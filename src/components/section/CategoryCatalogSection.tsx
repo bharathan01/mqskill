@@ -17,7 +17,9 @@ import {
 
 type CategoryCatalogSectionProps = {
   categoryId: string
-  categoryName: string
+  categoryName?: string
+  topicId?: string | null
+  initialSort?: CatalogSort
 }
 
 const emptyFilters: CatalogFilters = {
@@ -99,9 +101,11 @@ function RatingStars({ value }: { value: number }) {
 export function CategoryCatalogSection({
   categoryId,
   categoryName,
+  topicId,
+  initialSort = 'popular',
 }: CategoryCatalogSectionProps) {
   const [filters, setFilters] = useState<CatalogFilters>(emptyFilters)
-  const [sort, setSort] = useState<CatalogSort>('popular')
+  const [sort, setSort] = useState<CatalogSort>(initialSort)
   const [page, setPage] = useState(1)
   const [open, setOpen] = useState({
     level: false,
@@ -111,8 +115,8 @@ export function CategoryCatalogSection({
   })
 
   const courses = useMemo(
-    () => getCatalogCourses(categoryId, filters, sort),
-    [categoryId, filters, sort],
+    () => getCatalogCourses(categoryId, filters, sort, topicId),
+    [categoryId, filters, sort, topicId],
   )
   const totalPages = courses.length > 0 ? catalogListSection.totalPages : 0
   const visibleCourses = useMemo(
@@ -147,15 +151,19 @@ export function CategoryCatalogSection({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-navy">
-              {catalogListSection.titlePrefix} {categoryName} {catalogListSection.titleSuffix}
+              {categoryId === 'all' || !categoryName
+                ? `${catalogListSection.titlePrefix} ${catalogListSection.titleSuffix}`
+                : `${catalogListSection.titlePrefix} ${categoryName} ${catalogListSection.titleSuffix}`}
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              {categoryId.startsWith('it') ||
-              categoryId === 'hardware' ||
-              categoryId === 'operating-systems-servers' ||
-              categoryId === 'network-security'
-                ? catalogListSection.subtitle
-                : `Discover the best ${categoryName.toLowerCase()} courses to grow your career`}
+              {categoryId === 'all' || !categoryName
+                ? catalogListSection.allSubtitle
+                : categoryId.startsWith('it') ||
+                    categoryId === 'hardware' ||
+                    categoryId === 'operating-systems-servers' ||
+                    categoryId === 'network-security'
+                  ? catalogListSection.subtitle
+                  : `Discover the best ${categoryName.toLowerCase()} courses to grow your career`}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -176,7 +184,9 @@ export function CategoryCatalogSection({
                 <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
               </span>
             </label>
-            <span className="text-sm text-slate-400">{catalogListSection.totalLabel}</span>
+            <span className="text-sm text-slate-400">
+              {categoryId === 'all' ? catalogListSection.allTotalLabel : catalogListSection.totalLabel}
+            </span>
           </div>
         </div>
 

@@ -14,7 +14,11 @@ import {
   StudentCertificatesPage,
   StudentCoursesPage,
   StudentDashboardPage,
-  StudentPlaceholderPage,
+  StudentHelpPage,
+  StudentLanguagePage,
+  StudentPaymentsPage,
+  StudentProfilePage,
+  StudentSettingsPage,
   TutorDashboardPage,
 } from '@/pages'
 import { paths } from './paths'
@@ -38,11 +42,11 @@ export function AppRoutes() {
         <Route index element={<StudentDashboardPage />} />
         <Route path="courses" element={<StudentCoursesPage />} />
         <Route path="certificates" element={<StudentCertificatesPage />} />
-        <Route path="payments" element={<StudentPlaceholderPage title="Payments" />} />
-        <Route path="profile" element={<StudentPlaceholderPage title="Profile Settings" />} />
-        <Route path="settings" element={<StudentPlaceholderPage title="Account Settings" />} />
-        <Route path="language" element={<StudentPlaceholderPage title="Language" />} />
-        <Route path="help" element={<StudentPlaceholderPage title="Help & Support" />} />
+        <Route path="payments" element={<StudentPaymentsPage />} />
+        <Route path="profile" element={<StudentProfilePage />} />
+        <Route path="settings" element={<StudentSettingsPage />} />
+        <Route path="language" element={<StudentLanguagePage />} />
+        <Route path="help" element={<StudentHelpPage />} />
       </Route>
 
       <Route path={paths.tutor.root} element={<RoleLayout role="tutor" />}>

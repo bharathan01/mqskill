@@ -1,6 +1,6 @@
 export { APP_NAME, APP_TAGLINE } from './app'
 export { browseMenu } from './browseMenu'
-export { courseCategories, getCourseCategory } from './courseCategories'
+export { allCoursesCategory, courseCategories, getCourseCategory } from './courseCategories'
 export { courseDetails, courseHeroCopy, getCourseDetail } from './courseDetails'
 export {
   catalogCourses,
@@ -48,6 +48,26 @@ export {
   studentCertificatesPage,
   studentExpiredCertificates,
 } from './studentCertificates'
+export {
+  studentInvoices,
+  studentPaymentMethods,
+  studentPaymentsPage,
+} from './studentPayments'
+export { studentProfileDefaults, studentProfileFields, studentProfilePage } from './studentProfile'
+export { studentHelpChannels, studentHelpFaqs, studentHelpPage } from './studentHelp'
+export {
+  studentLoginSessions,
+  studentNotificationRules,
+  studentPasswordDefaults,
+  studentPrivacyRules,
+  studentSettingsDefaults,
+  studentSettingsPage,
+} from './studentSettings'
+export {
+  studentLanguageDefaults,
+  studentLanguagePage,
+  studentLanguages,
+} from './studentLanguage'
 export {
   studentActiveCourses,
   studentCoursesPage,

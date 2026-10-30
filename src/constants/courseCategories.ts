@@ -218,9 +218,29 @@ export const courseCategories: Record<string, CourseCategory> = {
   ),
 }
 
+export const allCoursesCategory: CourseCategory = category(
+  'all',
+  'All Courses',
+  'Explore expert-led courses across development, IT, design, business, and more — all in one catalog.',
+  'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80',
+  siblingTabs([
+    { id: 'development', name: 'Development' },
+    { id: 'it-software', name: 'IT & Software' },
+    { id: 'data-science', name: 'Data Science' },
+    { id: 'design', name: 'Design' },
+    { id: 'business', name: 'Business' },
+    { id: 'marketing', name: 'Marketing' },
+    { id: 'personal-dev', name: 'Personal Dev' },
+    { id: 'health-fitness', name: 'Health & Fitness' },
+  ]),
+)
+
 export function getCourseCategory(slug: string | undefined) {
   if (!slug) {
     return undefined
+  }
+  if (slug === allCoursesCategory.id) {
+    return allCoursesCategory
   }
   return courseCategories[slug]
 }

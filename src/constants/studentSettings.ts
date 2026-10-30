@@ -1,0 +1,137 @@
+export const studentSettingsPage = {
+  crumb: ['Settings', 'Security & Compliance'],
+  title: 'Account Settings & Security',
+  subtitle: 'Configure your password, multi-factor authentication, privacy preferences, and notification rules.',
+  badge: 'SOC2 & FERPA Protected',
+  passwordTitle: 'Change Password',
+  passwordSubtitle: 'Update your credentials regularly to protect course progress',
+  lastReset: 'Last reset: 42d ago',
+  lastResetNow: 'Last reset: Just now',
+  currentLabel: 'Current Password',
+  newLabel: 'New Password',
+  confirmLabel: 'Confirm New Password',
+  entropy: 'Entropy Score',
+  entropyHint: 'Complies with 14+ characters, special symbols, and Maqskillz enterprise entropy standards.',
+  discard: 'Discard',
+  savePassword: 'Save New Password',
+  mismatch: 'New passwords do not match.',
+  tooWeak: 'Password does not meet enterprise entropy standards.',
+  notificationsTitle: 'Notification Rules',
+  notificationsSubtitle: 'Tailor alerting frequency across institutional channels',
+  twoFaTitle: 'Two-Factor Authentication (2FA)',
+  twoFaBadge: 'Enforced',
+  twoFaSubtitle: 'Multi-factor validation protecting exam credentials and student transcripts',
+  twoFaMethod: 'Authenticator App & Hardware Key',
+  twoFaConfigured: 'Configured via Google Authenticator + YubiKey 5C NFC',
+  twoFaPrimary: 'Primary: Hardware Token (FIDO2)',
+  reconfigure: 'Reconfigure 2FA',
+  backupCodes: '8 of 10 Emergency One-Time Backup Codes remaining',
+  downloadCodes: 'Download Codes',
+  sessionsTitle: 'Active Login Sessions',
+  sessionsSubtitle: 'Devices currently authenticated to your Maqskillz LMS account',
+  logoutOthers: 'Log out of other sessions',
+  currentSession: 'Current Session',
+  activeNow: 'Active Now',
+  privacyTitle: 'Privacy & Data Policies',
+  privacySubtitle: 'Control record discoverability and GDPR/FERPA exports',
+  downloadArchive: 'Download Personal Data Archive (GDPR / FERPA)',
+  privacyPolicy: 'Apex LMS Institutional Privacy Policy',
+  policyVersion: 'v4.8',
+  dangerTitle: 'Danger Zone',
+  dangerSubtitle: 'Irreversible administrative actions regarding enrollment status',
+  transferTitle: 'Request Institutional Data Transfer',
+  transferBody: 'Export academic credits to another university via IMS Global LTI interchange',
+  transferCta: 'Initiate Transfer',
+  transferDone: 'Transfer requested',
+  deactivateTitle: 'Deactivate Student Account',
+  deactivateBody: 'Revokes access to coursework, grades, and campus portal permanently',
+  deactivateCta: 'Deactivate Account',
+  unsaved: 'Unsaved preference toggles are staged locally until committed.',
+  revert: 'Revert Defaults',
+  save: 'Save Changes',
+  saved: 'Preferences saved',
+}
+
+export const studentPasswordDefaults = {
+  current: 'currentSuperSecure2024',
+  next: 'Atlas*Alpha894X',
+  confirm: 'Atlas*Alpha894X',
+}
+
+export const studentSettingsDefaults = {
+  announcements: true,
+  reminders: true,
+  live: true,
+  promo: false,
+  emergency: true,
+  publicProfile: true,
+  transcript: true,
+}
+
+export const studentNotificationRules = [
+  {
+    id: 'announcements' as const,
+    title: 'Course & Exam Announcements',
+    body: 'Faculty releases, grading publications, and syllabus updates via Email + In-App banner',
+    locked: false,
+  },
+  {
+    id: 'reminders' as const,
+    title: 'Assignment Due Date Reminders',
+    body: 'Automated countdown alert dispatched 48h before assignment submissions',
+    locked: false,
+  },
+  {
+    id: 'live' as const,
+    title: 'Live Class & Webinar Alerts',
+    body: 'Immediate push notification 15 minutes before scheduled virtual lecture',
+    locked: false,
+  },
+  {
+    id: 'promo' as const,
+    title: 'Promotional & Course Arrivals',
+    body: 'Elective catalogs, semester discounts, and academic campus partner digests',
+    locked: false,
+  },
+  {
+    id: 'emergency' as const,
+    title: 'Institutional Emergency Broadcasts',
+    body: 'Critical university safety warnings, campus closures, and system outage alerts (Mandatory)',
+    locked: true,
+  },
+]
+
+export const studentPrivacyRules = [
+  {
+    id: 'publicProfile' as const,
+    title: 'Public Profile Visibility',
+    body: 'Permit verified employers and academic recruiters to inspect earned certificates via public URL slug',
+  },
+  {
+    id: 'transcript' as const,
+    title: 'Show Enrolled Courses on Academic Transcript',
+    body: 'Include current semester ongoing coursework within shareable official transcripts',
+  },
+]
+
+export const studentLoginSessions = [
+  {
+    id: 'chrome',
+    device: 'Chrome 124 on macOS Sonoma',
+    place: 'Boston, Massachusetts, United States',
+    meta: 'IP:  198.51.100.24',
+    current: true,
+    status: 'Active Now',
+    icon: 'desktop' as const,
+  },
+  {
+    id: 'ios',
+    device: 'Mobile Safari on iOS 17.5',
+    app: 'Maqskillz Mobile App',
+    place: 'Cambridge, Massachusetts, United States',
+    meta: 'Last active 3 hours ago',
+    current: false,
+    status: null,
+    icon: 'mobile' as const,
+  },
+]

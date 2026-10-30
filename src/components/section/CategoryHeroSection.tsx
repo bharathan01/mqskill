@@ -43,11 +43,17 @@ export function CategoryHeroSection({ category }: CategoryHeroSectionProps) {
                   Home
                 </Link>
                 <span>›</span>
-                <Link to={paths.courses} className="hover:text-navy">
-                  Courses
-                </Link>
-                <span>›</span>
-                <span className="font-medium text-navy">{category.name}</span>
+                {category.id === 'all' ? (
+                  <span className="font-medium text-navy">Courses</span>
+                ) : (
+                  <>
+                    <Link to={paths.courses} className="hover:text-navy">
+                      Courses
+                    </Link>
+                    <span>›</span>
+                    <span className="font-medium text-navy">{category.name}</span>
+                  </>
+                )}
               </nav>
               <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-navy sm:text-5xl">
                 {category.name}

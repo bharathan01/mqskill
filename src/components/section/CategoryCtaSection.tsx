@@ -3,7 +3,7 @@ import { categoryCtaSection } from '@/constants/categoryCourses'
 import { Container } from '@/components/ui'
 
 type CategoryCtaSectionProps = {
-  categoryName: string
+  categoryName?: string
 }
 
 export function CategoryCtaSection({ categoryName }: CategoryCtaSectionProps) {
@@ -20,8 +20,8 @@ export function CategoryCtaSection({ categoryName }: CategoryCtaSectionProps) {
                 {categoryCtaSection.title}
               </h2>
               <p className="mt-3 max-w-lg text-sm leading-6 text-slate-500 sm:text-base">
-                {categoryCtaSection.descriptionPrefix} {categoryName}{' '}
-                {categoryCtaSection.descriptionSuffix}
+                {categoryCtaSection.descriptionPrefix}
+                {categoryName ? ` ${categoryName}` : ''} {categoryCtaSection.descriptionSuffix}
               </p>
               <div className="mt-7 flex flex-wrap items-center gap-5">
                 <Link

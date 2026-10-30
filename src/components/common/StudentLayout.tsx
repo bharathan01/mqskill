@@ -87,10 +87,20 @@ export function StudentLayout() {
         <div className="mt-4 space-y-1 border-t border-slate-100 pt-4">
           <NavLink
             to={studentNavFooter.help.to}
-            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50"
+            className={({ isActive }) =>
+              `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+                isActive
+                  ? 'bg-brand text-white shadow-sm'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+              }`
+            }
           >
-            <HelpCircleIcon className="h-4 w-4 text-slate-400" />
-            {studentNavFooter.help.label}
+            {({ isActive }) => (
+              <>
+                <HelpCircleIcon className={`h-4 w-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                {studentNavFooter.help.label}
+              </>
+            )}
           </NavLink>
           <Link
             to={studentNavFooter.signOut.to}

@@ -304,8 +304,10 @@ export const catalogListSection = {
   titlePrefix: 'All',
   titleSuffix: 'Courses',
   subtitle: 'Discover the best IT and software courses to grow your career',
+  allSubtitle: 'Discover the best courses to grow your career',
   sortLabel: 'Sort by',
   totalLabel: '1,200+ courses',
+  allTotalLabel: '2,400+ courses',
   filtersTitle: 'Filters',
   clearAll: 'Clear all',
   sortOptions: [
@@ -605,11 +607,13 @@ export function getCatalogCourses(
   categoryId: string,
   filters: CatalogFilters,
   sort: CatalogSort,
+  topicId?: string | null,
 ) {
-  const inCategory = catalogCourses.filter((course) =>
-    course.categoryIds.includes(categoryId),
-  )
-  const pool = inCategory.length > 0 ? inCategory : catalogCourses
+  const inCategory =
+    categoryId === 'all'
+      ? catalogCourses
+      : catalogCourses.filter((course) => course.categoryIds.includes(categoryId))
+  const pool = categoryId === 'all' || inCategory.length > 0 ? inCategory : catalogCourses
 
   const filtered = pool.filter((course) => {
     if (filters.rating !== null && course.rating < filters.rating) return false
@@ -630,6 +634,12 @@ export function getCatalogCourses(
       !filters.subtitles.some((item) => course.subtitles.includes(item))
     ) {
       return false
+    }
+    if (topicId) {
+      const needle = topicId.toLowerCase()
+      const topicMatch = course.topic.id.toLowerCase() === needle
+      const tagMatch = course.tags.some((tag) => tag.toLowerCase().includes(needle))
+      if (!topicMatch && !tagMatch) return false
     }
     return true
   })
@@ -659,10 +669,11 @@ export const categoryCtaSection = {
 } as const
 
 export function getStarterCourses(categoryId: string, list: StarterList) {
-  const inCategory = starterCourses.filter((course) =>
-    course.categoryIds.includes(categoryId),
-  )
-  const pool = inCategory.length > 0 ? inCategory : starterCourses
+  const inCategory =
+    categoryId === 'all'
+      ? starterCourses
+      : starterCourses.filter((course) => course.categoryIds.includes(categoryId))
+  const pool = categoryId === 'all' || inCategory.length > 0 ? inCategory : starterCourses
   const listed = pool.filter((course) => course.lists.includes(list))
   const result = listed.length > 0 ? listed : pool
   return result.slice(0, 4)
