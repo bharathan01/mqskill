@@ -44,6 +44,11 @@ export { features, heroContent, heroStats } from './home'
 export { loginPage } from './login'
 export { studentDashboard, studentShell, studentUser } from './student'
 export {
+  studentActiveCertificates,
+  studentCertificatesPage,
+  studentExpiredCertificates,
+} from './studentCertificates'
+export {
   studentActiveCourses,
   studentCoursesPage,
   studentExpiredCourses,

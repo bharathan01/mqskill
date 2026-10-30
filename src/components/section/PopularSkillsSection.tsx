@@ -18,7 +18,9 @@ export function PopularSkillsSection() {
   const tab = popularSkillTabs.find((item) => item.id === activeTab) ?? popularSkillTabs[0]
 
   const courses = useMemo(() => {
-    const tabCourses = trendingCourses.filter((course) => tab.courseIds.includes(course.id))
+    const tabCourses = trendingCourses.filter((course) =>
+      tab.courseIds.some((id) => id === course.id),
+    )
     if (!activeSkill) {
       return tabCourses
     }

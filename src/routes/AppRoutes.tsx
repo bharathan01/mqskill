@@ -11,6 +11,7 @@ import {
   LoginPage,
   NotFoundPage,
   SignupPage,
+  StudentCertificatesPage,
   StudentCoursesPage,
   StudentDashboardPage,
   StudentPlaceholderPage,
@@ -36,7 +37,7 @@ export function AppRoutes() {
       <Route path={paths.student.root} element={<StudentLayout />}>
         <Route index element={<StudentDashboardPage />} />
         <Route path="courses" element={<StudentCoursesPage />} />
-        <Route path="certificates" element={<StudentPlaceholderPage title="Certificates" />} />
+        <Route path="certificates" element={<StudentCertificatesPage />} />
         <Route path="payments" element={<StudentPlaceholderPage title="Payments" />} />
         <Route path="profile" element={<StudentPlaceholderPage title="Profile Settings" />} />
         <Route path="settings" element={<StudentPlaceholderPage title="Account Settings" />} />

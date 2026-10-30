@@ -137,7 +137,7 @@ export function CategoryCatalogRow({ course }: { course: CatalogCourse }) {
           ))}
         </div>
       </div>
-
+ // test comment
       <div className="flex shrink-0 flex-col items-start sm:items-end">
         <p className="text-lg font-bold text-navy">
           {formatPrice(course.pricePrefix, course.price)}
