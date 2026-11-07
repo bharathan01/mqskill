@@ -603,11 +603,56 @@ export type CatalogFilters = {
   subtitles: string[]
 }
 
+function courseMatchesQuery(course: CatalogCourse, query: string) {
+  const needle = query.trim().toLowerCase()
+  if (!needle) return true
+  return (
+    course.title.toLowerCase().includes(needle) ||
+    course.description.toLowerCase().includes(needle) ||
+    course.instructor.name.toLowerCase().includes(needle) ||
+    course.topic.label.toLowerCase().includes(needle) ||
+    course.tags.some((tag) => tag.toLowerCase().includes(needle))
+  )
+}
+
+export function searchCatalogCourses(query: string, limit = 6) {
+  const needle = query.trim().toLowerCase()
+  if (!needle) return []
+
+  return catalogCourses
+    .filter((course) => courseMatchesQuery(course, needle))
+    .sort((a, b) => {
+      const aTitle = a.title.toLowerCase()
+      const bTitle = b.title.toLowerCase()
+      const aExact = aTitle === needle ? 0 : aTitle.startsWith(needle) ? 1 : 2
+      const bExact = bTitle === needle ? 0 : bTitle.startsWith(needle) ? 1 : 2
+      if (aExact !== bExact) return aExact - bExact
+      return b.reviews - a.reviews
+    })
+    .slice(0, limit)
+}
+
+export function findCatalogCourse(query: string) {
+  const needle = query.trim().toLowerCase()
+  if (!needle) return undefined
+
+  const exact = catalogCourses.find((course) => course.title.toLowerCase() === needle)
+  if (exact) return exact
+
+  const matches = searchCatalogCourses(needle, 2)
+  if (matches.length === 1) return matches[0]
+  if (matches.length > 0 && matches[0].title.toLowerCase().startsWith(needle)) {
+    return matches[0]
+  }
+  return undefined
+}
+
 export function getCatalogCourses(
   categoryId: string,
   filters: CatalogFilters,
   sort: CatalogSort,
   topicId?: string | null,
+  query?: string | null,
 ) {
   const inCategory =
     categoryId === 'all'
@@ -641,6 +686,7 @@ export function getCatalogCourses(
       const tagMatch = course.tags.some((tag) => tag.toLowerCase().includes(needle))
       if (!topicMatch && !tagMatch) return false
     }
+    if (query && !courseMatchesQuery(course, query)) return false
     return true
   })
 

@@ -20,6 +20,7 @@ function catalogSortFromQuery(value: string | null): CatalogSort {
 export function CoursesPage() {
   const [params] = useSearchParams()
   const topicId = params.get('skill')
+  const searchQuery = params.get('q')
   const initialSort = catalogSortFromQuery(params.get('sort'))
 
   return (
@@ -28,9 +29,10 @@ export function CoursesPage() {
       <CategoryCoursesSection key={allCoursesCategory.id} categoryId={allCoursesCategory.id} />
       <CategoryExploreSection />
       <CategoryCatalogSection
-        key={`${allCoursesCategory.id}-catalog-${topicId ?? 'all'}-${initialSort}`}
+        key={`${allCoursesCategory.id}-catalog-${topicId ?? 'all'}-${searchQuery ?? ''}-${initialSort}`}
         categoryId={allCoursesCategory.id}
         topicId={topicId}
+        searchQuery={searchQuery}
         initialSort={initialSort}
       />
       <CategoryCtaSection />

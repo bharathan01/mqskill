@@ -19,6 +19,10 @@ export const demoForm = {
   title: 'Request a Demo',
   subtitle: "Let's discuss how Maqskillz can help your team.",
   submit: 'Request a Demo',
+  successTitle: 'Demo request received',
+  successBody:
+    'Thanks for reaching out. Our team will contact you within 1 business day to schedule your personalized demo.',
+  successReset: 'Submit another request',
   fields: {
     fullName: { label: 'Full name', placeholder: 'e.g. Priyanshu Sharma', required: true },
     workEmail: { label: 'Work email', placeholder: 'name@company.com', required: true },
@@ -185,6 +189,20 @@ export const businessSuccessSection = {
   badge: 'Success story',
   stories: [
     {
+      id: 'northline',
+      quote:
+        'We finally have a single place to upskill teams and prove the impact to leadership.',
+      body: 'Reporting is clear, onboarding was fast, and employees actually enjoy the learning experience.',
+      name: 'Marcus Chen',
+      role: 'L&D Lead, Northline',
+      avatar:
+        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80',
+      image:
+        'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=800&h=1000&q=80',
+      statValue: '2x',
+      statLabel: 'Team Productivity Gain',
+    },
+    {
       id: 'technova',
       quote:
         'Maqskillz has helped our team build critical skills and stay ahead in a fast-changing industry.',
@@ -212,20 +230,7 @@ export const businessSuccessSection = {
       statValue: '40%',
       statLabel: 'Higher Course Completion',
     },
-    {
-      id: 'northline',
-      quote:
-        'We finally have a single place to upskill teams and prove the impact to leadership.',
-      body: 'Reporting is clear, onboarding was fast, and employees actually enjoy the learning experience.',
-      name: 'Marcus Chen',
-      role: 'L&D Lead, Northline',
-      avatar:
-        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80',
-      image:
-        'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=800&h=1000&q=80',
-      statValue: '2x',
-      statLabel: 'Team Productivity Gain',
-    },
+   
   ],
 } as const
 

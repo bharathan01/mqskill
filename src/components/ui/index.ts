@@ -55,6 +55,7 @@ export {
   InfinityIcon,
   InfoIcon,
   KeyIcon,
+  SendIcon,
   InstagramIcon,
   LayersIcon,
   LightbulbIcon,

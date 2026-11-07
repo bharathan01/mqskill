@@ -51,7 +51,7 @@ export function BusinessSuccessSection() {
                   <img
                     src={story.image}
                     alt=""
-                    className="aspect-[4/5] h-auto w-full object-cover object-top"
+                    className="aspect-[4/3] h-auto max-h-[720px] w-full object-cover object-top"
                   />
                 </div>
                 <div className="absolute top-8 left-0 max-w-[150px] -translate-x-2 rounded-2xl bg-white px-4 py-4 shadow-[0_12px_30px_rgba(15,40,80,0.12)] sm:max-w-[168px] sm:-translate-x-6">

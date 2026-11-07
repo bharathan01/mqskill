@@ -4,6 +4,7 @@ export {
   CategoryPage,
   CoursePage,
   CoursesPage,
+  ForgotPasswordPage,
   HomePage,
   LoginPage,
   NotFoundPage,
@@ -22,3 +23,5 @@ export {
 } from './student'
 export { TutorDashboardPage } from './tutor'
 export { AdminDashboardPage } from './admin'
+export { OrganizationDashboardPage } from './organization'
+export { EmployeeDashboardPage } from './employee'

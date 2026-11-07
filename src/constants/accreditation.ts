@@ -1,42 +1,41 @@
 export const accreditationSection = {
   badge: 'Accredited & Certified Worldwide',
-  title: 'Best Supporter of',
-  highlight: 'Maqskillz.',
+  title: 'Learn. Get certified. Get recognised.',
   description:
     'Our curriculum and digital badges are formally recognized by leading national universities, premier technology councils, and accreditation boards.',
   cta: 'Preview Sample Certificate',
   partners: [
     {
       id: 'global-board',
-      name: 'Global Board',
+      name: 'ISO 9001',
       role: 'Accredited Curriculum',
       status: 'Global Standard',
       icon: 'global-board',
     },
     {
       id: 'global-institute',
-      name: 'Global Institute',
+      name: '14001 & 45001',
       role: 'Standard of Excellence',
       status: 'Certified Member',
       icon: 'global-institute',
     },
     {
       id: 'national-university',
-      name: 'National University',
+      name: 'QHSE',
       role: 'Charter Partner',
       status: 'Verified Board',
       icon: 'national-university',
     },
     {
       id: 'collegiate-council',
-      name: 'Collegiate Council',
+      name: 'CPD',
       role: 'Quality Assurance',
       status: 'Audited QA',
       icon: 'collegiate-council',
     },
     {
       id: 'premier-college',
-      name: 'Premier College',
+      name: 'EXEMPLAR GLOBAL',
       role: 'Skill Validation Body',
       status: 'Accredited Peer',
       icon: 'premier-college',

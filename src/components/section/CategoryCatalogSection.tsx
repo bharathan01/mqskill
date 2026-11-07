@@ -19,6 +19,7 @@ type CategoryCatalogSectionProps = {
   categoryId: string
   categoryName?: string
   topicId?: string | null
+  searchQuery?: string | null
   initialSort?: CatalogSort
 }
 
@@ -102,6 +103,7 @@ export function CategoryCatalogSection({
   categoryId,
   categoryName,
   topicId,
+  searchQuery,
   initialSort = 'popular',
 }: CategoryCatalogSectionProps) {
   const [filters, setFilters] = useState<CatalogFilters>(emptyFilters)
@@ -115,8 +117,8 @@ export function CategoryCatalogSection({
   })
 
   const courses = useMemo(
-    () => getCatalogCourses(categoryId, filters, sort, topicId),
-    [categoryId, filters, sort, topicId],
+    () => getCatalogCourses(categoryId, filters, sort, topicId, searchQuery),
+    [categoryId, filters, sort, topicId, searchQuery],
   )
   const totalPages = courses.length > 0 ? catalogListSection.totalPages : 0
   const visibleCourses = useMemo(
@@ -126,7 +128,7 @@ export function CategoryCatalogSection({
 
   useEffect(() => {
     setPage(1)
-  }, [categoryId, filters, sort])
+  }, [categoryId, filters, sort, searchQuery])
 
   function goToPage(next: number) {
     const clamped = Math.min(Math.max(1, next), totalPages)

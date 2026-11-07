@@ -1,173 +1,432 @@
-import type { FormEvent } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+  type ClipboardEvent,
+} from 'react'
 import { Link, useNavigate } from 'react-router'
-import logo from '@/assets/logo.png'
-import { APP_NAME, loginPage } from '@/constants'
+import {
+  authenticateDemoUser,
+  authMessages,
+  dashboardPathForRole,
+  findDemoUser,
+  loginPage,
+  maskEmail,
+  verifyDemoOtp,
+  type DemoUser,
+} from '@/constants'
 import { paths } from '@/routes/paths'
 import {
-  AppleIcon,
+  AwardIcon,
   BookIcon,
-  ChevronRightIcon,
-  GlobeIcon,
-  GoogleIcon,
-  TrendingUpIcon,
-  UsersIcon,
+  BuildingIcon,
+  ChevronLeftIcon,
+  ClockIcon,
+  GraduationCapIcon,
+  InfoIcon,
+  LockIcon,
+  MailIcon,
+  ShieldCheckIcon,
+  SmartphoneIcon,
 } from '@/components/ui'
 
-const statIcons = {
-  courses: BookIcon,
-  instructors: UsersIcon,
-  learners: TrendingUpIcon,
-  flexible: GlobeIcon,
+const featureIcons = {
+  book: BookIcon,
+  award: AwardIcon,
+  shield: ShieldCheckIcon,
+}
+
+const fieldClass =
+  'h-11 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-brand'
+
+function formatTimer(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
 export function LoginPage() {
+  const emptyCode = ['', '', '', '', '', '']
   const navigate = useNavigate()
+  const [step, setStep] = useState<'signin' | 'verify'>('signin')
+  const [email, setEmail] = useState('')
+  const [pendingUser, setPendingUser] = useState<DemoUser | null>(null)
+  const [error, setError] = useState('')
+  const [code, setCode] = useState<string[]>(emptyCode)
+  const [secondsLeft, setSecondsLeft] = useState(loginPage.verify.seconds)
+  const inputsRef = useRef<Array<HTMLInputElement | null>>([])
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    navigate(paths.student.dashboard)
+  useEffect(() => {
+    if (step !== 'verify') return
+    const timer = window.setInterval(() => {
+      setSecondsLeft((current) => (current <= 0 ? 0 : current - 1))
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [step])
+
+  useEffect(() => {
+    if (step !== 'verify') return
+    const frame = window.requestAnimationFrame(() => {
+      inputsRef.current[0]?.focus()
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [step])
+
+  function startVerify(user: DemoUser) {
+    setPendingUser(user)
+    setEmail(user.email)
+    setError('')
+    setCode(emptyCode)
+    setSecondsLeft(loginPage.verify.seconds)
+    setStep('verify')
   }
 
-  function goToDashboard() {
-    navigate(paths.student.dashboard)
+  function handleSignIn(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const data = new FormData(event.currentTarget)
+    const nextEmail = String(data.get('email') ?? '')
+    const password = String(data.get('password') ?? '')
+    const user = authenticateDemoUser(nextEmail, password)
+    if (!user) {
+      setError(authMessages.invalidCredentials)
+      return
+    }
+    startVerify(user)
+  }
+
+  function handleSso() {
+    const trimmed = email.trim()
+    if (!trimmed) {
+      setError(authMessages.emailRequired)
+      return
+    }
+    const user = findDemoUser(trimmed)
+    if (!user) {
+      setError(authMessages.unknownEmail)
+      return
+    }
+    startVerify(user)
+  }
+
+  function handleVerify(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const otp = code.join('')
+    if (otp.length < 6 || !pendingUser) return
+    if (!verifyDemoOtp(otp)) {
+      setError(authMessages.invalidOtp)
+      return
+    }
+    navigate(dashboardPathForRole(pendingUser.role))
+  }
+
+  function updateDigit(index: number, value: string) {
+    const digit = value.replace(/\D/g, '').slice(-1)
+    setCode((current) => {
+      const next = [...current]
+      next[index] = digit
+      return next
+    })
+    if (digit && index < 5) {
+      inputsRef.current[index + 1]?.focus()
+    }
+  }
+
+  function handleCodeKeyDown(index: number, event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'Backspace' && !code[index] && index > 0) {
+      inputsRef.current[index - 1]?.focus()
+    }
+  }
+
+  function handleCodePaste(event: ClipboardEvent<HTMLInputElement>) {
+    event.preventDefault()
+    const pasted = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
+    if (!pasted) return
+    const next = Array.from({ length: 6 }, (_, index) => pasted[index] ?? '')
+    setCode(next)
+    inputsRef.current[Math.min(pasted.length, 5)]?.focus()
+  }
+
+  function handleResend() {
+    setSecondsLeft(loginPage.verify.seconds)
+    setCode(emptyCode)
+    inputsRef.current[0]?.focus()
   }
 
   return (
-    <div className="grid h-screen overflow-hidden bg-white lg:grid-cols-2">
-      <section className="relative hidden h-full overflow-hidden bg-[#0B3A8A] px-10 py-8 text-white lg:flex lg:flex-col xl:px-14 xl:py-10">
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#082A6B] via-[#0B4DB3] to-[#1D4ED8]" />
-        <div className="pointer-events-none absolute -top-28 -left-20 h-[26rem] w-[26rem] rounded-full bg-[#3B82F6]/50" />
-        <div className="pointer-events-none absolute top-[18%] -left-32 h-[34rem] w-[34rem] rounded-[46%] bg-[#1E40AF]/70" />
-        <div className="pointer-events-none absolute right-[-8%] top-[-12%] h-80 w-80 rounded-full bg-[#60A5FA]/30" />
-        <div className="pointer-events-none absolute bottom-[-18%] left-[8%] h-72 w-[28rem] rounded-[50%] bg-[#2563EB]/45" />
+    <div className="grid h-screen overflow-hidden bg-white lg:grid-cols-[0.92fr_1.08fr]">
+      <section className="relative hidden h-full overflow-hidden bg-[#0A2744] px-10 py-8 text-white lg:flex lg:flex-col xl:px-12 xl:py-10">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#071C33] via-[#0A2744] to-[#123A6B]" />
+        <div className="pointer-events-none absolute right-[-18%] bottom-[-12%] h-72 w-72 rounded-full border border-white/10" />
+        <div className="pointer-events-none absolute right-[-8%] bottom-[8%] h-52 w-52 rounded-full border border-white/10" />
+        <div className="pointer-events-none absolute right-[10%] bottom-[-20%] h-64 w-64 rounded-full bg-brand/20 blur-2xl" />
 
-        <div className="relative z-10 flex h-full max-w-[22rem] flex-col xl:max-w-md">
-          <Link to={paths.home} className="text-2xl font-semibold tracking-tight">
-            {loginPage.brand}
+        <div className="relative z-10 flex h-full max-w-md flex-col">
+          <Link to={paths.home} className="inline-flex items-center gap-3 self-start">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand text-white">
+              <GraduationCapIcon className="h-5 w-5" />
+            </span>
+            <span>
+              <span className="block text-lg font-bold tracking-tight">{loginPage.brand}</span>
+              <span className="block text-[10px] font-semibold tracking-[0.16em] text-white/65 uppercase">
+                {loginPage.brandTag}
+              </span>
+            </span>
           </Link>
-          <h1 className="mt-6 text-4xl leading-[1.12] font-bold tracking-tight xl:text-5xl">
-            {loginPage.title[0]}{' '}
-            <span className="block">{loginPage.title[1]}</span>
+
+          <h1 className="mt-14 text-4xl font-bold tracking-tight xl:text-[2.75rem] xl:leading-[1.15]">
+            {loginPage.title}
           </h1>
-          <p className="mt-4 max-w-sm text-sm leading-6 text-white/80">
+          <p className="mt-4 max-w-sm text-sm leading-6 text-white/75">
             {loginPage.description}
           </p>
-          <ul className="mt-6 space-y-3">
-            {loginPage.stats.map((stat) => {
-              const Icon = statIcons[stat.icon]
+
+          <ul className="mt-10 space-y-5">
+            {loginPage.features.map((feature) => {
+              const Icon = featureIcons[feature.icon]
               return (
-                <li key={stat.id} className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/30 bg-white/10">
+                <li key={feature.id} className="flex gap-3">
+                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 text-sky-200">
                     <Icon className="h-4 w-4" />
                   </span>
                   <span>
-                    <span className="block text-sm font-bold">{stat.value}</span>
-                    <span className="text-xs text-white/70">{stat.label}</span>
+                    <span className="block text-sm font-semibold">{feature.title}</span>
+                    <span className="mt-1 block text-sm leading-5 text-white/65">
+                      {feature.body}
+                    </span>
                   </span>
                 </li>
               )
             })}
           </ul>
-          <p className="mt-auto max-w-sm pt-6 text-sm leading-6 text-white/75 italic">
-            “{loginPage.quote}”
-          </p>
-        </div>
 
-        <img
-          src={loginPage.image}
-          alt=""
-          className="pointer-events-none absolute right-[-4%] bottom-[4%] z-[5] h-[56%] w-[42%] object-cover object-[center_18%] shadow-[0_20px_60px_rgba(0,0,0,0.25)]"
-          style={{
-            borderRadius: '62% 38% 48% 52% / 42% 28% 72% 58%',
-          }}
-        />
-      </section>
-
-      <section className="flex h-full items-center justify-center overflow-hidden bg-[#F7F8FC] px-4 py-6 sm:px-8">
-        <div className="w-full max-w-[26rem] rounded-3xl border border-slate-100 bg-white px-6 py-6 shadow-sm sm:px-8 sm:py-7">
-          <Link
-            to={paths.home}
-            className="mx-auto flex h-12 w-[160px] items-center overflow-hidden"
-          >
-            <img
-              src={logo}
-              alt={APP_NAME}
-              className="h-full w-full scale-[1.7] object-contain"
-            />
-          </Link>
-          <h2 className="mt-4 text-center text-2xl font-bold text-black sm:text-3xl">
-            {loginPage.welcome}
-          </h2>
-          <p className="mt-1.5 text-center text-sm text-slate-500">{loginPage.subtitle}</p>
-
-          <form className="mt-5 space-y-3.5" onSubmit={handleSubmit}>
-            <label className="block text-sm font-semibold text-black">
-              {loginPage.email}
-              <input
-                type="email"
-                name="email"
-                required
-                autoComplete="email"
-                placeholder={loginPage.emailPlaceholder}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-normal text-slate-800 outline-none placeholder:text-slate-400 focus:border-brand"
-              />
-            </label>
-            <label className="block text-sm font-semibold text-black">
-              {loginPage.password}
-              <input
-                type="password"
-                name="password"
-                required
-                autoComplete="current-password"
-                placeholder={loginPage.passwordPlaceholder}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-normal text-slate-800 outline-none placeholder:text-slate-400 focus:border-brand"
-              />
-            </label>
-            <div className="flex justify-end">
-              <button type="button" className="text-sm font-medium text-brand">
-                {loginPage.forgot}
-              </button>
-            </div>
-            <button
-              type="submit"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand py-3 text-sm font-semibold text-white hover:bg-blue-700"
-            >
-              {loginPage.submit}
-              <ChevronRightIcon className="h-4 w-4" />
-            </button>
-          </form>
-
-          <div className="my-4 flex items-center gap-3 text-xs font-semibold tracking-widest text-slate-400">
-            <span className="h-px flex-1 bg-slate-200" />
-            {loginPage.or}
-            <span className="h-px flex-1 bg-slate-200" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={goToDashboard}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 sm:text-sm"
-            >
-              <GoogleIcon className="h-4 w-4" />
-              {loginPage.google}
-            </button>
-            <button
-              type="button"
-              onClick={goToDashboard}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 sm:text-sm"
-            >
-              <AppleIcon className="h-4 w-4" />
-              {loginPage.apple}
-            </button>
-          </div>
-
-          <p className="mt-5 text-center text-sm text-slate-500">
-            {loginPage.noAccount}{' '}
-            <Link to={paths.signup} className="font-semibold text-brand">
-              {loginPage.signup}
+          <p className="mt-auto pt-10 text-xs text-white/55">
+            {loginPage.footer}
+            <span className="mx-2">·</span>
+            <Link to={paths.privacy} className="hover:text-white">
+              {loginPage.privacy}
+            </Link>
+            <span className="mx-2">·</span>
+            <Link to={paths.terms} className="hover:text-white">
+              {loginPage.terms}
             </Link>
           </p>
+        </div>
+      </section>
+
+      <section className="flex h-full items-center justify-center overflow-y-auto bg-white px-4 py-8 sm:px-8">
+        <div className="w-full max-w-[26rem]">
+          {step === 'signin' ? (
+            <>
+              <Link
+                to={paths.home}
+                className="mb-8 inline-flex items-center gap-3 lg:hidden"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand text-white">
+                  <GraduationCapIcon className="h-5 w-5" />
+                </span>
+                <span>
+                  <span className="block text-lg font-bold text-navy">{loginPage.brand}</span>
+                  <span className="block text-[10px] font-semibold tracking-[0.16em] text-slate-400 uppercase">
+                    {loginPage.brandTag}
+                  </span>
+                </span>
+              </Link>
+
+              <h2 className="text-3xl font-bold tracking-tight text-slate-900">
+                {loginPage.welcome}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-500">{loginPage.subtitle}</p>
+
+              <button
+                type="button"
+                onClick={handleSso}
+                className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              >
+                <BuildingIcon className="h-4 w-4 text-slate-500" />
+                {loginPage.sso}
+              </button>
+
+              <div className="my-6 flex items-center gap-3 text-xs text-slate-400">
+                <span className="h-px flex-1 bg-slate-200" />
+                {loginPage.or}
+                <span className="h-px flex-1 bg-slate-200" />
+              </div>
+
+              <form className="space-y-4" onSubmit={handleSignIn}>
+                <label className="block text-sm font-semibold text-slate-900">
+                  {loginPage.email}
+                  <span className="relative mt-1.5 block">
+                    <MailIcon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="email"
+                      name="email"
+                      required
+                      autoComplete="email"
+                      value={email}
+                      onChange={(event) => {
+                        setEmail(event.target.value)
+                        setError('')
+                      }}
+                      placeholder={loginPage.emailPlaceholder}
+                      className={fieldClass}
+                    />
+                  </span>
+                </label>
+
+                <label className="block text-sm font-semibold text-slate-900">
+                  {loginPage.password}
+                  <span className="relative mt-1.5 block">
+                    <LockIcon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="password"
+                      name="password"
+                      required
+                      autoComplete="current-password"
+                      placeholder={loginPage.passwordPlaceholder}
+                      onChange={() => setError('')}
+                      className={fieldClass}
+                    />
+                  </span>
+                </label>
+
+                <div className="flex items-center justify-between gap-3 pt-1">
+                  <label className="inline-flex items-center gap-2 text-sm text-slate-600">
+                    <input
+                      type="checkbox"
+                      name="remember"
+                      defaultChecked
+                      className="h-4 w-4 rounded border-slate-300 accent-brand"
+                    />
+                    {loginPage.remember}
+                  </label>
+                  <Link to={paths.forgotPassword} className="text-sm font-semibold text-brand">
+                    {loginPage.forgot}
+                  </Link>
+                </div>
+
+                {error ? <p className="text-sm font-medium text-red-600">{error}</p> : null}
+
+                <button
+                  type="submit"
+                  className="inline-flex w-full items-center justify-center rounded-lg bg-brand py-3 text-sm font-semibold text-white hover:bg-blue-700"
+                >
+                  {loginPage.submit} →
+                </button>
+              </form>
+
+              <p className="mt-6 text-center text-sm text-slate-500">
+                {loginPage.noAccount}{' '}
+                <Link to={paths.signup} className="font-semibold text-brand">
+                  {loginPage.signup}
+                </Link>
+              </p>
+
+              <div className="mt-4 flex gap-3 rounded-xl bg-slate-50 px-4 py-3.5 text-sm leading-5 text-slate-500">
+                <InfoIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                <p>{loginPage.notice}</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setStep('signin')
+                  setPendingUser(null)
+                  setError('')
+                }}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-navy"
+              >
+                <ChevronLeftIcon className="h-4 w-4" />
+                {loginPage.verify.back}
+              </button>
+
+              <span className="mt-8 flex h-12 w-12 items-center justify-center rounded-xl bg-[#EAF2FF] text-brand">
+                <SmartphoneIcon className="h-5 w-5" />
+              </span>
+
+              <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-900">
+                {loginPage.verify.title}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                {loginPage.verify.subtitle}{' '}
+                <span className="font-medium text-slate-700">{maskEmail(email)}</span>.
+              </p>
+
+              <form className="mt-8 space-y-5" onSubmit={handleVerify}>
+                <div className="flex justify-center gap-2">
+                  {code.map((digit, index) => (
+                    <input
+                      key={index}
+                      ref={(node) => {
+                        inputsRef.current[index] = node
+                      }}
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={1}
+                      value={digit}
+                      aria-label={`Digit ${index + 1}`}
+                      onChange={(event) => {
+                        setError('')
+                        updateDigit(index, event.target.value)
+                      }}
+                      onKeyDown={(event) => handleCodeKeyDown(index, event)}
+                      onPaste={(event) => {
+                        setError('')
+                        handleCodePaste(event)
+                      }}
+                      className="h-12 w-11 rounded-lg border-2 border-slate-200 text-center text-lg font-semibold text-slate-900 outline-none focus:border-brand sm:h-14 sm:w-12"
+                    />
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <p className="inline-flex items-center gap-1.5 text-slate-500">
+                    <ClockIcon className="h-4 w-4" />
+                    {loginPage.verify.expires}{' '}
+                    <span className="font-semibold text-slate-700">{formatTimer(secondsLeft)}</span>
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={secondsLeft > 0}
+                    className="font-semibold text-brand disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {loginPage.verify.resend}
+                  </button>
+                </div>
+
+                <label className="inline-flex items-center gap-2 text-sm text-slate-600">
+                  <input
+                    type="checkbox"
+                    name="trust"
+                    className="h-4 w-4 rounded border-slate-300 accent-brand"
+                  />
+                  {loginPage.verify.trust}
+                </label>
+
+                {error ? <p className="text-sm font-medium text-red-600">{error}</p> : null}
+
+                <button
+                  type="submit"
+                  disabled={code.join('').length < 6}
+                  className="inline-flex w-full items-center justify-center rounded-lg bg-brand py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {loginPage.verify.submit}
+                </button>
+              </form>
+
+              <button
+                type="button"
+                className="mt-5 w-full text-center text-sm font-semibold text-brand"
+              >
+                {loginPage.verify.alternate}
+              </button>
+            </>
+          )}
         </div>
       </section>
     </div>

@@ -1,7 +1,8 @@
-import type { FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { businessHero, demoForm } from '@/constants/business'
 import {
   ChartIcon,
+  CheckCircleIcon,
   ChevronDownIcon,
   Container,
   LayersIcon,
@@ -15,13 +16,21 @@ const highlightIcons = {
 }
 
 const inputClass =
-  'mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-navy outline-none placeholder:text-slate-400 focus:border-brand'
+  'mt-1.5 w-full rounded-lg border-2 border-slate-300 bg-white px-3 py-2.5 text-sm text-navy outline-none placeholder:text-slate-400 focus:border-brand'
 
 const labelClass = 'text-[11px] font-semibold tracking-[0.12em] text-navy uppercase'
 
 export function BusinessHeroSection() {
+  const [submitted, setSubmitted] = useState(false)
+  const [submitterName, setSubmitterName] = useState('')
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const data = new FormData(event.currentTarget)
+    const name = String(data.get('fullName') ?? '').trim()
+    setSubmitterName(name)
+    setSubmitted(true)
+    event.currentTarget.reset()
   }
 
   return (
@@ -71,96 +80,128 @@ export function BusinessHeroSection() {
           >
             <h2 className="text-2xl font-bold text-navy">{demoForm.title}</h2>
             <p className="mt-1 text-sm text-slate-500">{demoForm.subtitle}</p>
-            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-              <label className={`block ${labelClass}`}>
-                {demoForm.fields.fullName.label} *
-                <input
-                  type="text"
-                  required
-                  placeholder={demoForm.fields.fullName.placeholder}
-                  className={inputClass}
-                />
-              </label>
-              <label className={`block ${labelClass}`}>
-                {demoForm.fields.workEmail.label} *
-                <input
-                  type="email"
-                  required
-                  placeholder={demoForm.fields.workEmail.placeholder}
-                  className={inputClass}
-                />
-              </label>
-              <div className="grid gap-4 sm:grid-cols-2">
+
+            {submitted ? (
+              <div className="mt-6 rounded-2xl border-2 border-emerald-200 bg-emerald-50 px-5 py-8 text-center">
+                <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-emerald-600 shadow-sm">
+                  <CheckCircleIcon className="h-6 w-6" />
+                </span>
+                <h3 className="mt-4 text-lg font-bold text-navy">{demoForm.successTitle}</h3>
+                {submitterName ? (
+                  <p className="mt-2 text-sm font-medium text-navy">
+                    Thanks, {submitterName}.
+                  </p>
+                ) : null}
+                <p className="mt-2 text-sm leading-6 text-slate-600">{demoForm.successBody}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubmitted(false)
+                    setSubmitterName('')
+                  }}
+                  className="mt-6 inline-flex rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white"
+                >
+                  {demoForm.successReset}
+                </button>
+              </div>
+            ) : (
+              <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
                 <label className={`block ${labelClass}`}>
-                  {demoForm.fields.companyName.label} *
+                  {demoForm.fields.fullName.label} *
                   <input
                     type="text"
+                    name="fullName"
                     required
-                    placeholder={demoForm.fields.companyName.placeholder}
+                    placeholder={demoForm.fields.fullName.placeholder}
                     className={inputClass}
                   />
                 </label>
                 <label className={`block ${labelClass}`}>
-                  {demoForm.fields.teamSize.label}
-                  <span className="relative mt-1.5 block">
-                    <select
-                      defaultValue=""
-                      className={`${inputClass} mt-0 appearance-none pr-9`}
-                    >
-                      <option value="" disabled>
-                        {demoForm.fields.teamSize.placeholder}
-                      </option>
-                      {demoForm.teamSizes.map((size) => (
-                        <option key={size} value={size}>
-                          {size}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  </span>
+                  {demoForm.fields.workEmail.label} *
+                  <input
+                    type="email"
+                    name="workEmail"
+                    required
+                    placeholder={demoForm.fields.workEmail.placeholder}
+                    className={inputClass}
+                  />
                 </label>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className={`block ${labelClass}`}>
-                  {demoForm.fields.phone.label}
-                  <span className="mt-1.5 flex overflow-hidden rounded-lg border border-slate-200 focus-within:border-brand">
-                    <span className="border-r border-slate-200 px-3 py-2.5 text-sm text-slate-500">
-                      {demoForm.fields.phone.prefix}
-                    </span>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className={`block ${labelClass}`}>
+                    {demoForm.fields.companyName.label} *
                     <input
-                      type="tel"
-                      placeholder={demoForm.fields.phone.placeholder}
-                      className="min-w-0 flex-1 px-3 py-2.5 text-sm text-navy outline-none placeholder:text-slate-400"
+                      type="text"
+                      name="companyName"
+                      required
+                      placeholder={demoForm.fields.companyName.placeholder}
+                      className={inputClass}
                     />
-                  </span>
-                </label>
-                <label className={`block ${labelClass}`}>
-                  {demoForm.fields.role.label}
-                  <span className="relative mt-1.5 block">
-                    <select
-                      defaultValue=""
-                      className={`${inputClass} mt-0 appearance-none pr-9`}
-                    >
-                      <option value="" disabled>
-                        {demoForm.fields.role.placeholder}
-                      </option>
-                      {demoForm.roles.map((role) => (
-                        <option key={role} value={role}>
-                          {role}
+                  </label>
+                  <label className={`block ${labelClass}`}>
+                    {demoForm.fields.teamSize.label}
+                    <span className="relative mt-1.5 block">
+                      <select
+                        name="teamSize"
+                        defaultValue=""
+                        className={`${inputClass} mt-0 appearance-none pr-9`}
+                      >
+                        <option value="" disabled>
+                          {demoForm.fields.teamSize.placeholder}
                         </option>
-                      ))}
-                    </select>
-                    <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  </span>
-                </label>
-              </div>
-              <button
-                type="submit"
-                className="mt-2 w-full rounded-xl bg-brand py-3 text-sm font-semibold text-white"
-              >
-                {demoForm.submit} →
-              </button>
-            </form>
+                        {demoForm.teamSizes.map((size) => (
+                          <option key={size} value={size}>
+                            {size}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    </span>
+                  </label>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className={`block ${labelClass}`}>
+                    {demoForm.fields.phone.label}
+                    <span className="mt-1.5 flex overflow-hidden rounded-lg border-2 border-slate-300 focus-within:border-brand">
+                      <span className="border-r-2 border-slate-300 px-3 py-2.5 text-sm text-slate-500">
+                        {demoForm.fields.phone.prefix}
+                      </span>
+                      <input
+                        type="tel"
+                        name="phone"
+                        placeholder={demoForm.fields.phone.placeholder}
+                        className="min-w-0 flex-1 px-3 py-2.5 text-sm text-navy outline-none placeholder:text-slate-400"
+                      />
+                    </span>
+                  </label>
+                  <label className={`block ${labelClass}`}>
+                    {demoForm.fields.role.label}
+                    <span className="relative mt-1.5 block">
+                      <select
+                        name="role"
+                        defaultValue=""
+                        className={`${inputClass} mt-0 appearance-none pr-9`}
+                      >
+                        <option value="" disabled>
+                          {demoForm.fields.role.placeholder}
+                        </option>
+                        {demoForm.roles.map((role) => (
+                          <option key={role} value={role}>
+                            {role}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    </span>
+                  </label>
+                </div>
+                <button
+                  type="submit"
+                  className="mt-2 w-full rounded-xl bg-brand py-3 text-sm font-semibold text-white"
+                >
+                  {demoForm.submit} →
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </Container>

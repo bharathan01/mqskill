@@ -81,13 +81,16 @@ export function CourseHeroSection({ course }: { course: CourseDetail }) {
           </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
-            <span className="flex items-center gap-1.5">
+            <a
+              href="#reviews"
+              className="flex items-center gap-1.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-sky-300/60"
+            >
               <span className="font-semibold text-amber-400">{course.rating.toFixed(1)}</span>
               <RatingStars value={course.rating} />
-              <a href="#reviews" className="text-sky-300 underline underline-offset-2">
+              <span className="text-sky-300 underline underline-offset-2">
                 ({formatCount(course.reviews)} {courseHeroCopy.ratings})
-              </a>
-            </span>
+              </span>
+            </a>
             <span className="text-white/40">•</span>
             <span className="text-slate-200">
               {formatCount(course.learners)} {courseHeroCopy.learners}

@@ -6,12 +6,14 @@ export {
   catalogCourses,
   catalogListSection,
   categoryCtaSection,
+  findCatalogCourse,
   getCatalogCourses,
   getStarterCourses,
   popularInstructors,
   popularInstructorsSection,
   popularTopics,
   popularTopicsSection,
+  searchCatalogCourses,
   starterCourses,
   starterCoursesSection,
 } from './categoryCourses'
@@ -30,9 +32,12 @@ export {
   currentLanguage,
   notificationCount,
   searchPlaceholder,
+  searchSuggestions,
 } from './header'
 export {
   adminNavLinks,
+  employeeNavLinks,
+  organizationNavLinks,
   publicNavLinks,
   roleLabels,
   roleNav,
@@ -40,8 +45,30 @@ export {
   studentNavLinks,
   tutorNavLinks,
 } from './navigation'
+export {
+  authenticateDemoUser,
+  authMessages,
+  dashboardPathForRole,
+  demoOtp,
+  demoUsers,
+  findDemoUser,
+  verifyDemoOtp,
+  type DemoUser,
+  type UserRole,
+} from './auth'
 export { features, heroContent, heroStats } from './home'
-export { loginPage } from './login'
+export { loginPage, maskEmail } from './login'
+export {
+  forgotPasswordPage,
+  getPasswordChecks,
+  getPasswordStrength,
+  type PasswordRequirementId,
+} from './forgotPassword'
+export {
+  getSignupYearOptions,
+  signupPage,
+  type SignupProfileType,
+} from './signup'
 export { studentDashboard, studentShell, studentUser } from './student'
 export {
   studentActiveCertificates,

@@ -16,3 +16,16 @@ body,
   background: #fff;
   color: #0f172a;
 }
+
+@keyframes testimonials-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@utility animate-testimonials-scroll {
+  animation: testimonials-scroll 35s linear infinite;
+}

@@ -7,9 +7,12 @@ import {
   CategoryPage,
   CoursePage,
   CoursesPage,
+  EmployeeDashboardPage,
+  ForgotPasswordPage,
   HomePage,
   LoginPage,
   NotFoundPage,
+  OrganizationDashboardPage,
   SignupPage,
   StudentCertificatesPage,
   StudentCoursesPage,
@@ -27,10 +30,11 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path={paths.login} element={<LoginPage />} />
+      <Route path={paths.forgotPassword} element={<ForgotPasswordPage />} />
+      <Route path={paths.signup} element={<SignupPage />} />
 
       <Route element={<PublicLayout />}>
         <Route path={paths.home} element={<HomePage />} />
-        <Route path={paths.signup} element={<SignupPage />} />
         <Route path={paths.courses} element={<CoursesPage />} />
         <Route path={paths.course} element={<CoursePage />} />
         <Route path={paths.category} element={<CategoryPage />} />
@@ -47,6 +51,14 @@ export function AppRoutes() {
         <Route path="settings" element={<StudentSettingsPage />} />
         <Route path="language" element={<StudentLanguagePage />} />
         <Route path="help" element={<StudentHelpPage />} />
+      </Route>
+
+      <Route path={paths.organization.root} element={<RoleLayout role="organization" />}>
+        <Route index element={<OrganizationDashboardPage />} />
+      </Route>
+
+      <Route path={paths.employee.root} element={<RoleLayout role="employee" />}>
+        <Route index element={<EmployeeDashboardPage />} />
       </Route>
 
       <Route path={paths.tutor.root} element={<RoleLayout role="tutor" />}>

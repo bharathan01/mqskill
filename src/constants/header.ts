@@ -3,6 +3,12 @@ import { browseMenu } from './browseMenu'
 
 export const searchPlaceholder = 'Search for anything'
 
+export const searchSuggestions = {
+  empty: 'No matching courses',
+  viewAll: 'Browse all courses',
+  heading: 'Suggested courses',
+} as const
+
 export const currentLanguage = 'EN'
 
 export const notificationCount = 2

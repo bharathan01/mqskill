@@ -66,11 +66,8 @@ export function AccreditationSection() {
             <DiamondIcon className="h-2.5 w-2.5" />
             {accreditationSection.badge}
           </span>
-          <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">
+          <h2 className="mt-5 max-w-3xl text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">
             {accreditationSection.title}
-            <span className="mt-1 block w-fit border-b-[3px] border-brand pb-0.5">
-              {accreditationSection.highlight}
-            </span>
           </h2>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-500 sm:text-[15px]">
             {accreditationSection.description}

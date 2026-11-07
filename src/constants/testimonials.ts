@@ -1,7 +1,6 @@
 export const testimonialsSection = {
   title: 'Join thousands of learners worldwide',
   subtitle: 'Real stories from our learners who have transformed their careers with Maqskillz.',
-  viewAll: 'View all testimonials',
 } as const
 
 export const testimonials = [

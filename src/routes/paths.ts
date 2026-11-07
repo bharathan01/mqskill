@@ -1,6 +1,7 @@
 export const paths = {
   home: '/',
   login: '/login',
+  forgotPassword: '/forgot-password',
   signup: '/signup',
   courses: '/courses',
   category: '/courses/:categoryId',
@@ -24,6 +25,14 @@ export const paths = {
     settings: '/student/settings',
     language: '/student/language',
     help: '/student/help',
+  },
+  organization: {
+    root: '/organization',
+    dashboard: '/organization',
+  },
+  employee: {
+    root: '/employee',
+    dashboard: '/employee',
   },
   tutor: {
     root: '/tutor',

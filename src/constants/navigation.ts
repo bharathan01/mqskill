@@ -20,6 +20,14 @@ export const studentNavFooter = {
   signOut: { label: 'Sign Out', to: paths.login },
 } as const
 
+export const organizationNavLinks = [
+  { label: 'Dashboard', to: paths.organization.dashboard },
+] as const
+
+export const employeeNavLinks = [
+  { label: 'Dashboard', to: paths.employee.dashboard },
+] as const
+
 export const tutorNavLinks = [
   { label: 'Dashboard', to: paths.tutor.dashboard },
 ] as const
@@ -30,12 +38,16 @@ export const adminNavLinks = [
 
 export const roleNav = {
   student: studentNavLinks,
+  organization: organizationNavLinks,
+  employee: employeeNavLinks,
   tutor: tutorNavLinks,
   admin: adminNavLinks,
 } as const
 
 export const roleLabels = {
   student: 'Student',
+  organization: 'Organization',
+  employee: 'Employee',
   tutor: 'Tutor',
   admin: 'Admin',
 } as const
