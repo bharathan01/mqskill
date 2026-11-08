@@ -4,6 +4,7 @@ export {
   CategoryPage,
   CoursePage,
   CoursesPage,
+  EmployeeInvitePage,
   ForgotPasswordPage,
   HomePage,
   LoginPage,
@@ -23,5 +24,26 @@ export {
 } from './student'
 export { TutorDashboardPage } from './tutor'
 export { AdminDashboardPage } from './admin'
-export { OrganizationDashboardPage } from './organization'
+export {
+  OrganizationAnnouncementsPage,
+  OrganizationBillingPage,
+  OrganizationHelpPage,
+  OrganizationInvoiceDetailPage,
+  OrganizationNewTicketPage,
+  OrganizationSettingsPage,
+  OrganizationTicketDetailPage,
+  OrganizationNewAnnouncementPage,
+  OrganizationCartPage,
+  OrganizationCatalogPage,
+  OrganizationCheckoutPage,
+  OrganizationDashboardPage,
+  OrganizationEmployeeDetailPage,
+  OrganizationEmployeesPage,
+  OrganizationPaymentSuccessPage,
+  OrganizationPlaceholderPage,
+  OrganizationPurchasedDetailPage,
+  OrganizationPurchasedPage,
+  OrganizationReportsPage,
+  OrganizationTrainingRequestsPage,
+} from './organization'
 export { EmployeeDashboardPage } from './employee'

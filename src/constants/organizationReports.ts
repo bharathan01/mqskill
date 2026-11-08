@@ -1,0 +1,540 @@
+export type ReportMatrixCell =
+  | { kind: 'done' }
+  | { kind: 'progress'; value: number }
+  | { kind: 'not_started' }
+  | { kind: 'empty' }
+
+export const organizationReportsPage = {
+  title: 'Reports & analytics',
+  subtitle: 'See how your people are learning — by department, course and person.',
+  export: 'Export',
+  tabs: {
+    overview: 'Overview',
+    leaderboard: 'Leaderboard',
+    certificates: 'Certificates',
+    assessments: 'Assessments',
+  },
+  metrics: {
+    activeLearners: 'Active learners',
+    activeDetail: 'of 48 employees',
+    completion: 'Completion',
+    completionDetail: 'avg across seats',
+    assessments: 'Assessments',
+    assessmentsDetail: 'avg score',
+    passRate: 'Pass rate',
+    passRateDetail: 'first or later try',
+    certificates: 'Certificates',
+    certificatesDetail: 'issued so far',
+  },
+  departmentTitle: 'Completion by department',
+  people: (count: number) => `${count} people`,
+  hoursTitle: 'Learning hours',
+  hoursBadge: '+36% vs last week',
+  hoursFooter: '142 hours this week · 36 learners',
+  courseProgressTitle: 'Course progress',
+  legend: {
+    notStarted: 'Not started',
+    inProgress: 'In progress',
+    completed: 'Completed',
+  },
+  courseHeaders: [
+    'Course',
+    'Seats',
+    'Not started · In progress · Done',
+    'Avg score',
+    'Pass rate',
+  ],
+  matrixTitle: 'Employee × course',
+  matrixSubtitle: 'Spot who is stuck at a glance.',
+  openFullMatrix: 'Open full matrix →',
+  matrixDone: 'Done',
+  matrixNotStarted: 'Not started',
+  leaderboardTitle: 'Top learners',
+  leaderboardHint:
+    'Best employees are ranked by courses completed. If two people completed the same number, the higher average assessment score ranks first.',
+  leaderboardHeaders: [
+    'Rank',
+    'Employee',
+    'Department',
+    'Completed',
+    'Avg score',
+    'Certificates',
+    'Hours',
+  ],
+  leaderboardShowing: (shown: number, total: number) =>
+    `Showing ${shown} of ${total} learners`,
+  leaderboardShowAll: 'Show all',
+  leaderboardShowLess: 'Show less',
+  leaderboardTotalLearners: 36,
+  certificatesTitle: 'Certificates issued',
+  certificatesDownloadAll: 'Download all (ZIP)',
+  certificatesDownloadToast: 'Certificates ZIP downloaded.',
+  certificatesSearchPlaceholder: 'Search by name, course or certificate ID',
+  certificatesHeaders: ['Employee', 'Course', 'Issued', 'Expires', 'Certificate ID', ''],
+  certificatesFooter:
+    'Each certificate has a unique ID and QR code so anyone can verify it on maqskillz.com/verify.',
+  certificatesFilters: {
+    all: 'All',
+    valid: 'Valid',
+    expiring: 'Expiring',
+    expired: 'Expired',
+  },
+  certificatesMetrics: {
+    issued: 'Certificates issued',
+    issuedDetail: 'since Oct 2026',
+    people: 'People certified',
+    peopleDetail: 'of 48 employees',
+    week: 'This week',
+    weekDetail: 'new certificates',
+    expiring: 'Expiring in 90 days',
+    expiringDetail: 'nothing to renew',
+  },
+  assessmentsTitle: 'Assessment results',
+  assessmentsHeaders: ['Employee', 'Assessment', 'Best score', 'Attempts', 'Result'],
+  exportToast: 'Report exported.',
+} as const
+
+export type ReportCertificateStatus = 'valid' | 'expiring' | 'expired'
+
+export const organizationReportCertificateMetrics = [
+  {
+    id: 'issued',
+    label: organizationReportsPage.certificatesMetrics.issued,
+    value: '30',
+    detail: organizationReportsPage.certificatesMetrics.issuedDetail,
+    tone: 'green' as const,
+  },
+  {
+    id: 'people',
+    label: organizationReportsPage.certificatesMetrics.people,
+    value: '21',
+    detail: organizationReportsPage.certificatesMetrics.peopleDetail,
+    tone: 'blue' as const,
+  },
+  {
+    id: 'week',
+    label: organizationReportsPage.certificatesMetrics.week,
+    value: '8',
+    detail: organizationReportsPage.certificatesMetrics.weekDetail,
+    tone: 'blue' as const,
+  },
+  {
+    id: 'expiring',
+    label: organizationReportsPage.certificatesMetrics.expiring,
+    value: '0',
+    detail: organizationReportsPage.certificatesMetrics.expiringDetail,
+    tone: 'slate' as const,
+  },
+]
+
+export const organizationReportMetrics = [
+  {
+    id: 'learners',
+    label: organizationReportsPage.metrics.activeLearners,
+    value: '36',
+    detail: organizationReportsPage.metrics.activeDetail,
+    tone: 'blue' as const,
+  },
+  {
+    id: 'completion',
+    label: organizationReportsPage.metrics.completion,
+    value: '64%',
+    detail: organizationReportsPage.metrics.completionDetail,
+    tone: 'green' as const,
+  },
+  {
+    id: 'assessments',
+    label: organizationReportsPage.metrics.assessments,
+    value: '78%',
+    detail: organizationReportsPage.metrics.assessmentsDetail,
+    tone: 'blue' as const,
+  },
+  {
+    id: 'pass',
+    label: organizationReportsPage.metrics.passRate,
+    value: '86%',
+    detail: organizationReportsPage.metrics.passRateDetail,
+    tone: 'green' as const,
+  },
+  {
+    id: 'certs',
+    label: organizationReportsPage.metrics.certificates,
+    value: '30',
+    detail: organizationReportsPage.metrics.certificatesDetail,
+    tone: 'orange' as const,
+  },
+]
+
+export const organizationReportDepartments = [
+  { id: 'quality', label: 'Quality', percent: 82, people: 8 },
+  { id: 'operations', label: 'Operations', percent: 71, people: 14 },
+  { id: 'hr', label: 'HR', percent: 68, people: 6 },
+  { id: 'sales', label: 'Sales', percent: 54, people: 11 },
+  { id: 'finance', label: 'Finance', percent: 49, people: 5 },
+]
+
+export const organizationReportHours = [
+  { id: 'w1', label: 'W1', hours: 62 },
+  { id: 'w2', label: 'W2', hours: 78 },
+  { id: 'w3', label: 'W3', hours: 70 },
+  { id: 'w4', label: 'W4', hours: 95 },
+  { id: 'w5', label: 'W5', hours: 88 },
+  { id: 'w6', label: 'W6', hours: 110 },
+  { id: 'w7', label: 'W7', hours: 104 },
+  { id: 'now', label: 'Now', hours: 142 },
+]
+
+export const organizationReportCourses = [
+  {
+    id: 'digital-marketing',
+    title: 'Digital Marketing Fundamentals',
+    seats: 7,
+    notStarted: 2,
+    inProgress: 3,
+    done: 2,
+    avgScore: 84,
+    passRate: 100,
+  },
+  {
+    id: 'whs',
+    title: 'Workplace Health & Safety',
+    seats: 45,
+    notStarted: 8,
+    inProgress: 20,
+    done: 17,
+    avgScore: 81,
+    passRate: 89,
+  },
+  {
+    id: 'iso-9001',
+    title: 'ISO 9001:2015 Quality Awareness',
+    seats: 20,
+    notStarted: 3,
+    inProgress: 8,
+    done: 9,
+    avgScore: 88,
+    passRate: 94,
+  },
+  {
+    id: 'pm',
+    title: 'Project Management Fundamentals',
+    seats: 24,
+    notStarted: 10,
+    inProgress: 12,
+    done: 2,
+    avgScore: 76,
+    passRate: 82,
+  },
+]
+
+export const organizationReportMatrixCourses = [
+  { id: 'digital-marketing', label: 'Digital mktg' },
+  { id: 'whs', label: 'Health & safety' },
+  { id: 'iso-9001', label: 'ISO 9001' },
+  { id: 'pm', label: 'Project mgmt' },
+] as const
+
+export const organizationReportMatrix = [
+  {
+    id: 'e1',
+    employeeId: 'e1',
+    name: 'Mariam Saleh',
+    initials: 'MS',
+    cells: [
+      { kind: 'done' },
+      { kind: 'done' },
+      { kind: 'progress', value: 72 },
+      { kind: 'not_started' },
+    ] as ReportMatrixCell[],
+  },
+  {
+    id: 'e2',
+    employeeId: 'e2',
+    name: 'Yousef Hamad',
+    initials: 'YH',
+    cells: [
+      { kind: 'done' },
+      { kind: 'progress', value: 58 },
+      { kind: 'done' },
+      { kind: 'progress', value: 20 },
+    ] as ReportMatrixCell[],
+  },
+  {
+    id: 'e3',
+    employeeId: 'e3',
+    name: 'Layla Hassan',
+    initials: 'LH',
+    cells: [
+      { kind: 'progress', value: 62 },
+      { kind: 'done' },
+      { kind: 'not_started' },
+      { kind: 'empty' },
+    ] as ReportMatrixCell[],
+  },
+  {
+    id: 'e4',
+    employeeId: 'e4',
+    name: 'Omar Faisal',
+    initials: 'OF',
+    cells: [
+      { kind: 'progress', value: 35 },
+      { kind: 'not_started' },
+      { kind: 'progress', value: 44 },
+      { kind: 'empty' },
+    ] as ReportMatrixCell[],
+  },
+  {
+    id: 'e5',
+    employeeId: 'e5',
+    name: 'Noora Al-Kuwaiti',
+    initials: 'NA',
+    cells: [
+      { kind: 'done' },
+      { kind: 'progress', value: 81 },
+      { kind: 'done' },
+      { kind: 'not_started' },
+    ] as ReportMatrixCell[],
+  },
+]
+
+export const organizationReportLeaderboard = [
+  {
+    rank: 1,
+    employeeId: 'e1',
+    name: 'Mariam Saleh',
+    initials: 'MS',
+    department: 'Quality',
+    done: 4,
+    avgScore: 94,
+    certificates: 4,
+    hours: 38,
+  },
+  {
+    rank: 2,
+    employeeId: 'e2',
+    name: 'Yousef Hamad',
+    initials: 'YH',
+    department: 'Operations',
+    done: 3,
+    avgScore: 91,
+    certificates: 3,
+    hours: 30,
+  },
+  {
+    rank: 3,
+    employeeId: 'e8',
+    name: 'Ahmed Al-Mutawa',
+    initials: 'AA',
+    department: 'Operations',
+    done: 2,
+    avgScore: 88,
+    certificates: 2,
+    hours: 24,
+  },
+  {
+    rank: 4,
+    employeeId: 'e13',
+    name: 'Noura Khalifa',
+    initials: 'NK',
+    department: 'HR',
+    done: 2,
+    avgScore: 86,
+    certificates: 2,
+    hours: 22,
+  },
+  {
+    rank: 5,
+    employeeId: 'e16',
+    name: 'Faisal Nabil',
+    initials: 'FN',
+    department: 'Sales',
+    done: 2,
+    avgScore: 84,
+    certificates: 1,
+    hours: 20,
+  },
+  {
+    rank: 6,
+    employeeId: 'e9',
+    name: 'Fatima Qassim',
+    initials: 'FQ',
+    department: 'Quality',
+    done: 1,
+    avgScore: 90,
+    certificates: 1,
+    hours: 14,
+  },
+  {
+    rank: 7,
+    employeeId: 'e10',
+    name: 'Hassan Jaber',
+    initials: 'HJ',
+    department: 'Operations',
+    done: 1,
+    avgScore: 82,
+    certificates: 1,
+    hours: 12,
+  },
+  {
+    rank: 8,
+    employeeId: 'e3',
+    name: 'Layla Hassan',
+    initials: 'LH',
+    department: 'HR',
+    done: 1,
+    avgScore: 79,
+    certificates: 1,
+    hours: 10,
+  },
+  {
+    rank: 9,
+    employeeId: 'e4',
+    name: 'Omar Faisal',
+    initials: 'OF',
+    department: 'Sales',
+    done: 1,
+    avgScore: 78,
+    certificates: 1,
+    hours: 9,
+  },
+  {
+    rank: 10,
+    employeeId: 'e5',
+    name: 'Noora Al-Kuwaiti',
+    initials: 'NA',
+    department: 'Operations',
+    done: 1,
+    avgScore: 76,
+    certificates: 1,
+    hours: 8,
+  },
+  {
+    rank: 11,
+    employeeId: 'e6',
+    name: 'Khalid Mansoor',
+    initials: 'KM',
+    department: 'Finance',
+    done: 1,
+    avgScore: 74,
+    certificates: 1,
+    hours: 7,
+  },
+  {
+    rank: 12,
+    employeeId: 'e12',
+    name: 'Tariq Saeed',
+    initials: 'TS',
+    department: 'Operations',
+    done: 0,
+    avgScore: 72,
+    certificates: 0,
+    hours: 6,
+  },
+]
+
+export const organizationReportLeaderboardPreview = 8
+
+const reportCertificateCourses = [
+  'Workplace Health & Safety',
+  'Digital Marketing Fundamentals',
+  'ISO 9001:2015 Quality Awareness',
+  'Project Management Fundamentals',
+] as const
+
+const reportCertificateHolders = [
+  { employeeId: 'e1', employee: 'Mariam Saleh', initials: 'MS' },
+  { employeeId: 'e2', employee: 'Yousef Hamad', initials: 'YH' },
+  { employeeId: 'e8', employee: 'Ahmed Al-Mutawa', initials: 'AA' },
+  { employeeId: 'e13', employee: 'Noura Khalifa', initials: 'NK' },
+  { employeeId: 'e16', employee: 'Faisal Nabil', initials: 'FN' },
+  { employeeId: 'e3', employee: 'Layla Hassan', initials: 'LH' },
+  { employeeId: 'e4', employee: 'Omar Faisal', initials: 'OF' },
+  { employeeId: 'e5', employee: 'Noora Al-Kuwaiti', initials: 'NA' },
+  { employeeId: 'e6', employee: 'Khalid Mansoor', initials: 'KM' },
+  { employeeId: 'e9', employee: 'Fatima Qassim', initials: 'FQ' },
+  { employeeId: 'e12', employee: 'Tariq Saeed', initials: 'TS' },
+] as const
+
+const reportCertificateIssued = [
+  { day: 2, month: 'Nov' },
+  { day: 1, month: 'Nov' },
+  { day: 31, month: 'Oct' },
+  { day: 30, month: 'Oct' },
+  { day: 29, month: 'Oct' },
+  { day: 28, month: 'Oct' },
+  { day: 27, month: 'Oct' },
+  { day: 26, month: 'Oct' },
+  { day: 25, month: 'Oct' },
+  { day: 24, month: 'Oct' },
+  { day: 23, month: 'Oct' },
+  { day: 22, month: 'Oct' },
+  { day: 21, month: 'Oct' },
+  { day: 20, month: 'Oct' },
+  { day: 19, month: 'Oct' },
+  { day: 18, month: 'Oct' },
+  { day: 17, month: 'Oct' },
+  { day: 16, month: 'Oct' },
+  { day: 15, month: 'Oct' },
+  { day: 14, month: 'Oct' },
+  { day: 13, month: 'Oct' },
+  { day: 12, month: 'Oct' },
+  { day: 11, month: 'Oct' },
+  { day: 10, month: 'Oct' },
+  { day: 9, month: 'Oct' },
+  { day: 8, month: 'Oct' },
+  { day: 7, month: 'Oct' },
+  { day: 6, month: 'Oct' },
+  { day: 5, month: 'Oct' },
+  { day: 4, month: 'Oct' },
+] as const
+
+export const organizationReportCertificates = Array.from({ length: 30 }, (_, index) => {
+  const holder = reportCertificateHolders[index % reportCertificateHolders.length]
+  const course = reportCertificateCourses[index % reportCertificateCourses.length]
+  const issued = reportCertificateIssued[index]
+  const year = 2026
+  const credentialNum = String(431 - index).padStart(5, '0')
+
+  return {
+    id: `rc${index + 1}`,
+    employeeId: holder.employeeId,
+    employee: holder.employee,
+    initials: holder.initials,
+    course,
+    issued: `${issued.day} ${issued.month} ${year}`,
+    expires: `${issued.day} ${issued.month} ${year + 2}`,
+    credential: `MQC-26-${credentialNum}`,
+    status: 'valid' as ReportCertificateStatus,
+    cpdHours: 8 + (index % 5),
+  }
+})
+
+export const organizationReportAssessments = [
+  {
+    id: 'ra1',
+    employeeId: 'e1',
+    employee: 'Mariam Saleh',
+    title: 'Final assessment — Health & Safety',
+    score: 90,
+    attempts: '1 of 3',
+    result: 'Passed',
+  },
+  {
+    id: 'ra2',
+    employeeId: 'e2',
+    employee: 'Yousef Hamad',
+    title: 'Final assessment — Digital Marketing',
+    score: 88,
+    attempts: '1 of 3',
+    result: 'Passed',
+  },
+  {
+    id: 'ra3',
+    employeeId: 'e3',
+    employee: 'Layla Hassan',
+    title: 'Module quiz — ISO 9001',
+    score: 86,
+    attempts: '2 of 3',
+    result: 'Passed',
+  },
+]

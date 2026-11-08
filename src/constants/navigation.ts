@@ -22,6 +22,15 @@ export const studentNavFooter = {
 
 export const organizationNavLinks = [
   { label: 'Dashboard', to: paths.organization.dashboard },
+  { label: 'Employees', to: paths.organization.employees },
+  { label: 'Training requests', to: paths.organization.requests },
+  { label: 'Course catalog', to: paths.organization.catalog },
+  { label: 'Purchased courses', to: paths.organization.purchased },
+  { label: 'Reports & analytics', to: paths.organization.reports },
+  { label: 'Announcements', to: paths.organization.announcements },
+  { label: 'Billing & invoices', to: paths.organization.billing },
+  { label: 'Organization settings', to: paths.organization.settings },
+  { label: 'Help & support', to: paths.organization.help },
 ] as const
 
 export const employeeNavLinks = [

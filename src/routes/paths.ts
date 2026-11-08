@@ -29,10 +29,29 @@ export const paths = {
   organization: {
     root: '/organization',
     dashboard: '/organization',
+    employees: '/organization/employees',
+    employeeDetail: '/organization/employees/:employeeId',
+    requests: '/organization/requests',
+    catalog: '/organization/catalog',
+    cart: '/organization/cart',
+    checkout: '/organization/checkout',
+    paymentSuccess: '/organization/checkout/success',
+    purchased: '/organization/purchased',
+    purchasedDetail: '/organization/purchased/:courseId',
+    reports: '/organization/reports',
+    announcements: '/organization/announcements',
+    newAnnouncement: '/organization/announcements/new',
+    billing: '/organization/billing',
+    invoiceDetail: '/organization/billing/:invoiceId',
+    settings: '/organization/settings',
+    help: '/organization/help',
+    newTicket: '/organization/help/new',
+    ticketDetail: '/organization/help/:ticketId',
   },
   employee: {
     root: '/employee',
     dashboard: '/employee',
+    invite: '/invite',
   },
   tutor: {
     root: '/tutor',
@@ -50,4 +69,20 @@ export function categoryPath(slug: string) {
 
 export function coursePath(slug: string) {
   return `/course/${slug}`
+}
+
+export function organizationEmployeePath(employeeId: string) {
+  return `/organization/employees/${employeeId}`
+}
+
+export function organizationPurchasedCoursePath(courseId: string) {
+  return `/organization/purchased/${courseId}`
+}
+
+export function organizationInvoicePath(invoiceId: string) {
+  return `/organization/billing/${invoiceId}`
+}
+
+export function organizationHelpTicketPath(ticketId: string) {
+  return `/organization/help/${ticketId}`
 }

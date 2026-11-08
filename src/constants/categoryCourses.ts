@@ -706,8 +706,6 @@ export const categoryCtaSection = {
   descriptionSuffix: 'courses and learn from industry experts.',
   primaryCta: 'Start Learning Today',
   primaryTo: paths.signup,
-  secondaryCta: 'Become an Instructor',
-  secondaryTo: paths.tutor.root,
   image:
     'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1000&q=80',
   words: ['Learn', 'Practice', 'Build', 'Grow'],

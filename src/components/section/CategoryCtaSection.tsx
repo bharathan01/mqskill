@@ -30,12 +30,6 @@ export function CategoryCtaSection({ categoryName }: CategoryCtaSectionProps) {
                 >
                   {categoryCtaSection.primaryCta}
                 </Link>
-                <Link
-                  to={categoryCtaSection.secondaryTo}
-                  className="text-sm font-semibold text-navy"
-                >
-                  {categoryCtaSection.secondaryCta} →
-                </Link>
               </div>
             </div>
 
