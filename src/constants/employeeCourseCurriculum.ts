@@ -33,6 +33,9 @@ export type CurriculumItem = {
   title: string
   durationLabel: string
   status: CurriculumItemStatus
+  /** When true, learners must complete this item before the next one unlocks. */
+  mandatory?: boolean
+  placement?: 'module' | 'course'
   video?: CurriculumVideo
   quiz?: {
     passScore: number
@@ -90,6 +93,7 @@ function quizItem(
   title: string,
   status: CurriculumItemStatus,
   questions: CurriculumQuizQuestion[],
+  options?: { mandatory?: boolean; placement?: 'module' | 'course'; passScore?: number },
 ): CurriculumItem {
   return {
     id,
@@ -97,7 +101,9 @@ function quizItem(
     title,
     durationLabel: '10 min',
     status,
-    quiz: { passScore: 70, questions },
+    mandatory: options?.mandatory ?? true,
+    placement: options?.placement ?? 'module',
+    quiz: { passScore: options?.passScore ?? 70, questions },
   }
 }
 
@@ -106,6 +112,7 @@ function assignmentItem(
   title: string,
   status: CurriculumItemStatus,
   assignment: CurriculumAssignment,
+  options?: { mandatory?: boolean; placement?: 'module' | 'course' },
 ): CurriculumItem {
   return {
     id,
@@ -113,6 +120,8 @@ function assignmentItem(
     title,
     durationLabel: assignment.dueLabel,
     status,
+    mandatory: options?.mandatory ?? true,
+    placement: options?.placement ?? 'module',
     assignment,
   }
 }
@@ -493,16 +502,60 @@ function buildGenericCurriculum(
   }
 }
 
-export const employeeCourseCurricula: Record<string, EmployeeCourseCurriculum> = {
-  'iso-9001': isoCurriculum,
-  whs: buildGenericCurriculum('whs', {
+function withWhsCompletionFlow(): EmployeeCourseCurriculum {
+  const base = buildGenericCurriculum('whs', {
     m1: 'Safety basics',
     m2: 'Hazard control',
     m3: 'Incident reporting',
     m4: 'Safe workplace habits',
     description:
-      'Learn workplace health and safety essentials — hazard spotting, controls, incident reporting, and safe habits — through short videos, quizzes, and practical assignments.',
-  }),
+      'Learn workplace health and safety essentials — hazard spotting, controls, incident reporting, and safe habits — through short videos, quizzes, and practical assignments. Module quizzes are mandatory; the end-of-course quiz and assignment are optional.',
+  })
+
+  return {
+    ...base,
+    modules: [
+      ...base.modules.map((module) => ({
+        ...module,
+        items: module.items.map((item) => {
+          if (item.id === 'whs-m4-a1') {
+            return {
+              ...item,
+              title: 'Course completion reflection (optional)',
+              mandatory: false,
+              placement: 'course' as const,
+              assignment: item.assignment
+                ? {
+                    ...item.assignment,
+                    brief:
+                      'Optional final reflection: summarise three safety improvements you will apply after this course.',
+                    dueLabel: 'Optional · after modules',
+                  }
+                : item.assignment,
+            }
+          }
+          if (item.id === 'whs-m4-q1') {
+            return {
+              ...item,
+              title: 'Course completion quiz (optional)',
+              mandatory: false,
+              placement: 'course' as const,
+              quiz: item.quiz ? { ...item.quiz, passScore: 80 } : item.quiz,
+            }
+          }
+          if (item.type === 'quiz' || item.type === 'assignment') {
+            return { ...item, mandatory: true, placement: 'module' as const }
+          }
+          return item
+        }),
+      })),
+    ],
+  }
+}
+
+export const employeeCourseCurricula: Record<string, EmployeeCourseCurriculum> = {
+  'iso-9001': isoCurriculum,
+  whs: withWhsCompletionFlow(),
   'digital-marketing': buildGenericCurriculum('digital-marketing', {
     m1: 'Marketing fundamentals',
     m2: 'Channels & content',
@@ -560,7 +613,8 @@ export function getDefaultCurriculumItemId(curriculum: EmployeeCourseCurriculum)
 
 export const employeeCourseCurriculumPage = {
   curriculum: 'Course Structure',
-  curriculumHint: 'Modules run in order; each quiz unlocks the next module.',
+  curriculumHint:
+    'Modules run in order. Mandatory quizzes and assignments unlock the next item. End-of-course items are optional unless marked mandatory.',
   expandAll: 'Expand All',
   collapseAll: 'Collapse All',
   courseDescription: 'About this course',
@@ -586,6 +640,10 @@ export const employeeCourseCurriculumPage = {
   quizzesTab: 'Quizzes',
   assignmentsEmpty: 'No assignments in this course.',
   quizzesEmpty: 'No quizzes in this course.',
+  mandatoryBadge: 'Mandatory',
+  optionalBadge: 'Optional',
+  modulePlacement: 'Module check',
+  coursePlacement: 'Course completion',
   openItem: 'Open',
   quizTitle: 'Knowledge check',
   quizPass: (score: number) => `Pass mark ${score}%`,
@@ -594,6 +652,7 @@ export const employeeCourseCurriculumPage = {
   quizResult: (score: number, passed: boolean) =>
     passed ? `You scored ${score}% — passed.` : `You scored ${score}% — try again.`,
   quizRequired: 'Answer every question before submitting.',
+  quizMandatoryHint: 'You must pass this quiz to continue.',
   assignmentTitle: 'Assignment',
   assignmentPoints: (points: number) => `${points} points`,
   assignmentDue: 'Due',
@@ -603,4 +662,5 @@ export const employeeCourseCurriculumPage = {
   assignmentSubmittedToast: 'Assignment submitted for review.',
   assignmentNote: 'Add a short note for your reviewer (optional)',
   assignmentNotePlaceholder: 'Anything your reviewer should know…',
+  assignmentMandatoryHint: 'You must submit this assignment to continue.',
 } as const

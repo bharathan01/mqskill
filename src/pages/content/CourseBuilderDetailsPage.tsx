@@ -1,11 +1,15 @@
-import { useRef, useState, type ChangeEvent } from 'react'
+import { useMemo, useRef, useState, type ChangeEvent } from 'react'
 import {
+  contentCoursesList,
   courseBuilderCategories,
   courseBuilderDeliveryModes,
   courseBuilderDetailsCopy,
   courseBuilderInstructors,
   courseBuilderLanguages,
   courseBuilderLevels,
+  courseBuilderVersionKinds,
+  suggestNextVersionName,
+  type CourseBuilderVersionKind,
 } from '@/constants'
 import {
   ContentCard,
@@ -94,6 +98,47 @@ export function CourseBuilderDetailsPage() {
   const thumbnailInputRef = useRef<HTMLInputElement>(null)
   const [thumbnailPreview, setThumbnailPreview] = useState(details.thumbnailPreviewUrl || '')
 
+  const parentCourses = useMemo(() => {
+    const seen = new Set<string>()
+    return contentCoursesList.filter((course) => {
+      if (seen.has(course.id)) return false
+      seen.add(course.id)
+      return true
+    })
+  }, [])
+
+  const selectedParent = parentCourses.find((course) => course.id === details.parentCourseId)
+
+  function handleVersionKindChange(kind: CourseBuilderVersionKind) {
+    if (kind === 'new') {
+      updateDetails({
+        versionKind: kind,
+        parentCourseId: '',
+        versionName: details.versionName.trim() || 'v1.0',
+      })
+      return
+    }
+    updateDetails({
+      versionKind: kind,
+      versionName: details.versionName.trim() || '',
+    })
+  }
+
+  function handleParentCourseChange(courseId: string) {
+    const course = parentCourses.find((item) => item.id === courseId)
+    if (!course) {
+      updateDetails({ parentCourseId: '' })
+      return
+    }
+    updateDetails({
+      parentCourseId: course.id,
+      title: details.title.trim() || course.title,
+      code: details.code.trim() || course.code,
+      category: details.category || course.category,
+      versionName: suggestNextVersionName(course.version),
+    })
+  }
+
   function handleThumbnailUpload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     event.target.value = ''
@@ -115,6 +160,89 @@ export function CourseBuilderDetailsPage() {
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
       <div className="space-y-6">
+        <ContentCard title={copy.sections.version} description={copy.versionHint}>
+          <fieldset>
+            <legend className="mb-1.5 text-sm font-semibold text-navy">
+              {copy.fields.versionKind}
+              <span className="ml-0.5 text-rose-500">*</span>
+            </legend>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {courseBuilderVersionKinds.map((kind) => {
+                const active = details.versionKind === kind.id
+                return (
+                  <label
+                    key={kind.id}
+                    className={`flex cursor-pointer items-start gap-3 rounded-lg border px-4 py-3 transition ${
+                      active ? 'border-brand bg-[#EFF4FF]' : 'border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="version-kind"
+                      checked={active}
+                      onChange={() => handleVersionKindChange(kind.id)}
+                      className="mt-1 accent-[#004ea8]"
+                    />
+                    <span>
+                      <span className="block text-sm font-semibold text-navy">{kind.label}</span>
+                      <span className="block text-xs text-slate-500">{kind.hint}</span>
+                    </span>
+                  </label>
+                )
+              })}
+            </div>
+            {detailsErrors.versionKind ? (
+              <p className="mt-1.5 text-xs font-medium text-rose-600">{detailsErrors.versionKind}</p>
+            ) : null}
+          </fieldset>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            {details.versionKind === 'revision' ? (
+              <ContentField
+                label={copy.fields.parentCourse}
+                htmlFor="cb-parent-course"
+                required
+                error={detailsErrors.parentCourse}
+                className="md:col-span-2"
+                hint={
+                  selectedParent
+                    ? `${copy.parentLiveVersion}: ${selectedParent.version}`
+                    : undefined
+                }
+              >
+                <ContentSelect
+                  id="cb-parent-course"
+                  value={details.parentCourseId}
+                  invalid={Boolean(detailsErrors.parentCourse)}
+                  onChange={(event) => handleParentCourseChange(event.target.value)}
+                >
+                  <option value="">{copy.placeholders.parentCourse}</option>
+                  {parentCourses.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.title} ({course.code}) · {course.version}
+                    </option>
+                  ))}
+                </ContentSelect>
+              </ContentField>
+            ) : null}
+            <ContentField
+              label={copy.fields.versionName}
+              htmlFor="cb-version-name"
+              required
+              error={detailsErrors.versionName}
+              className={details.versionKind === 'revision' ? '' : 'md:col-span-2'}
+            >
+              <ContentTextInput
+                id="cb-version-name"
+                value={details.versionName}
+                invalid={Boolean(detailsErrors.versionName)}
+                placeholder={copy.placeholders.versionName}
+                onChange={(event) => updateDetails({ versionName: event.target.value })}
+              />
+            </ContentField>
+          </div>
+        </ContentCard>
+
         <ContentCard title={copy.sections.basics} description={copy.subtitle}>
           <div className="grid gap-4 md:grid-cols-2">
             <ContentField

@@ -1,13 +1,15 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useNavigate } from 'react-router'
 import {
   contentAdminActivity,
   contentAdminAttention,
   contentAdminCourses,
   contentAdminDashboardPage,
-  contentAdminMetrics,
+  contentAdminDashboardRanges,
   contentAdminQuickActions,
+  isWithinDashboardRange,
   type ContentCourseStatus,
+  type ContentDashboardRangeId,
 } from '@/constants'
 import { paths } from '@/routes/paths'
 import {
@@ -16,6 +18,7 @@ import {
   BookIcon,
   CalendarIcon,
   CheckCircleIcon,
+  CheckIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   ClipboardIcon,
@@ -60,19 +63,45 @@ const attentionTone = {
   blue: 'bg-[#EFF4FF] text-brand',
 } as const
 
+type CourseRow = (typeof contentAdminCourses)[number]
+
 export function ContentAdminDashboardPage() {
+  const navigate = useNavigate()
+  const rangeRef = useRef<HTMLDivElement>(null)
+  const [rangeId, setRangeId] = useState<ContentDashboardRangeId>('30d')
+  const [rangeOpen, setRangeOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('all')
   const [status, setStatus] = useState<'all' | ContentCourseStatus>('all')
+  const [courses, setCourses] = useState<CourseRow[]>(() =>
+    contentAdminCourses.map((item) => ({ ...item })),
+  )
+  const [notice, setNotice] = useState<string | null>(null)
+
+  const rangeLabel =
+    contentAdminDashboardRanges.find((item) => item.id === rangeId)?.label ?? copy.rangeLabel
+
+  useEffect(() => {
+    function handlePointer(event: PointerEvent) {
+      if (!rangeRef.current?.contains(event.target as Node)) setRangeOpen(false)
+    }
+    document.addEventListener('pointerdown', handlePointer)
+    return () => document.removeEventListener('pointerdown', handlePointer)
+  }, [])
+
+  const rangedCourses = useMemo(
+    () => courses.filter((course) => isWithinDashboardRange(course.updated, rangeId)),
+    [courses, rangeId],
+  )
 
   const categories = useMemo(
-    () => ['all', ...Array.from(new Set(contentAdminCourses.map((item) => item.category)))],
-    [],
+    () => ['all', ...Array.from(new Set(courses.map((item) => item.category)))],
+    [courses],
   )
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase()
-    return contentAdminCourses.filter((course) => {
+    return rangedCourses.filter((course) => {
       if (category !== 'all' && course.category !== category) return false
       if (status !== 'all' && course.status !== status) return false
       if (!needle) return true
@@ -82,7 +111,65 @@ export function ContentAdminDashboardPage() {
         course.category.toLowerCase().includes(needle)
       )
     })
-  }, [category, query, status])
+  }, [category, query, rangedCourses, status])
+
+  const rangeDays =
+    contentAdminDashboardRanges.find((item) => item.id === rangeId)?.days ?? null
+
+  const activity = useMemo(
+    () =>
+      contentAdminActivity.filter((item) =>
+        rangeDays == null ? true : item.daysAgo <= rangeDays,
+      ),
+    [rangeDays],
+  )
+
+  const metrics = useMemo(() => {
+    const published = rangedCourses.filter((item) => item.status === 'published').length
+    const draft = rangedCourses.filter((item) => item.status === 'draft').length
+    const updates = rangedCourses.length
+    return [
+      {
+        id: 'total',
+        label: copy.metrics.total,
+        value: String(rangedCourses.length),
+        detail: copy.metrics.totalDetail(rangedCourses.length),
+        tone: 'blue' as const,
+      },
+      {
+        id: 'published',
+        label: copy.metrics.published,
+        value: String(published),
+        detail: copy.metrics.publishedDetail,
+        trend: published ? `+${Math.min(published, 4)}` : undefined,
+        tone: 'green' as const,
+      },
+      {
+        id: 'draft',
+        label: copy.metrics.draft,
+        value: String(draft),
+        detail: copy.metrics.draftDetail,
+        tone: 'amber' as const,
+      },
+      {
+        id: 'updates',
+        label: copy.metrics.updates,
+        value: String(updates),
+        detail: copy.metrics.updatesDetail,
+        trend: updates ? `+${Math.min(updates, 7)}` : undefined,
+        tone: 'purple' as const,
+      },
+    ]
+  }, [rangedCourses])
+
+  function toggleArchive(course: CourseRow) {
+    const archiving = course.status !== 'archived'
+    const nextStatus: ContentCourseStatus = archiving ? 'archived' : 'draft'
+    setCourses((current) =>
+      current.map((item) => (item.id === course.id ? { ...item, status: nextStatus } : item)),
+    )
+    setNotice(`“${course.title}” ${archiving ? copy.archiveNotice : copy.restoreNotice}`)
+  }
 
   return (
     <div className="space-y-6">
@@ -97,14 +184,53 @@ export function ContentAdminDashboardPage() {
           <p className="mt-1 text-sm text-slate-500">{copy.subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            type="button"
-            className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-navy"
-          >
-            <CalendarIcon className="h-4 w-4 text-slate-400" />
-            {copy.range}
-            <ChevronDownIcon className="h-4 w-4 text-slate-400" />
-          </button>
+          <div ref={rangeRef} className="relative">
+            <button
+              type="button"
+              aria-haspopup="listbox"
+              aria-expanded={rangeOpen}
+              aria-label={copy.rangeLabel}
+              onClick={() => setRangeOpen((open) => !open)}
+              className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-navy hover:bg-slate-50"
+            >
+              <CalendarIcon className="h-4 w-4 text-slate-400" />
+              {rangeLabel}
+              <ChevronDownIcon
+                className={`h-4 w-4 text-slate-400 transition ${rangeOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+            {rangeOpen ? (
+              <ul
+                role="listbox"
+                className="absolute top-[calc(100%+0.35rem)] right-0 z-20 min-w-[11rem] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-[0_12px_28px_rgba(15,40,80,0.12)]"
+              >
+                {contentAdminDashboardRanges.map((item) => {
+                  const active = item.id === rangeId
+                  return (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={active}
+                        onClick={() => {
+                          setRangeId(item.id)
+                          setRangeOpen(false)
+                        }}
+                        className={`flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-sm ${
+                          active
+                            ? 'bg-[#EFF4FF] font-semibold text-brand'
+                            : 'text-navy hover:bg-slate-50'
+                        }`}
+                      >
+                        {item.label}
+                        {active ? <CheckIcon className="h-4 w-4" /> : null}
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            ) : null}
+          </div>
           <Link
             to={paths.content.courses}
             className="inline-flex h-10 items-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-navy hover:bg-slate-50"
@@ -121,8 +247,21 @@ export function ContentAdminDashboardPage() {
         </div>
       </header>
 
+      {notice ? (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+          <span>{notice}</span>
+          <button
+            type="button"
+            onClick={() => setNotice(null)}
+            className="text-emerald-700 hover:text-emerald-900"
+          >
+            Dismiss
+          </button>
+        </div>
+      ) : null}
+
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {contentAdminMetrics.map((metric) => (
+        {metrics.map((metric) => (
           <div
             key={metric.id}
             className="rounded-xl border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,40,80,0.04)]"
@@ -142,7 +281,7 @@ export function ContentAdminDashboardPage() {
               {metric.value}
             </p>
             <div className="mt-3 flex items-center gap-2">
-              {'trend' in metric && metric.trend ? (
+              {metric.trend ? (
                 <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
                   <TrendingUpIcon className="h-3 w-3" />
                   {metric.trend}
@@ -213,59 +352,91 @@ export function ContentAdminDashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((course) => (
-                <tr key={course.id} className="border-b border-slate-100 last:border-0">
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-3">
+              {filtered.map((course) => {
+                const archived = course.status === 'archived'
+                return (
+                  <tr key={course.id} className="border-b border-slate-100 last:border-0">
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br text-white ${course.accent}`}
+                        >
+                          <BookIcon className="h-4 w-4" />
+                        </span>
+                        <span>
+                          <span className="block font-semibold text-navy">{course.title}</span>
+                          <span className="block text-xs text-slate-400">{course.code}</span>
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-3 py-3 text-slate-500">{course.category}</td>
+                    <td className="px-3 py-3 text-center text-slate-500">{course.version}</td>
+                    <td className="px-3 py-3 text-center text-slate-500">{course.modules}</td>
+                    <td className="px-3 py-3 text-center text-slate-500">{course.submodules}</td>
+                    <td className="px-3 py-3">
                       <span
-                        className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br text-white ${course.accent}`}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[course.status]}`}
                       >
-                        <BookIcon className="h-4 w-4" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                        {copy.status[course.status]}
                       </span>
-                      <span>
-                        <span className="block font-semibold text-navy">{course.title}</span>
-                        <span className="block text-xs text-slate-400">{course.code}</span>
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-3 py-3 text-slate-500">{course.category}</td>
-                  <td className="px-3 py-3 text-center text-slate-500">{course.version}</td>
-                  <td className="px-3 py-3 text-center text-slate-500">{course.modules}</td>
-                  <td className="px-3 py-3 text-center text-slate-500">{course.submodules}</td>
-                  <td className="px-3 py-3">
-                    <span
-                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[course.status]}`}
-                    >
-                      <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                      {copy.status[course.status]}
-                    </span>
-                  </td>
-                  <td className="px-3 py-3 whitespace-nowrap text-slate-500">{course.updated}</td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-1.5">
-                      {[
-                        { label: 'Edit', Icon: PencilIcon },
-                        { label: 'View', Icon: EyeIcon },
-                        { label: 'Versions', Icon: NetworkIcon },
-                        { label: 'Archive', Icon: FileIcon },
-                      ].map((action) => (
+                    </td>
+                    <td className="px-3 py-3 whitespace-nowrap text-slate-500">{course.updated}</td>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-1.5">
                         <button
-                          key={action.label}
                           type="button"
-                          aria-label={action.label}
+                          aria-label={copy.actions.edit}
+                          title={copy.actions.edit}
+                          onClick={() => navigate(paths.content.courseBuilder)}
                           className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"
                         >
-                          <action.Icon className="h-3.5 w-3.5" />
+                          <PencilIcon className="h-3.5 w-3.5" />
                         </button>
-                      ))}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                        <button
+                          type="button"
+                          aria-label={copy.actions.view}
+                          title={copy.actions.view}
+                          onClick={() => navigate(paths.content.coursePreview)}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"
+                        >
+                          <EyeIcon className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={copy.actions.versions}
+                          title={copy.actions.versions}
+                          onClick={() =>
+                            navigate(
+                              `${paths.content.versions}?course=${encodeURIComponent(course.id)}`,
+                            )
+                          }
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"
+                        >
+                          <NetworkIcon className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={archived ? copy.actions.restore : copy.actions.archive}
+                          title={archived ? copy.actions.restore : copy.actions.archive}
+                          onClick={() => toggleArchive(course)}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"
+                        >
+                          {archived ? (
+                            <RefreshIcon className="h-3.5 w-3.5" />
+                          ) : (
+                            <FileIcon className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
               {!filtered.length ? (
                 <tr>
                   <td colSpan={8} className="px-5 py-10 text-center text-sm text-slate-500">
-                    No courses match this view.
+                    {copy.emptyCourses}
                   </td>
                 </tr>
               ) : null}
@@ -279,14 +450,19 @@ export function ContentAdminDashboardPage() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-lg font-bold text-navy">{copy.activityTitle}</h2>
-              <p className="mt-0.5 text-xs text-slate-400">{copy.activitySubtitle}</p>
+              <p className="mt-0.5 text-xs text-slate-400">
+                {copy.activitySubtitle} · {rangeLabel}
+              </p>
             </div>
-            <button type="button" className="text-sm font-semibold text-brand hover:text-blue-700">
+            <Link
+              to={paths.content.history}
+              className="text-sm font-semibold text-brand hover:text-blue-700"
+            >
               {copy.viewLog}
-            </button>
+            </Link>
           </div>
           <ul className="mt-2">
-            {contentAdminActivity.map((item) => (
+            {activity.map((item) => (
               <li
                 key={item.id}
                 className="flex items-start gap-3 border-b border-slate-100 py-3 last:border-0"
@@ -306,6 +482,9 @@ export function ContentAdminDashboardPage() {
                 <span className="shrink-0 text-xs text-slate-400">{item.time}</span>
               </li>
             ))}
+            {!activity.length ? (
+              <li className="py-6 text-center text-sm text-slate-500">No activity in this period.</li>
+            ) : null}
           </ul>
         </div>
 
@@ -313,7 +492,7 @@ export function ContentAdminDashboardPage() {
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-bold text-navy">{copy.attentionTitle}</h2>
             <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-600">
-              {copy.issues}
+              {contentAdminAttention.length} {copy.issues}
             </span>
           </div>
           <ul className="mt-3 space-y-3">
@@ -327,13 +506,13 @@ export function ContentAdminDashboardPage() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-navy">{item.title}</p>
                   <p className="text-xs text-slate-500">{item.detail}</p>
-                  <button
-                    type="button"
+                  <Link
+                    to={item.to}
                     className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-brand hover:text-blue-700"
                   >
                     {item.action}
                     <ChevronRightIcon className="h-3.5 w-3.5" />
-                  </button>
+                  </Link>
                 </div>
               </li>
             ))}

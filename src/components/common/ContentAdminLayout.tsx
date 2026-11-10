@@ -4,6 +4,7 @@ import {
   contentAdminNavGroups,
   contentAdminShell,
   contentSearchCopy,
+  contentUnreadNotificationCount,
   searchContentAdmin,
   type ContentSearchKind,
 } from '@/constants'
@@ -44,7 +45,12 @@ function pageTitle(pathname: string) {
   if (pathname.startsWith(paths.content.versions)) return 'Course Versions'
   if (pathname.startsWith(paths.content.drafts)) return 'Draft Courses'
   if (pathname.startsWith(paths.content.scorm)) return 'SCORM Content'
-  if (pathname.startsWith(paths.content.assessments) || pathname.startsWith(paths.content.questionBank))
+  if (
+    pathname.startsWith(paths.content.assessments) ||
+    pathname.startsWith(paths.content.quizzes) ||
+    pathname.startsWith(paths.content.assignments) ||
+    pathname.startsWith(paths.content.questionBank)
+  )
     return 'Assessments & Quizzes'
   if (pathname.startsWith(paths.content.cpd) || pathname.startsWith(paths.content.certificates))
     return 'CPD & Certification'
@@ -52,6 +58,7 @@ function pageTitle(pathname: string) {
   if (pathname.startsWith(paths.content.qa)) return 'Course Q&A'
   if (pathname.startsWith(paths.content.analytics)) return 'Course Analytics'
   if (pathname.startsWith(paths.content.history)) return 'Activity & Version History'
+  if (pathname.startsWith(paths.content.notifications)) return 'Notifications'
   if (pathname.startsWith(paths.content.profile)) return 'Profile & Settings'
   if (pathname.startsWith(paths.content.help)) return 'Help & Support'
   return 'Content Admin'
@@ -208,6 +215,8 @@ function groupOpenForPath(pathname: string, groupId: string) {
   if (groupId === 'assessments')
     return (
       pathname.startsWith(paths.content.assessments) ||
+      pathname.startsWith(paths.content.quizzes) ||
+      pathname.startsWith(paths.content.assignments) ||
       pathname.startsWith(paths.content.questionBank)
     )
   if (groupId === 'cpd')
@@ -362,6 +371,7 @@ export function ContentAdminLayout() {
             <button
               type="button"
               aria-label="Help"
+              onClick={() => navigate(paths.content.help)}
               className="rounded-lg p-2 text-slate-500 hover:bg-slate-50"
             >
               <HelpCircleIcon className="h-5 w-5" />
@@ -369,10 +379,13 @@ export function ContentAdminLayout() {
             <button
               type="button"
               aria-label="Notifications"
+              onClick={() => navigate(paths.content.notifications)}
               className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-50"
             >
               <BellIcon className="h-5 w-5" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500" />
+              {contentUnreadNotificationCount() > 0 ? (
+                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500" />
+              ) : null}
             </button>
             <span className="mx-1 hidden h-7 w-px bg-slate-200 sm:block" />
             <button

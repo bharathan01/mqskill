@@ -1,9 +1,16 @@
 import { Link, useSearchParams } from 'react-router'
 import {
   builderId,
+  contentLibraryAssignments,
+  contentLibraryQuizzes,
   courseBuilderContentCopy,
   courseBuilderQuizCopy,
+  createBuilderModule,
   createBuilderQuestion,
+  createBuilderSubmodule,
+  getLibraryAssignment,
+  getLibraryQuiz,
+  type BuilderModuleAssignment,
   type BuilderQuiz,
   type BuilderQuizQuestion,
   type QuizQuestionType,
@@ -42,6 +49,90 @@ export function CourseBuilderQuizPage() {
         module.id === activeModule.id ? { ...module, quiz: { ...module.quiz, ...patch } } : module,
       ),
     )
+  }
+
+  function patchAssignment(patch: Partial<BuilderModuleAssignment>) {
+    if (!activeModule) return
+    updateModules((current) =>
+      current.map((module) =>
+        module.id === activeModule.id
+          ? {
+              ...module,
+              assignment: {
+                ...(module.assignment ?? {
+                  enabled: false,
+                  libraryId: '',
+                  title: '',
+                  brief: '',
+                  points: 20,
+                  dueDays: 7,
+                  accept: 'PDF, DOC, DOCX',
+                  mandatory: true,
+                }),
+                ...patch,
+              },
+            }
+          : module,
+      ),
+    )
+  }
+
+  function attachLibraryQuiz(libraryId: string) {
+    if (!libraryId) {
+      patchQuiz({ libraryId: '' })
+      return
+    }
+    const library = getLibraryQuiz(libraryId)
+    if (!library) return
+    patchQuiz({
+      libraryId,
+      enabled: true,
+      title: library.title,
+      passMark: library.passMark,
+      maxAttempts: library.maxAttempts,
+      timeLimitMin: library.timeLimitMin,
+      questions: library.questions.map((question) => ({
+        id: question.id,
+        prompt: question.prompt,
+        type:
+          question.type === 'multiple'
+            ? ('multiple' as const)
+            : question.type === 'truefalse'
+              ? ('truefalse' as const)
+              : ('single' as const),
+        points: question.points,
+        explanation: '',
+        options:
+          question.options.length > 0
+            ? question.options.map((option) => ({
+                id: option.id,
+                text: option.text,
+                correct: option.correct,
+              }))
+            : [
+                { id: `${question.id}-a`, text: '', correct: true },
+                { id: `${question.id}-b`, text: '', correct: false },
+              ],
+      })),
+    })
+  }
+
+  function attachLibraryAssignment(libraryId: string) {
+    if (!libraryId) {
+      patchAssignment({ enabled: false, libraryId: '', title: '', brief: '' })
+      return
+    }
+    const library = getLibraryAssignment(libraryId)
+    if (!library) return
+    patchAssignment({
+      enabled: true,
+      libraryId,
+      title: library.title,
+      brief: library.brief,
+      points: library.points,
+      dueDays: library.dueDays,
+      accept: library.accept,
+    })
   }
 
   function patchQuestion(questionId: string, patch: Partial<BuilderQuizQuestion>) {
@@ -86,6 +177,15 @@ export function CourseBuilderQuizPage() {
     patchQuiz({ questions: [...activeModule.quiz.questions, createBuilderQuestion('single')] })
   }
 
+  function addFirstModule() {
+    const module = createBuilderModule('New module 1')
+    const submodule = createBuilderSubmodule('New submodule')
+    module.submodules = [submodule]
+    module.quiz = { ...module.quiz, enabled: true, mandatory: true }
+    updateModules(() => [module])
+    setSearchParams({ module: module.id }, { replace: true })
+  }
+
   if (!modules.length) {
     return (
       <div className="space-y-6">
@@ -102,12 +202,23 @@ export function CourseBuilderQuizPage() {
             title={courseBuilderContentCopy.emptyOutlineTitle}
             body={copy.noModules}
           >
-            <Link
-              to={paths.content.courseBuilder}
-              className="inline-flex h-10 items-center rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-blue-700"
-            >
-              {copy.goToContent}
-            </Link>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={addFirstModule}
+                className="inline-flex h-10 items-center gap-2 rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-blue-700"
+              >
+                <PlusIcon className="h-4 w-4" />
+                {copy.addFirstModule}
+              </button>
+              <Link
+                to={paths.content.courseBuilder}
+                className="inline-flex h-10 items-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-navy hover:bg-slate-50"
+              >
+                {copy.goToContent}
+              </Link>
+            </div>
+            <p className="mt-3 text-center text-xs text-slate-400">{copy.addFirstModuleHint}</p>
           </ContentEmptyState>
         </ContentCard>
       </div>
@@ -115,6 +226,16 @@ export function CourseBuilderQuizPage() {
   }
 
   const quiz = activeModule.quiz
+  const assignment = activeModule.assignment ?? {
+    enabled: false,
+    libraryId: '',
+    title: '',
+    brief: '',
+    points: 20,
+    dueDays: 7,
+    accept: 'PDF, DOC, DOCX',
+    mandatory: true,
+  }
   const totalPoints = quiz.questions.reduce((sum, question) => sum + question.points, 0)
 
   return (
@@ -151,9 +272,14 @@ export function CourseBuilderQuizPage() {
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-semibold">{module.title}</span>
                       <span className={`block text-xs ${active ? 'text-white/70' : 'text-slate-400'}`}>
-                        {module.quiz.enabled
-                          ? `${module.quiz.questions.length} ${copy.questionCount}`
-                          : 'No quiz'}
+                        {[
+                          module.quiz.enabled
+                            ? `${module.quiz.questions.length} ${copy.questionCount}`
+                            : 'No quiz',
+                          module.assignment?.enabled ? 'Assignment' : null,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
                       </span>
                     </span>
                   </button>
@@ -173,6 +299,34 @@ export function CourseBuilderQuizPage() {
 
             {quiz.enabled ? (
               <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <ContentField
+                  label={copy.attachLibrary}
+                  htmlFor="cb-quiz-library"
+                  hint={copy.attachLibraryHint}
+                  className="md:col-span-2"
+                >
+                  <ContentSelect
+                    id="cb-quiz-library"
+                    value={quiz.libraryId}
+                    onChange={(event) => attachLibraryQuiz(event.target.value)}
+                  >
+                    <option value="">{copy.attachNone}</option>
+                    {contentLibraryQuizzes.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.title}
+                        {item.usedInCourses.length
+                          ? ` · used in ${item.usedInCourses.map((c) => c.title).join(', ')}`
+                          : ' · unused'}
+                      </option>
+                    ))}
+                  </ContentSelect>
+                  <Link
+                    to={paths.content.quizzes}
+                    className="mt-2 inline-flex text-xs font-semibold text-brand hover:text-blue-700"
+                  >
+                    {copy.openLibrary}
+                  </Link>
+                </ContentField>
                 <ContentField label={copy.quizTitle} htmlFor="cb-quiz-title" className="md:col-span-2">
                   <ContentTextInput
                     id="cb-quiz-title"
@@ -219,6 +373,66 @@ export function CourseBuilderQuizPage() {
                     checked={quiz.shuffle}
                     label={copy.shuffle}
                     onChange={(value) => patchQuiz({ shuffle: value })}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <ContentToggle
+                    checked={quiz.mandatory}
+                    label={copy.mandatory}
+                    onChange={(value) => patchQuiz({ mandatory: value })}
+                  />
+                </div>
+              </div>
+            ) : null}
+          </ContentCard>
+
+          <ContentCard title={copy.assignmentSection} description={activeModule.title}>
+            <ContentToggle
+              checked={assignment.enabled}
+              label={copy.enableAssignment}
+              onChange={(value) => patchAssignment({ enabled: value })}
+            />
+            {assignment.enabled ? (
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <ContentField
+                  label={copy.attachAssignment}
+                  htmlFor="cb-asg-library"
+                  className="md:col-span-2"
+                >
+                  <ContentSelect
+                    id="cb-asg-library"
+                    value={assignment.libraryId}
+                    onChange={(event) => attachLibraryAssignment(event.target.value)}
+                  >
+                    <option value="">{copy.attachAssignmentNone}</option>
+                    {contentLibraryAssignments.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.title}
+                        {item.usedInCourses.length
+                          ? ` · used in ${item.usedInCourses.map((c) => c.title).join(', ')}`
+                          : ' · unused'}
+                      </option>
+                    ))}
+                  </ContentSelect>
+                  <Link
+                    to={paths.content.assignments}
+                    className="mt-2 inline-flex text-xs font-semibold text-brand hover:text-blue-700"
+                  >
+                    {copy.openAssignments}
+                  </Link>
+                </ContentField>
+                <ContentField label="Assignment title" htmlFor="cb-asg-title" className="md:col-span-2">
+                  <ContentTextInput
+                    id="cb-asg-title"
+                    value={assignment.title}
+                    onChange={(event) => patchAssignment({ title: event.target.value })}
+                  />
+                </ContentField>
+                <div className="md:col-span-2">
+                  <ContentToggle
+                    checked={assignment.mandatory}
+                    label={copy.assignmentMandatory}
+                    onChange={(value) => patchAssignment({ mandatory: value })}
                   />
                 </div>
               </div>

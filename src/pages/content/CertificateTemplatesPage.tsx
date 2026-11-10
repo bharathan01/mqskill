@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState, type ChangeEvent } from 'react'
 import {
   contentCertificatesPage,
   contentCertificateTemplates,
@@ -19,15 +19,22 @@ import {
   CopyIcon,
   EyeIcon,
   FilterIcon,
-  PencilIcon,
-  PlusIcon,
   QrCodeIcon,
   SearchIcon,
+  TrashIcon,
+  UploadIcon,
 } from '@/components/ui'
 
 const copy = contentCertificatesPage
 
 const statusTone = { active: 'green', draft: 'amber' } as const
+
+const layoutAccents: Record<CertificateTemplateLayout, { accent: string; color: string }> = {
+  classic: { accent: 'from-[#004ea8] to-[#0b7bd6]', color: '#004ea8' },
+  modern: { accent: 'from-[#0F766E] to-[#34D399]', color: '#0F766E' },
+  minimal: { accent: 'from-[#64748B] to-[#94A3B8]', color: '#475569' },
+  badge: { accent: 'from-[#B45309] to-[#FBBF24]', color: '#B45309' },
+}
 
 function CertificatePreview({
   template,
@@ -68,9 +75,7 @@ function CertificatePreview({
           {copy.certificateOf}
         </p>
         <p className={`mt-1.5 text-slate-400 ${large ? 'text-xs' : ''}`}>{copy.previewCertify}</p>
-        <p
-          className={`mt-1 font-serif font-bold text-navy ${large ? 'text-3xl' : 'text-sm'}`}
-        >
+        <p className={`mt-1 font-serif font-bold text-navy ${large ? 'text-3xl' : 'text-sm'}`}>
           {copy.previewName}
         </p>
         <p className={`mt-1 text-slate-400 ${large ? 'text-xs' : ''}`}>{copy.previewCompleted}</p>
@@ -94,12 +99,18 @@ function CertificatePreview({
           <span className={large ? 'text-xs' : ''}>{copy.previewDate}</span>
         </div>
         {large ? <p className="mt-2 text-xs text-slate-400">{copy.previewId}</p> : null}
+        {template.fileName ? (
+          <p className={`mt-2 truncate text-slate-400 ${large ? 'text-xs' : 'text-[0.5rem]'}`}>
+            {template.fileName}
+          </p>
+        ) : null}
       </div>
     </div>
   )
 }
 
 export function ContentCertificateTemplatesPage() {
+  const importRef = useRef<HTMLInputElement>(null)
   const [templates, setTemplates] = useState<CertificateTemplate[]>(contentCertificateTemplates)
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<'all' | CertificateTemplateStatus>('all')
@@ -108,7 +119,6 @@ export function ContentCertificateTemplatesPage() {
   const [preview, setPreview] = useState<CertificateTemplate | null>(null)
   const [applying, setApplying] = useState<CertificateTemplate | null>(null)
   const [applyCourse, setApplyCourse] = useState('')
-
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase()
     return templates.filter((item) => {
@@ -129,22 +139,28 @@ export function ContentCertificateTemplatesPage() {
     setLayout('all')
   }
 
-  function create() {
+  function handleImport(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    const baseName = file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ')
     const entry: CertificateTemplate = {
-      id: `tpl-new-${Date.now()}`,
-      name: `Untitled Template ${templates.length + 1}`,
-      description: 'New certificate template. Start by choosing a layout and colours.',
+      id: `tpl-import-${Date.now()}`,
+      name: baseName || 'Imported template',
+      description: `Imported from ${file.name}`,
       layout: 'classic',
       status: 'draft',
-      accent: 'from-[#004ea8] to-[#0b7bd6]',
-      color: '#004ea8',
+      accent: layoutAccents.classic.accent,
+      color: layoutAccents.classic.color,
       orientation: 'Landscape',
       courses: 0,
       updated: 'Just now',
       isDefault: false,
+      fileName: file.name,
     }
     setTemplates((current) => [entry, ...current])
-    setNotice(copy.createNotice)
+    setNotice(copy.importNotice)
   }
 
   function duplicate(item: CertificateTemplate) {
@@ -164,6 +180,13 @@ export function ContentCertificateTemplatesPage() {
       return next
     })
     setNotice(`“${item.name}” ${copy.duplicateNotice}`)
+  }
+
+  function remove(item: CertificateTemplate) {
+    setTemplates((current) => current.filter((entry) => entry.id !== item.id))
+    if (preview?.id === item.id) setPreview(null)
+    if (applying?.id === item.id) setApplying(null)
+    setNotice(`“${item.name}” ${copy.deleteNotice}`)
   }
 
   function setDefault(item: CertificateTemplate) {
@@ -198,14 +221,23 @@ export function ContentCertificateTemplatesPage() {
           <h1 className="text-2xl font-bold tracking-tight text-navy">{copy.title}</h1>
           <p className="mt-1 text-sm text-slate-500">{copy.subtitle}</p>
         </div>
-        <button
-          type="button"
-          onClick={create}
-          className="inline-flex h-10 items-center gap-2 self-start rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-blue-700 lg:self-auto"
-        >
-          <PlusIcon className="h-4 w-4" />
-          {copy.create}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            ref={importRef}
+            type="file"
+            accept=".json,.pdf,application/pdf,application/json,image/png,image/jpeg"
+            className="sr-only"
+            onChange={handleImport}
+          />
+          <button
+            type="button"
+            onClick={() => importRef.current?.click()}
+            className="inline-flex h-10 items-center gap-2 rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            <UploadIcon className="h-4 w-4" />
+            {copy.fields.import}
+          </button>
+        </div>
       </header>
 
       {notice ? <ContentNotice onDismiss={() => setNotice(null)}>{notice}</ContentNotice> : null}
@@ -290,17 +322,10 @@ export function ContentCertificateTemplatesPage() {
                 <p className="mt-3 text-xs text-slate-400">
                   {copy.layouts[item.layout]} · {item.orientation} · {item.courses} {copy.usedBy} ·{' '}
                   {copy.updated} {item.updated}
+                  {item.fileName ? ` · ${item.fileName}` : ''}
                 </p>
 
                 <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setNotice(`“${item.name}” ${copy.editNotice}`)}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-navy hover:bg-slate-50"
-                  >
-                    <PencilIcon className="h-3.5 w-3.5" />
-                    {copy.actions.edit}
-                  </button>
                   <button
                     type="button"
                     onClick={() => {
@@ -320,6 +345,15 @@ export function ContentCertificateTemplatesPage() {
                     className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"
                   >
                     <CopyIcon className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => remove(item)}
+                    aria-label={`${copy.actions.delete}: ${item.name}`}
+                    title={copy.actions.delete}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-rose-50 hover:text-rose-600"
+                  >
+                    <TrashIcon className="h-3.5 w-3.5" />
                   </button>
                   {!item.isDefault ? (
                     <button

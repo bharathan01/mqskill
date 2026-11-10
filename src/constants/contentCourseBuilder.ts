@@ -88,6 +88,8 @@ export const courseBuilderDeliveryModes = [
 
 export type CourseBuilderDeliveryMode = (typeof courseBuilderDeliveryModes)[number]['id'] | ''
 
+export type CourseBuilderVersionKind = 'new' | 'revision' | ''
+
 export type CourseBuilderDetails = {
   title: string
   code: string
@@ -97,6 +99,12 @@ export type CourseBuilderDetails = {
   instructor: string
   duration: string
   deliveryMode: CourseBuilderDeliveryMode
+  /** New course vs next version of an existing course. */
+  versionKind: CourseBuilderVersionKind
+  /** Existing course this revision belongs to (when versionKind is revision). */
+  parentCourseId: string
+  /** Display version label, e.g. v1.0 or v2.1. */
+  versionName: string
   shortDescription: string
   description: string
   outcomes: string[]
@@ -108,10 +116,37 @@ export type CourseBuilderDetails = {
   thumbnailPreviewUrl: string
 }
 
+export const courseBuilderVersionKinds = [
+  {
+    id: 'new' as const,
+    label: 'New course',
+    hint: 'Start a brand-new course in the catalogue',
+  },
+  {
+    id: 'revision' as const,
+    label: 'Next version',
+    hint: 'Publish an update of an existing course',
+  },
+] as const
+
+export function suggestNextVersionName(current: string) {
+  const match = current.trim().match(/^v?(\d+)\.(\d+)/i)
+  if (!match) return 'v1.1'
+  return `v${Number(match[1])}.${Number(match[2]) + 1}`
+}
+
+export function isCourseBuilderVersionReady(details: CourseBuilderDetails) {
+  if (!details.versionKind) return false
+  if (!details.versionName.trim()) return false
+  if (details.versionKind === 'revision' && !details.parentCourseId) return false
+  return true
+}
+
 export const courseBuilderDetailsCopy = {
   title: 'Course Details',
   subtitle: 'Tell learners what this course is about and who it is for.',
   sections: {
+    version: 'Version',
     basics: 'Basic information',
     description: 'Description',
     outcomes: 'Learning outcomes',
@@ -127,6 +162,9 @@ export const courseBuilderDetailsCopy = {
     instructor: 'Lead instructor',
     duration: 'Estimated duration (hours)',
     deliveryMode: 'Delivery mode',
+    versionKind: 'What are you creating?',
+    parentCourse: 'Based on course',
+    versionName: 'Version name',
     shortDescription: 'Short description',
     description: 'Full description',
     outcomes: 'What learners will achieve',
@@ -137,6 +175,8 @@ export const courseBuilderDetailsCopy = {
   placeholders: {
     title: 'e.g. ISO 14001: Environmental Management',
     code: 'e.g. ENV-140',
+    parentCourse: 'Select the course this version updates',
+    versionName: 'e.g. v1.0 or v2.1',
     shortDescription: 'One or two sentences shown on course cards (max 160 characters).',
     description: 'Describe the course scope, structure and benefits.',
     outcome: 'Add an outcome and press Enter',
@@ -144,11 +184,17 @@ export const courseBuilderDetailsCopy = {
     audience: 'e.g. Site managers, quality officers, new joiners',
     tag: 'Add a tag and press Enter',
   },
+  versionHint:
+    'New courses start at v1.0. For a next version, pick the live course and set the version name learners will see.',
+  parentLiveVersion: 'Current live version',
   errors: {
     title: 'Course title is required',
     code: 'Course code is required',
     category: 'Select a category',
     shortDescription: 'Add a short description',
+    versionKind: 'Choose new course or next version',
+    parentCourse: 'Select which course this version updates',
+    versionName: 'Enter a version name',
   },
   addOutcome: 'Add',
   addTag: 'Add',
@@ -170,7 +216,9 @@ export type BuilderSubmodule = {
   description: string
   required: boolean
   video: {
-    source: 'upload' | 'url'
+    source: 'upload' | 'url' | 'library'
+    /** Media library asset id when source is library. */
+    mediaId: string
     fileName: string
     url: string
     /** Local blob URL or remote URL used for the builder preview player. */
@@ -196,12 +244,28 @@ export type BuilderQuizQuestion = {
 
 export type BuilderQuiz = {
   enabled: boolean
+  /** When set, quiz content is pulled from the Quizzes library. */
+  libraryId: string
   title: string
   passMark: number
   maxAttempts: number
   timeLimitMin: number
   shuffle: boolean
+  /** Learner must pass before unlocking the next module item. */
+  mandatory: boolean
   questions: BuilderQuizQuestion[]
+}
+
+export type BuilderModuleAssignment = {
+  enabled: boolean
+  libraryId: string
+  title: string
+  brief: string
+  points: number
+  dueDays: number
+  accept: string
+  /** Learner must submit before unlocking the next module item. */
+  mandatory: boolean
 }
 
 export type BuilderModule = {
@@ -210,12 +274,13 @@ export type BuilderModule = {
   summary: string
   submodules: BuilderSubmodule[]
   quiz: BuilderQuiz
+  assignment: BuilderModuleAssignment
 }
 
 export const courseBuilderContentCopy = {
   title: 'Course Content',
-  subtitle: 'Organise modules and submodules, then add videos and quizzes.',
-  tabs: { content: 'Content builder', quiz: 'Module quizzes' },
+  subtitle: 'Organise modules and submodules, then attach module quizzes and assignments.',
+  tabs: { content: 'Content builder', quiz: 'Module quizzes & assignments' },
   outline: 'Course outline',
   addModule: 'Add Module',
   addSubmodule: 'Add Submodule',
@@ -224,8 +289,21 @@ export const courseBuilderContentCopy = {
   moduleSummaryPlaceholder: 'What will learners cover in this module?',
   modulePrefix: 'Module',
   quizBadge: 'Quiz',
-  addQuiz: 'Add module quiz',
+  assignmentBadge: 'Assignment',
+  addQuiz: 'Add quiz',
   editQuiz: 'Edit quiz',
+  addAssignment: 'Add assignment',
+  editAssignment: 'Edit assignment',
+  assessmentsTitle: 'Module quiz & assignment',
+  assessmentsHint:
+    'Attach a quiz and/or assignment after this module’s content. Mark them mandatory to block progress until completed.',
+  attachQuiz: 'Quiz from library',
+  attachAssignment: 'Assignment from library',
+  noLibraryQuiz: 'Custom quiz — edit questions on the quizzes tab',
+  noLibraryAssignment: 'Choose an assignment from the library',
+  quizMandatory: 'Quiz is mandatory to continue',
+  assignmentMandatory: 'Assignment is mandatory to continue',
+  configureQuiz: 'Open quiz editor',
   moveUp: 'Move up',
   moveDown: 'Move down',
   remove: 'Remove',
@@ -246,11 +324,17 @@ export const courseBuilderContentCopy = {
     source: 'Video source',
     sourceUpload: 'Upload file',
     sourceUrl: 'Video URL',
+    sourceLibrary: 'Media Library',
     upload: 'Upload video',
     replace: 'Replace video',
     uploadHint: 'MP4 or MOV, up to 2 GB',
     url: 'Video URL',
     urlPlaceholder: 'https://…',
+    library: 'Choose from Media Library',
+    libraryPlaceholder: 'Select a ready video…',
+    libraryEmpty: 'No ready videos in the Media Library yet.',
+    libraryHint: 'Only ready videos can be attached. Manage uploads in Media Library.',
+    openLibrary: 'Open Media Library',
     captions: 'Captions available',
     allowDownload: 'Allow learners to download',
     transcript: 'Transcript',
@@ -267,10 +351,22 @@ export const courseBuilderContentCopy = {
 } as const
 
 export const courseBuilderQuizCopy = {
-  title: 'Module Quizzes',
-  subtitle: 'Add a quiz after a module’s submodules to check understanding.',
+  title: 'Module Quizzes & Assignments',
+  subtitle:
+    'Attach a library quiz or assignment after a module to check understanding before learners continue.',
   selectModule: 'Module',
   enable: 'Enable quiz for this module',
+  attachLibrary: 'Attach from Quizzes library',
+  attachLibraryHint: 'Create quizzes under Assessments & Quizzes → Quizzes, then attach here.',
+  attachNone: 'Custom quiz (edit questions below)',
+  mandatory: 'Mandatory — must pass to unlock the next item',
+  assignmentSection: 'Module assignment',
+  enableAssignment: 'Enable assignment for this module',
+  attachAssignment: 'Attach from Assignments library',
+  attachAssignmentNone: 'No assignment',
+  assignmentMandatory: 'Mandatory — must submit to unlock the next item',
+  openLibrary: 'Manage quizzes library',
+  openAssignments: 'Manage assignments library',
   settings: 'Quiz settings',
   quizTitle: 'Quiz title',
   passMark: 'Pass mark (%)',
@@ -290,11 +386,13 @@ export const courseBuilderQuizCopy = {
   explanationPlaceholder: 'Why is this the right answer?',
   removeQuestion: 'Remove question',
   emptyTitle: 'No questions yet',
-  emptyBody: 'Add the first question to this quiz.',
+  emptyBody: 'Add the first question to this quiz, or attach one from the library.',
   disabledTitle: 'Quiz is off for this module',
   disabledBody: 'Enable the quiz to start adding questions.',
-  noModules: 'Add at least one module in the content builder before creating quizzes.',
+  noModules: 'Add a module first, then attach a quiz or assignment to it.',
   goToContent: 'Go to content builder',
+  addFirstModule: 'Add first module',
+  addFirstModuleHint: 'Creates Module 1 so you can attach a quiz or assignment right away.',
   questionTypes: [
     { id: 'single' as QuizQuestionType, label: 'Single choice' },
     { id: 'multiple' as QuizQuestionType, label: 'Multiple choice' },
@@ -320,6 +418,7 @@ export function createBuilderSubmodule(title = 'New submodule'): BuilderSubmodul
     required: true,
     video: {
       source: 'upload',
+      mediaId: '',
       fileName: '',
       url: '',
       previewUrl: '',
@@ -333,12 +432,27 @@ export function createBuilderSubmodule(title = 'New submodule'): BuilderSubmodul
 export function createBuilderQuiz(title = 'Module quiz'): BuilderQuiz {
   return {
     enabled: false,
+    libraryId: '',
     title,
     passMark: 70,
     maxAttempts: 3,
     timeLimitMin: 0,
     shuffle: true,
+    mandatory: true,
     questions: [],
+  }
+}
+
+export function createBuilderModuleAssignment(): BuilderModuleAssignment {
+  return {
+    enabled: false,
+    libraryId: '',
+    title: '',
+    brief: '',
+    points: 20,
+    dueDays: 7,
+    accept: 'PDF, DOC, DOCX',
+    mandatory: true,
   }
 }
 
@@ -349,6 +463,7 @@ export function createBuilderModule(title = 'New module'): BuilderModule {
     summary: '',
     submodules: [],
     quiz: createBuilderQuiz(`${title} quiz`),
+    assignment: createBuilderModuleAssignment(),
   }
 }
 
@@ -391,6 +506,12 @@ export type CourseBuilderSettings = {
   finalAssessment: boolean
   finalPassMark: number | ''
   finalAttempts: number | ''
+  /** Optional end-of-course quiz from the Quizzes library. */
+  finalQuizId: string
+  finalQuizMandatory: boolean
+  /** Optional end-of-course assignment from the Assignments library. */
+  finalAssignmentId: string
+  finalAssignmentMandatory: boolean
   certificateEnabled: boolean
   certificateTemplate: string
   cpdEnabled: boolean
@@ -410,6 +531,7 @@ export const courseBuilderSettingsCopy = {
   sections: {
     access: 'Access & enrolment',
     completion: 'Completion rules',
+    endAssessments: 'End-of-course quiz & assignment (optional)',
     certification: 'Certification & CPD',
     engagement: 'Learner experience',
     publishing: 'Publishing',
@@ -420,9 +542,17 @@ export const courseBuilderSettingsCopy = {
     completionRule: 'Completion rule',
     completionPercent: 'Required progress (%)',
     sequential: 'Learners must complete submodules in order',
-    finalAssessment: 'Include a final assessment',
+    finalAssessment: 'Include end-of-course assessments',
     finalPassMark: 'Final pass mark (%)',
     finalAttempts: 'Final attempts allowed',
+    finalQuiz: 'Course completion quiz',
+    finalQuizHint: 'Optional. Attach a quiz learners take after all modules.',
+    finalQuizNone: 'No end-of-course quiz',
+    finalQuizMandatory: 'Mandatory — must pass to complete the course',
+    finalAssignment: 'Course completion assignment',
+    finalAssignmentHint: 'Optional. Attach a final assignment after all modules.',
+    finalAssignmentNone: 'No end-of-course assignment',
+    finalAssignmentMandatory: 'Mandatory — must submit to complete the course',
     certificate: 'Issue completion certificate',
     certificateTemplate: 'Certificate template',
     cpd: 'Award CPD hours',
@@ -470,6 +600,10 @@ export const courseBuilderDefaultSettings: CourseBuilderSettings = {
   finalAssessment: false,
   finalPassMark: '',
   finalAttempts: '',
+  finalQuizId: '',
+  finalQuizMandatory: false,
+  finalAssignmentId: '',
+  finalAssignmentMandatory: false,
   certificateEnabled: false,
   certificateTemplate: '',
   cpdEnabled: false,
@@ -533,6 +667,9 @@ export function createDefaultCourseBuilderDetails(): CourseBuilderDetails {
     instructor: '',
     duration: '',
     deliveryMode: '',
+    versionKind: '',
+    parentCourseId: '',
+    versionName: '',
     shortDescription: '',
     description: '',
     outcomes: [],
@@ -553,6 +690,7 @@ export const courseBuilderPublishChecks = {
   code: 'Course code',
   category: 'Category selected',
   description: 'Short description',
+  version: 'Version details',
   modules: 'At least one module',
   submodules: 'Every module has a submodule',
   videos: 'Every video submodule has a primary video',
@@ -616,6 +754,13 @@ export function computeCourseBuilderChecks(
       id: 'description',
       label: labels.description,
       passed: Boolean(details.shortDescription.trim()),
+      required: true,
+      to: paths.content.createCourse,
+    },
+    {
+      id: 'version',
+      label: labels.version,
+      passed: isCourseBuilderVersionReady(details),
       required: true,
       to: paths.content.createCourse,
     },

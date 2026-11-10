@@ -26,9 +26,11 @@ import {
   ContentDraftCoursesPage,
   ContentHelpSupportPage,
   ContentMediaLibraryPage,
+  ContentNotificationsPage,
   ContentScormPackagesPage,
   ContentScormValidationPage,
-  ContentFinalAssessmentPage,
+  ContentQuizzesLibraryPage,
+  ContentAssignmentsLibraryPage,
   ContentQuestionBankPage,
   ContentCpdConfigurationPage,
   ContentCertificateTemplatesPage,
@@ -191,7 +193,9 @@ export function AppRoutes() {
         <Route path="drafts" element={<ContentDraftCoursesPage />} />
         <Route path="scorm/validation" element={<ContentScormValidationPage />} />
         <Route path="scorm" element={<ContentScormPackagesPage />} />
-        <Route path="assessments" element={<ContentFinalAssessmentPage />} />
+        <Route path="assessments" element={<ContentQuizzesLibraryPage />} />
+        <Route path="quizzes" element={<ContentQuizzesLibraryPage />} />
+        <Route path="assignments" element={<ContentAssignmentsLibraryPage />} />
         <Route path="question-bank" element={<ContentQuestionBankPage />} />
         <Route path="cpd" element={<ContentCpdConfigurationPage />} />
         <Route path="certificates" element={<ContentCertificateTemplatesPage />} />
@@ -199,6 +203,7 @@ export function AppRoutes() {
         <Route path="qa" element={<ContentCourseQaPage />} />
         <Route path="analytics" element={<ContentCourseAnalyticsPage />} />
         <Route path="history" element={<ContentPublishingHistoryPage />} />
+        <Route path="notifications" element={<ContentNotificationsPage />} />
         <Route path="profile" element={<ContentProfileSettingsPage />} />
         <Route path="help" element={<ContentHelpSupportPage />} />
       </Route>

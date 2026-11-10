@@ -15,12 +15,16 @@ export type CertificateTemplate = {
   courses: number
   updated: string
   isDefault: boolean
+  /** Optional uploaded design file name. */
+  fileName?: string
 }
 
 export const contentCertificatesPage = {
   title: 'Certificate Templates',
   subtitle: 'Design and manage the certificates learners receive when they complete a course.',
   create: 'New Template',
+  createTitle: 'Create certificate template',
+  createHint: 'Start from a blank template. Upload a design file or import an existing template file.',
   searchPlaceholder: 'Search templates…',
   allStatuses: 'All statuses',
   allLayouts: 'All layouts',
@@ -35,17 +39,30 @@ export const contentCertificatesPage = {
   usedBy: 'courses',
   updated: 'Updated',
   actions: {
-    edit: 'Edit',
     use: 'Use template',
     preview: 'Preview',
     duplicate: 'Duplicate',
+    delete: 'Delete',
     setDefault: 'Set as default',
+  },
+  fields: {
+    name: 'Template name',
+    description: 'Description',
+    layout: 'Layout',
+    orientation: 'Orientation',
+    color: 'Accent colour',
+    file: 'Open design file',
+    fileHint: 'PNG, JPG or PDF of your certificate artwork',
+    import: 'Import template',
+    importHint: 'Import a .json or .pdf template file',
   },
   useNotice: 'is now applied to the selected course.',
   duplicateNotice: 'duplicated as a draft.',
   defaultNotice: 'is now the default certificate template.',
-  editNotice: 'opened for editing.',
-  createNotice: 'New draft template created.',
+  createNotice: 'New certificate template created.',
+  deleteNotice: 'template deleted.',
+  importNotice: 'Template imported.',
+  fileNotice: 'Design file attached.',
   previewTitle: 'Template preview',
   closePreview: 'Close preview',
   previewCertify: 'This is to certify that',
@@ -67,6 +84,7 @@ export const contentCertificatesPage = {
     'Cybersecurity for Everyone',
   ],
   cancel: 'Cancel',
+  save: 'Create template',
   confirm: 'Apply template',
 } as const
 

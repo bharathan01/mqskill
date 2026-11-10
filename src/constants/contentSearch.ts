@@ -160,6 +160,13 @@ export function searchContentAdmin(query: string, limit = 8): ContentSearchResul
       to: paths.content.help,
     },
     {
+      id: 'page-notifications',
+      kind: 'page',
+      title: 'Notifications',
+      subtitle: 'Alerts',
+      to: paths.content.notifications,
+    },
+    {
       id: 'page-create',
       kind: 'page',
       title: 'Create New Course',

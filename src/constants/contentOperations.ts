@@ -268,11 +268,21 @@ export const contentQaQuestions: ContentQaQuestion[] = [
 
 /* --------------------------- Course analytics --------------------------- */
 
+export type ContentAnalyticsRangeId = '30d' | '3m' | '6m' | '12m'
+
+export const contentAnalyticsRanges = [
+  { id: '30d' as const, label: 'Last 30 days' },
+  { id: '3m' as const, label: 'Last 3 months' },
+  { id: '6m' as const, label: 'Last 6 months' },
+  { id: '12m' as const, label: 'Last 12 months' },
+]
+
 export const contentAnalyticsPage = {
   title: 'Course Analytics',
   subtitle: 'Completion performance across published courses.',
   badge: 'Completion',
   range: 'Last 6 months',
+  rangeLabel: 'Date range',
   chartTitle: 'Completion rate over time',
   chartSubtitle: 'Average completion across all published courses',
   tableTitle: 'Completion by course',
@@ -292,23 +302,92 @@ export const contentAnalyticsPage = {
   exportNotice: 'Analytics export prepared (sample).',
 } as const
 
-export const contentAnalyticsKpis = [
-  { id: 'enrolled', label: 'Total enrolments', value: '12,480', trend: '+8.2%', detail: 'vs previous period', tone: 'blue' as const },
-  { id: 'completion', label: 'Avg. completion rate', value: '74.6%', trend: '+3.1%', detail: 'across published courses', tone: 'green' as const },
-  { id: 'time', label: 'Avg. time to complete', value: '5h 42m', trend: '-12m', detail: 'faster than last period', tone: 'purple' as const },
-  { id: 'dropoff', label: 'At-risk courses', value: '3', trend: '', detail: 'completion below 60%', tone: 'amber' as const },
-]
+export type ContentAnalyticsKpi = {
+  id: string
+  label: string
+  value: string
+  trend: string
+  detail: string
+  tone: 'blue' | 'green' | 'purple' | 'amber'
+}
 
-export const contentCompletionTrend = [
-  { month: 'Jun', rate: 66 },
-  { month: 'Jul', rate: 68 },
-  { month: 'Aug', rate: 65 },
-  { month: 'Sep', rate: 71 },
-  { month: 'Oct', rate: 73 },
-  { month: 'Nov', rate: 75 },
-]
+export type ContentCompletionTrendPoint = { month: string; rate: number }
 
-export const contentCourseCompletion = [
+export type ContentCourseCompletionRow = {
+  id: string
+  title: string
+  code: string
+  enrolled: number
+  completed: number
+  avgTime: string
+  dropOff: string
+  accent: string
+}
+
+const analyticsKpisByRange: Record<ContentAnalyticsRangeId, ContentAnalyticsKpi[]> = {
+  '30d': [
+    { id: 'enrolled', label: 'Total enrolments', value: '1,840', trend: '+4.1%', detail: 'vs previous period', tone: 'blue' },
+    { id: 'completion', label: 'Avg. completion rate', value: '71.2%', trend: '+1.4%', detail: 'across published courses', tone: 'green' },
+    { id: 'time', label: 'Avg. time to complete', value: '5h 18m', trend: '-8m', detail: 'faster than last period', tone: 'purple' },
+    { id: 'dropoff', label: 'At-risk courses', value: '4', trend: '', detail: 'completion below 60%', tone: 'amber' },
+  ],
+  '3m': [
+    { id: 'enrolled', label: 'Total enrolments', value: '5,960', trend: '+6.4%', detail: 'vs previous period', tone: 'blue' },
+    { id: 'completion', label: 'Avg. completion rate', value: '73.0%', trend: '+2.2%', detail: 'across published courses', tone: 'green' },
+    { id: 'time', label: 'Avg. time to complete', value: '5h 30m', trend: '-10m', detail: 'faster than last period', tone: 'purple' },
+    { id: 'dropoff', label: 'At-risk courses', value: '3', trend: '', detail: 'completion below 60%', tone: 'amber' },
+  ],
+  '6m': [
+    { id: 'enrolled', label: 'Total enrolments', value: '12,480', trend: '+8.2%', detail: 'vs previous period', tone: 'blue' },
+    { id: 'completion', label: 'Avg. completion rate', value: '74.6%', trend: '+3.1%', detail: 'across published courses', tone: 'green' },
+    { id: 'time', label: 'Avg. time to complete', value: '5h 42m', trend: '-12m', detail: 'faster than last period', tone: 'purple' },
+    { id: 'dropoff', label: 'At-risk courses', value: '3', trend: '', detail: 'completion below 60%', tone: 'amber' },
+  ],
+  '12m': [
+    { id: 'enrolled', label: 'Total enrolments', value: '24,910', trend: '+11.5%', detail: 'vs previous period', tone: 'blue' },
+    { id: 'completion', label: 'Avg. completion rate', value: '72.8%', trend: '+2.0%', detail: 'across published courses', tone: 'green' },
+    { id: 'time', label: 'Avg. time to complete', value: '5h 55m', trend: '-6m', detail: 'faster than last period', tone: 'purple' },
+    { id: 'dropoff', label: 'At-risk courses', value: '2', trend: '', detail: 'completion below 60%', tone: 'amber' },
+  ],
+}
+
+const analyticsTrendByRange: Record<ContentAnalyticsRangeId, ContentCompletionTrendPoint[]> = {
+  '30d': [
+    { month: 'W1', rate: 69 },
+    { month: 'W2', rate: 70 },
+    { month: 'W3', rate: 72 },
+    { month: 'W4', rate: 71 },
+  ],
+  '3m': [
+    { month: 'Sep', rate: 71 },
+    { month: 'Oct', rate: 73 },
+    { month: 'Nov', rate: 75 },
+  ],
+  '6m': [
+    { month: 'Jun', rate: 66 },
+    { month: 'Jul', rate: 68 },
+    { month: 'Aug', rate: 65 },
+    { month: 'Sep', rate: 71 },
+    { month: 'Oct', rate: 73 },
+    { month: 'Nov', rate: 75 },
+  ],
+  '12m': [
+    { month: 'Dec', rate: 62 },
+    { month: 'Jan', rate: 64 },
+    { month: 'Feb', rate: 63 },
+    { month: 'Mar', rate: 66 },
+    { month: 'Apr', rate: 67 },
+    { month: 'May', rate: 69 },
+    { month: 'Jun', rate: 66 },
+    { month: 'Jul', rate: 68 },
+    { month: 'Aug', rate: 65 },
+    { month: 'Sep', rate: 71 },
+    { month: 'Oct', rate: 73 },
+    { month: 'Nov', rate: 75 },
+  ],
+}
+
+const courseCompletionBase: ContentCourseCompletionRow[] = [
   { id: 'qms-101', title: 'ISO 9001: Quality Management Systems', code: 'QMS-101', enrolled: 3240, completed: 2784, avgTime: '6h 10m', dropOff: 'Module 2 quiz', accent: 'from-[#004EA8] to-[#3B82F6]' },
   { id: 'hse-110', title: 'Fire Safety Awareness', code: 'HSE-110', enrolled: 2860, completed: 2515, avgTime: '2h 25m', dropOff: 'Lesson 04', accent: 'from-[#B45309] to-[#FBBF24]' },
   { id: 'ism-220', title: 'ISO 27001: Information Security', code: 'ISM-220', enrolled: 2410, completed: 1806, avgTime: '8h 05m', dropOff: 'Module 3 risk', accent: 'from-[#102A4C] to-[#3B6BA5]' },
@@ -316,6 +395,34 @@ export const contentCourseCompletion = [
   { id: 'bus-301', title: 'Project Management Fundamentals', code: 'BUS-301', enrolled: 1120, completed: 616, avgTime: '9h 15m', dropOff: 'Module 4 project', accent: 'from-[#7C3AED] to-[#A78BFA]' },
   { id: 'cmp-118', title: 'Data Privacy & GDPR Basics', code: 'CMP-118', enrolled: 870, completed: 435, avgTime: '3h 30m', dropOff: 'Final assessment', accent: 'from-[#BE123C] to-[#FB7185]' },
 ]
+
+const courseScaleByRange: Record<ContentAnalyticsRangeId, number> = {
+  '30d': 0.15,
+  '3m': 0.48,
+  '6m': 1,
+  '12m': 1.95,
+}
+
+export const contentAnalyticsKpis = analyticsKpisByRange['6m']
+export const contentCompletionTrend = analyticsTrendByRange['6m']
+export const contentCourseCompletion = courseCompletionBase
+
+export function getAnalyticsKpis(rangeId: ContentAnalyticsRangeId) {
+  return analyticsKpisByRange[rangeId]
+}
+
+export function getAnalyticsTrend(rangeId: ContentAnalyticsRangeId) {
+  return analyticsTrendByRange[rangeId]
+}
+
+export function getAnalyticsCourses(rangeId: ContentAnalyticsRangeId) {
+  const scale = courseScaleByRange[rangeId]
+  return courseCompletionBase.map((course) => ({
+    ...course,
+    enrolled: Math.max(1, Math.round(course.enrolled * scale)),
+    completed: Math.max(0, Math.round(course.completed * scale)),
+  }))
+}
 
 /* --------------------------- Publishing history -------------------------- */
 

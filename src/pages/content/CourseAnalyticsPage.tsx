@@ -1,9 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  contentAnalyticsKpis,
   contentAnalyticsPage,
-  contentCompletionTrend,
-  contentCourseCompletion,
+  contentAnalyticsRanges,
+  getAnalyticsCourses,
+  getAnalyticsKpis,
+  getAnalyticsTrend,
+  type ContentAnalyticsRangeId,
+  type ContentCompletionTrendPoint,
 } from '@/constants'
 import {
   ContentBadge,
@@ -15,6 +18,7 @@ import {
   BookIcon,
   CalendarIcon,
   ChartIcon,
+  CheckIcon,
   ChevronDownIcon,
   ClockIcon,
   DownloadIcon,
@@ -38,15 +42,21 @@ const W = 640
 const H = 240
 const PAD = { top: 16, right: 16, bottom: 32, left: 40 }
 
-function CompletionChart() {
-  const [active, setActive] = useState<number | null>(contentCompletionTrend.length - 1)
+function CompletionChart({ trend }: { trend: ContentCompletionTrendPoint[] }) {
+  const [active, setActive] = useState<number | null>(trend.length - 1)
+
+  useEffect(() => {
+    setActive(trend.length - 1)
+  }, [trend])
+
   const min = 50
   const max = 100
   const innerW = W - PAD.left - PAD.right
   const innerH = H - PAD.top - PAD.bottom
-  const points = contentCompletionTrend.map((item, index) => ({
+  const denom = Math.max(trend.length - 1, 1)
+  const points = trend.map((item, index) => ({
     ...item,
-    x: PAD.left + (innerW * index) / (contentCompletionTrend.length - 1),
+    x: PAD.left + (innerW * index) / denom,
     y: PAD.top + innerH - ((item.rate - min) / (max - min)) * innerH,
   }))
   const line = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ')
@@ -59,7 +69,7 @@ function CompletionChart() {
       <svg
         viewBox={`0 0 ${W} ${H}`}
         role="img"
-        aria-label="Completion rate by month"
+        aria-label="Completion rate by period"
         className="h-auto w-full"
       >
         <defs>
@@ -82,7 +92,7 @@ function CompletionChart() {
         <path d={area} fill="url(#completion-fill)" />
         <path d={line} fill="none" stroke="#004EA8" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
         {points.map((p, index) => (
-          <g key={p.month}>
+          <g key={`${p.month}-${index}`}>
             <text x={p.x} y={H - 10} textAnchor="middle" fontSize="11" fill="#64748B">
               {p.month}
             </text>
@@ -124,12 +134,30 @@ function rateTone(rate: number) {
 }
 
 export function ContentCourseAnalyticsPage() {
+  const rangeRef = useRef<HTMLDivElement>(null)
+  const [rangeId, setRangeId] = useState<ContentAnalyticsRangeId>('6m')
+  const [rangeOpen, setRangeOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [notice, setNotice] = useState<string | null>(null)
 
+  const rangeLabel =
+    contentAnalyticsRanges.find((item) => item.id === rangeId)?.label ?? copy.range
+
+  const kpis = useMemo(() => getAnalyticsKpis(rangeId), [rangeId])
+  const trend = useMemo(() => getAnalyticsTrend(rangeId), [rangeId])
+  const courses = useMemo(() => getAnalyticsCourses(rangeId), [rangeId])
+
+  useEffect(() => {
+    const onPointerDown = (event: MouseEvent) => {
+      if (!rangeRef.current?.contains(event.target as Node)) setRangeOpen(false)
+    }
+    document.addEventListener('mousedown', onPointerDown)
+    return () => document.removeEventListener('mousedown', onPointerDown)
+  }, [])
+
   const rows = useMemo(() => {
     const needle = query.trim().toLowerCase()
-    return contentCourseCompletion
+    return courses
       .map((course) => ({ ...course, rate: Math.round((course.completed / course.enrolled) * 100) }))
       .filter(
         (course) =>
@@ -138,7 +166,7 @@ export function ContentCourseAnalyticsPage() {
           course.code.toLowerCase().includes(needle),
       )
       .sort((a, b) => b.rate - a.rate)
-  }, [query])
+  }, [courses, query])
 
   const kpiIcons = {
     enrolled: UsersIcon,
@@ -160,14 +188,53 @@ export function ContentCourseAnalyticsPage() {
           <p className="mt-1 text-sm text-slate-500">{copy.subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            type="button"
-            className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-navy"
-          >
-            <CalendarIcon className="h-4 w-4 text-slate-400" />
-            {copy.range}
-            <ChevronDownIcon className="h-4 w-4 text-slate-400" />
-          </button>
+          <div ref={rangeRef} className="relative">
+            <button
+              type="button"
+              aria-haspopup="listbox"
+              aria-expanded={rangeOpen}
+              aria-label={copy.rangeLabel}
+              onClick={() => setRangeOpen((open) => !open)}
+              className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-navy hover:bg-slate-50"
+            >
+              <CalendarIcon className="h-4 w-4 text-slate-400" />
+              {rangeLabel}
+              <ChevronDownIcon
+                className={`h-4 w-4 text-slate-400 transition ${rangeOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+            {rangeOpen ? (
+              <ul
+                role="listbox"
+                className="absolute top-[calc(100%+0.35rem)] right-0 z-20 min-w-[12rem] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-[0_12px_28px_rgba(15,40,80,0.12)]"
+              >
+                {contentAnalyticsRanges.map((item) => {
+                  const active = item.id === rangeId
+                  return (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={active}
+                        onClick={() => {
+                          setRangeId(item.id)
+                          setRangeOpen(false)
+                        }}
+                        className={`flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-sm ${
+                          active
+                            ? 'bg-[#EFF4FF] font-semibold text-brand'
+                            : 'text-navy hover:bg-slate-50'
+                        }`}
+                      >
+                        {item.label}
+                        {active ? <CheckIcon className="h-4 w-4" /> : null}
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            ) : null}
+          </div>
           <button
             type="button"
             onClick={() => setNotice(copy.exportNotice)}
@@ -182,7 +249,7 @@ export function ContentCourseAnalyticsPage() {
       {notice ? <ContentNotice onDismiss={() => setNotice(null)}>{notice}</ContentNotice> : null}
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {contentAnalyticsKpis.map((kpi) => {
+        {kpis.map((kpi) => {
           const Icon = kpiIcons[kpi.id as keyof typeof kpiIcons]
           return (
             <div
@@ -217,16 +284,20 @@ export function ContentCourseAnalyticsPage() {
       <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-[0_1px_2px_rgba(15,40,80,0.04)]">
         <div className="mb-4">
           <h2 className="text-lg font-bold text-navy">{copy.chartTitle}</h2>
-          <p className="mt-0.5 text-xs text-slate-400">{copy.chartSubtitle}</p>
+          <p className="mt-0.5 text-xs text-slate-400">
+            {copy.chartSubtitle} · {rangeLabel}
+          </p>
         </div>
-        <CompletionChart />
+        <CompletionChart trend={trend} />
       </section>
 
       <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,40,80,0.04)]">
         <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2 className="text-lg font-bold text-navy">{copy.tableTitle}</h2>
-            <p className="mt-0.5 text-xs text-slate-400">{copy.tableSubtitle}</p>
+            <p className="mt-0.5 text-xs text-slate-400">
+              {copy.tableSubtitle} · {rangeLabel}
+            </p>
           </div>
           <label className="relative min-w-[14rem]">
             <SearchIcon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />

@@ -241,7 +241,8 @@ export function EmployeeCourseLessonPage() {
     ).length
     const score = Math.round((correct / quiz.questions.length) * 100)
     setQuizScore(score)
-    if (score >= quiz.passScore) markComplete()
+    const passed = score >= quiz.passScore
+    if (passed || activeItem?.mandatory === false) markComplete()
   }
 
   function submitAssignment() {
@@ -671,6 +672,22 @@ export function EmployeeCourseLessonPage() {
                                 </span>
                                 <span
                                   className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                                    item.mandatory === false
+                                      ? 'bg-slate-100 text-slate-600'
+                                      : 'bg-rose-50 text-rose-700'
+                                  }`}
+                                >
+                                  {item.mandatory === false
+                                    ? curriculumCopy.optionalBadge
+                                    : curriculumCopy.mandatoryBadge}
+                                </span>
+                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                                  {item.placement === 'course'
+                                    ? curriculumCopy.coursePlacement
+                                    : curriculumCopy.modulePlacement}
+                                </span>
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                                     status === 'completed'
                                       ? 'bg-emerald-50 text-emerald-700'
                                       : status === 'locked'
@@ -726,6 +743,22 @@ export function EmployeeCourseLessonPage() {
                                 </span>
                                 <span
                                   className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                                    item.mandatory === false
+                                      ? 'bg-slate-100 text-slate-600'
+                                      : 'bg-rose-50 text-rose-700'
+                                  }`}
+                                >
+                                  {item.mandatory === false
+                                    ? curriculumCopy.optionalBadge
+                                    : curriculumCopy.mandatoryBadge}
+                                </span>
+                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                                  {item.placement === 'course'
+                                    ? curriculumCopy.coursePlacement
+                                    : curriculumCopy.modulePlacement}
+                                </span>
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                                     status === 'completed'
                                       ? 'bg-emerald-50 text-emerald-700'
                                       : status === 'locked'
@@ -769,6 +802,14 @@ export function EmployeeCourseLessonPage() {
                   {curriculumCopy.quizPass(quiz.passScore)}
                 </span>
               </div>
+              <p className="mt-2 text-xs text-slate-500">
+                {activeItem?.mandatory === false
+                  ? curriculumCopy.optionalBadge
+                  : curriculumCopy.quizMandatoryHint}
+                {activeItem?.placement === 'course'
+                  ? ` · ${curriculumCopy.coursePlacement}`
+                  : ` · ${curriculumCopy.modulePlacement}`}
+              </p>
               <ul className="mt-5 space-y-5">
                 {quiz.questions.map((question, index) => (
                   <li key={question.id}>
@@ -854,6 +895,14 @@ export function EmployeeCourseLessonPage() {
                   {curriculumCopy.assignmentPoints(assignment.points)} · {assignment.dueLabel}
                 </span>
               </div>
+              <p className="mt-2 text-xs text-slate-500">
+                {activeItem?.mandatory === false
+                  ? curriculumCopy.optionalBadge
+                  : curriculumCopy.assignmentMandatoryHint}
+                {activeItem?.placement === 'course'
+                  ? ` · ${curriculumCopy.coursePlacement}`
+                  : ` · ${curriculumCopy.modulePlacement}`}
+              </p>
               <p className="mt-3 text-sm leading-relaxed text-slate-600">{assignment.brief}</p>
               <p className="mt-3 text-xs text-slate-400">
                 {curriculumCopy.assignmentAccept}: {assignment.accept}
@@ -1004,6 +1053,19 @@ export function EmployeeCourseLessonPage() {
                                       }`}
                                     >
                                       {curriculumCopy.type[item.type]}
+                                    </span>
+                                  ) : null}
+                                  {item.type !== 'video' ? (
+                                    <span
+                                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                                        item.mandatory === false
+                                          ? 'bg-slate-100 text-slate-600'
+                                          : 'bg-rose-100 text-rose-700'
+                                      }`}
+                                    >
+                                      {item.mandatory === false
+                                        ? curriculumCopy.optionalBadge
+                                        : curriculumCopy.mandatoryBadge}
                                     </span>
                                   ) : null}
                                 </span>

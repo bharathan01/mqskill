@@ -39,6 +39,11 @@ function stepIndexForPath(pathname: string) {
 
 function computeDetailsErrors(details: CourseBuilderDetails): CourseBuilderDetailsErrors {
   const errors: CourseBuilderDetailsErrors = {}
+  if (!details.versionKind) errors.versionKind = 'Choose new course or next version'
+  if (details.versionKind === 'revision' && !details.parentCourseId) {
+    errors.parentCourse = 'Select which course this version updates'
+  }
+  if (!details.versionName.trim()) errors.versionName = 'Enter a version name'
   if (!details.title.trim()) errors.title = 'Course title is required'
   if (!details.code.trim()) errors.code = 'Course code is required'
   if (!details.category) errors.category = 'Select a category'
@@ -127,6 +132,7 @@ export function CourseBuilderShell() {
   const isPublished = publishState === 'published'
   const isLastStep = stepIndex === courseBuilderSteps.length - 1
   const publishing = publishState === 'publishing'
+  const versionLabel = details.versionName.trim() || 'v1.0'
 
   return (
     <CourseBuilderContext.Provider value={value}>
@@ -142,8 +148,14 @@ export function CourseBuilderShell() {
             </Link>
             <div className="mt-2 flex flex-wrap items-center gap-2.5">
               <h1 className="text-2xl font-bold tracking-tight text-navy">{copy.title}</h1>
-              <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
-                {isPublished ? 'Published · v1.0' : copy.draftBadge}
+              <span
+                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                  isPublished
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : 'bg-amber-50 text-amber-700'
+                }`}
+              >
+                {isPublished ? `Published · ${versionLabel}` : `Draft · ${versionLabel}`}
               </span>
             </div>
             <p className="mt-1 text-sm text-slate-500">{copy.subtitle}</p>

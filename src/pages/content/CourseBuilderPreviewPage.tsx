@@ -60,7 +60,12 @@ export function CourseBuilderPreviewPage() {
           ? 'All mandatory submodules'
           : `${settings.completionPercent}% progress`,
     },
-    { label: labels.version, value: 'v1.0' },
+    {
+      label: labels.version,
+      value:
+        details.versionName.trim() ||
+        (details.versionKind === 'revision' ? 'Next version' : 'v1.0'),
+    },
   ]
 
   return (

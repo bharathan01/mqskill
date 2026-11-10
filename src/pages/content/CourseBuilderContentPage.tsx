@@ -1,10 +1,18 @@
 import { useRef, useState, type ChangeEvent, type ReactNode } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import {
+  contentLibraryAssignments,
+  contentLibraryQuizzes,
+  contentMediaVideos,
   courseBuilderContentCopy,
   createBuilderModule,
+  createBuilderModuleAssignment,
   createBuilderSubmodule,
+  getLibraryAssignment,
+  getLibraryQuiz,
   type BuilderModule,
+  type BuilderModuleAssignment,
+  type BuilderQuiz,
   type BuilderSubmodule,
   type SubmoduleType,
 } from '@/constants'
@@ -104,6 +112,7 @@ function swap<T>(items: T[], from: number, to: number) {
 }
 
 export function CourseBuilderContentPage() {
+  const navigate = useNavigate()
   const { modules, updateModules } = useCourseBuilder()
   const videoInputRef = useRef<HTMLInputElement>(null)
   const [selection, setSelection] = useState<Selection>(() => ({
@@ -115,11 +124,108 @@ export function CourseBuilderContentPage() {
   const activeSubmodule =
     activeModule?.submodules.find((item) => item.id === selection.submoduleId) ?? null
   const activePreview = activeSubmodule ? previewSrc(activeSubmodule) : ''
+  const activeAssignment = activeModule?.assignment ?? createBuilderModuleAssignment()
 
   function patchModule(moduleId: string, patch: Partial<BuilderModule>) {
     updateModules((current) =>
       current.map((module) => (module.id === moduleId ? { ...module, ...patch } : module)),
     )
+  }
+
+  function patchModuleQuiz(moduleId: string, patch: Partial<BuilderQuiz>) {
+    updateModules((current) =>
+      current.map((module) =>
+        module.id === moduleId ? { ...module, quiz: { ...module.quiz, ...patch } } : module,
+      ),
+    )
+  }
+
+  function patchModuleAssignment(moduleId: string, patch: Partial<BuilderModuleAssignment>) {
+    updateModules((current) =>
+      current.map((module) =>
+        module.id === moduleId
+          ? {
+              ...module,
+              assignment: {
+                ...(module.assignment ?? createBuilderModuleAssignment()),
+                ...patch,
+              },
+            }
+          : module,
+      ),
+    )
+  }
+
+  function enableModuleQuiz(moduleId: string, openEditor = true) {
+    patchModuleQuiz(moduleId, { enabled: true, mandatory: true })
+    setSelection({ moduleId, submoduleId: null })
+    if (openEditor) navigate(`${paths.content.courseQuiz}?module=${moduleId}`)
+  }
+
+  function enableModuleAssignment(moduleId: string, openEditor = true) {
+    patchModuleAssignment(moduleId, { enabled: true, mandatory: true })
+    setSelection({ moduleId, submoduleId: null })
+    if (openEditor) navigate(`${paths.content.courseQuiz}?module=${moduleId}`)
+  }
+
+  function attachQuizFromLibrary(moduleId: string, libraryId: string) {
+    if (!libraryId) {
+      patchModuleQuiz(moduleId, { libraryId: '', enabled: true })
+      return
+    }
+    const library = getLibraryQuiz(libraryId)
+    if (!library) return
+    patchModuleQuiz(moduleId, {
+      enabled: true,
+      libraryId,
+      title: library.title,
+      passMark: library.passMark,
+      maxAttempts: library.maxAttempts,
+      timeLimitMin: library.timeLimitMin,
+      mandatory: true,
+      questions: library.questions.map((question) => ({
+        id: question.id,
+        prompt: question.prompt,
+        type:
+          question.type === 'multiple'
+            ? ('multiple' as const)
+            : question.type === 'truefalse'
+              ? ('truefalse' as const)
+              : ('single' as const),
+        points: question.points,
+        explanation: '',
+        options:
+          question.options.length > 0
+            ? question.options.map((option) => ({
+                id: option.id,
+                text: option.text,
+                correct: option.correct,
+              }))
+            : [
+                { id: `${question.id}-a`, text: '', correct: true },
+                { id: `${question.id}-b`, text: '', correct: false },
+              ],
+      })),
+    })
+  }
+
+  function attachAssignmentFromLibrary(moduleId: string, libraryId: string) {
+    if (!libraryId) {
+      patchModuleAssignment(moduleId, { enabled: false, libraryId: '', title: '', brief: '' })
+      return
+    }
+    const library = getLibraryAssignment(libraryId)
+    if (!library) return
+    patchModuleAssignment(moduleId, {
+      enabled: true,
+      libraryId,
+      title: library.title,
+      brief: library.brief,
+      points: library.points,
+      dueDays: library.dueDays,
+      accept: library.accept,
+      mandatory: true,
+    })
   }
 
   function patchSubmodule(
@@ -376,7 +482,54 @@ export function CourseBuilderContentPage() {
                       })}
                     </ul>
 
-                    <div className="flex items-center justify-between gap-2 border-t border-slate-100 px-3 py-2">
+                    {(module.quiz.enabled || module.assignment?.enabled) && (
+                      <ul className="space-y-0.5 border-t border-slate-100 px-2 py-2">
+                        {module.quiz.enabled ? (
+                          <li>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                navigate(`${paths.content.courseQuiz}?module=${module.id}`)
+                              }
+                              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm text-violet-700 hover:bg-violet-50"
+                            >
+                              <ClipboardIcon className="h-4 w-4 shrink-0" />
+                              <span className="min-w-0 flex-1 truncate font-medium">
+                                {module.quiz.title || copy.quizBadge}
+                              </span>
+                              {module.quiz.mandatory ? (
+                                <span className="rounded-full bg-rose-50 px-1.5 py-0.5 text-[10px] font-bold text-rose-600">
+                                  Required
+                                </span>
+                              ) : null}
+                            </button>
+                          </li>
+                        ) : null}
+                        {module.assignment?.enabled ? (
+                          <li>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                navigate(`${paths.content.courseQuiz}?module=${module.id}`)
+                              }
+                              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm text-amber-700 hover:bg-amber-50"
+                            >
+                              <FileIcon className="h-4 w-4 shrink-0" />
+                              <span className="min-w-0 flex-1 truncate font-medium">
+                                {module.assignment.title || copy.assignmentBadge}
+                              </span>
+                              {module.assignment.mandatory ? (
+                                <span className="rounded-full bg-rose-50 px-1.5 py-0.5 text-[10px] font-bold text-rose-600">
+                                  Required
+                                </span>
+                              ) : null}
+                            </button>
+                          </li>
+                        ) : null}
+                      </ul>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 px-3 py-2">
                       <button
                         type="button"
                         onClick={() => addSubmodule(module.id)}
@@ -385,19 +538,42 @@ export function CourseBuilderContentPage() {
                         <PlusIcon className="h-3.5 w-3.5" />
                         {copy.addSubmodule}
                       </button>
-                      <Link
-                        to={`${paths.content.courseQuiz}?module=${module.id}`}
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                          module.quiz.enabled
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : 'bg-slate-100 text-slate-500 hover:text-navy'
-                        }`}
-                      >
-                        <ClipboardIcon className="h-3.5 w-3.5" />
-                        {module.quiz.enabled
-                          ? `${copy.quizBadge} · ${module.quiz.questions.length}`
-                          : copy.addQuiz}
-                      </Link>
+                      {module.quiz.enabled ? (
+                        <Link
+                          to={`${paths.content.courseQuiz}?module=${module.id}`}
+                          className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700"
+                        >
+                          <ClipboardIcon className="h-3.5 w-3.5" />
+                          {copy.editQuiz}
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => enableModuleQuiz(module.id, false)}
+                          className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-700 hover:bg-violet-100"
+                        >
+                          <PlusIcon className="h-3.5 w-3.5" />
+                          {copy.addQuiz}
+                        </button>
+                      )}
+                      {module.assignment?.enabled ? (
+                        <Link
+                          to={`${paths.content.courseQuiz}?module=${module.id}`}
+                          className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700"
+                        >
+                          <FileIcon className="h-3.5 w-3.5" />
+                          {copy.editAssignment}
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => enableModuleAssignment(module.id, false)}
+                          className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100"
+                        >
+                          <PlusIcon className="h-3.5 w-3.5" />
+                          {copy.addAssignment}
+                        </button>
+                      )}
                     </div>
                   </li>
                 )
@@ -423,6 +599,7 @@ export function CourseBuilderContentPage() {
 
         <div className="space-y-6">
           {activeModule ? (
+            <>
             <ContentCard
               title={`${copy.modulePrefix} ${moduleNumber}`}
               description={activeModule.submodules.length + ' submodules'}
@@ -447,6 +624,97 @@ export function CourseBuilderContentPage() {
                 </ContentField>
               </div>
             </ContentCard>
+
+            <ContentCard title={copy.assessmentsTitle} description={copy.assessmentsHint}>
+              <div className="space-y-5">
+                <div>
+                  <ContentToggle
+                    checked={activeModule.quiz.enabled}
+                    label={copy.addQuiz}
+                    onChange={(enabled) => {
+                      if (enabled) enableModuleQuiz(activeModule.id, false)
+                      else patchModuleQuiz(activeModule.id, { enabled: false })
+                    }}
+                  />
+                  {activeModule.quiz.enabled ? (
+                    <div className="mt-3 grid gap-3">
+                      <ContentField label={copy.attachQuiz} htmlFor="cb-module-quiz-lib">
+                        <ContentSelect
+                          id="cb-module-quiz-lib"
+                          value={activeModule.quiz.libraryId}
+                          onChange={(event) =>
+                            attachQuizFromLibrary(activeModule.id, event.target.value)
+                          }
+                        >
+                          <option value="">{copy.noLibraryQuiz}</option>
+                          {contentLibraryQuizzes.map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.title}
+                              {item.usedInCourses.length
+                                ? ` · ${item.usedInCourses.map((c) => c.title).join(', ')}`
+                                : ''}
+                            </option>
+                          ))}
+                        </ContentSelect>
+                      </ContentField>
+                      <ContentToggle
+                        checked={activeModule.quiz.mandatory}
+                        label={copy.quizMandatory}
+                        onChange={(mandatory) => patchModuleQuiz(activeModule.id, { mandatory })}
+                      />
+                      <Link
+                        to={`${paths.content.courseQuiz}?module=${activeModule.id}`}
+                        className="inline-flex text-sm font-semibold text-brand hover:text-blue-700"
+                      >
+                        {copy.configureQuiz}
+                      </Link>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="border-t border-slate-100 pt-5">
+                  <ContentToggle
+                    checked={activeAssignment.enabled}
+                    label={copy.addAssignment}
+                    onChange={(enabled) => {
+                      if (enabled) enableModuleAssignment(activeModule.id, false)
+                      else patchModuleAssignment(activeModule.id, { enabled: false })
+                    }}
+                  />
+                  {activeAssignment.enabled ? (
+                    <div className="mt-3 grid gap-3">
+                      <ContentField label={copy.attachAssignment} htmlFor="cb-module-asg-lib">
+                        <ContentSelect
+                          id="cb-module-asg-lib"
+                          value={activeAssignment.libraryId}
+                          onChange={(event) =>
+                            attachAssignmentFromLibrary(activeModule.id, event.target.value)
+                          }
+                        >
+                          <option value="">{copy.noLibraryAssignment}</option>
+                          {contentLibraryAssignments.map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.title}
+                              {item.usedInCourses.length
+                                ? ` · ${item.usedInCourses.map((c) => c.title).join(', ')}`
+                                : ''}
+                            </option>
+                          ))}
+                        </ContentSelect>
+                      </ContentField>
+                      <ContentToggle
+                        checked={activeAssignment.mandatory}
+                        label={copy.assignmentMandatory}
+                        onChange={(mandatory) =>
+                          patchModuleAssignment(activeModule.id, { mandatory })
+                        }
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </ContentCard>
+            </>
           ) : null}
 
           {activeModule && activeSubmodule ? (
@@ -548,23 +816,29 @@ export function CourseBuilderContentPage() {
                 ) : (
                   <div className="mt-3 grid gap-5 lg:grid-cols-[minmax(0,1fr)_16rem]">
                     <div className="space-y-4">
-                      <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1">
-                        {(['upload', 'url'] as const).map((source) => (
+                      <div className="inline-flex flex-wrap rounded-lg border border-slate-200 bg-slate-50 p-1">
+                        {(
+                          [
+                            { id: 'upload' as const, label: editorCopy.sourceUpload },
+                            { id: 'library' as const, label: editorCopy.sourceLibrary },
+                            { id: 'url' as const, label: editorCopy.sourceUrl },
+                          ] as const
+                        ).map((source) => (
                           <button
-                            key={source}
+                            key={source.id}
                             type="button"
                             onClick={() =>
                               patchSubmodule(activeModule.id, activeSubmodule.id, {
-                                video: { source },
+                                video: { source: source.id },
                               })
                             }
                             className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
-                              activeSubmodule.video.source === source
+                              activeSubmodule.video.source === source.id
                                 ? 'bg-white text-brand shadow-sm'
                                 : 'text-slate-500 hover:text-navy'
                             }`}
                           >
-                            {source === 'upload' ? editorCopy.sourceUpload : editorCopy.sourceUrl}
+                            {source.label}
                           </button>
                         ))}
                       </div>
@@ -597,6 +871,75 @@ export function CourseBuilderContentPage() {
                               : editorCopy.upload}
                           </button>
                         </div>
+                      ) : activeSubmodule.video.source === 'library' ? (
+                        <div className="space-y-3">
+                          <ContentField label={editorCopy.library} htmlFor="cb-video-library">
+                            <ContentSelect
+                              id="cb-video-library"
+                              value={activeSubmodule.video.mediaId}
+                              onChange={(event) => {
+                                const media = contentMediaVideos.find(
+                                  (item) => item.id === event.target.value,
+                                )
+                                if (!media) {
+                                  patchSubmodule(activeModule.id, activeSubmodule.id, {
+                                    video: {
+                                      mediaId: '',
+                                      fileName: '',
+                                      previewUrl: '',
+                                      url: '',
+                                      captions: false,
+                                    },
+                                  })
+                                  return
+                                }
+                                patchSubmodule(activeModule.id, activeSubmodule.id, {
+                                  durationMin: Math.max(
+                                    1,
+                                    Math.round(media.durationSeconds / 60) ||
+                                      activeSubmodule.durationMin,
+                                  ),
+                                  video: {
+                                    source: 'library',
+                                    mediaId: media.id,
+                                    fileName: media.title,
+                                    previewUrl: media.previewUrl?.trim() || '',
+                                    url: media.previewUrl?.trim() || '',
+                                    captions: media.captions,
+                                  },
+                                })
+                              }}
+                            >
+                              <option value="">{editorCopy.libraryPlaceholder}</option>
+                              {contentMediaVideos
+                                .filter((item) => item.status === 'ready')
+                                .map((item) => (
+                                  <option key={item.id} value={item.id}>
+                                    {item.title} · {item.duration}
+                                    {item.captions ? ' · captions' : ''}
+                                  </option>
+                                ))}
+                            </ContentSelect>
+                          </ContentField>
+                          {contentMediaVideos.filter((item) => item.status === 'ready').length ===
+                          0 ? (
+                            <p className="text-xs text-slate-400">{editorCopy.libraryEmpty}</p>
+                          ) : (
+                            <p className="text-xs text-slate-400">{editorCopy.libraryHint}</p>
+                          )}
+                          {activeSubmodule.video.mediaId ? (
+                            <p className="inline-flex items-center gap-2 rounded-lg bg-[#EFF4FF] px-3 py-2 text-sm font-semibold text-brand">
+                              <VideoIcon className="h-4 w-4" />
+                              {activeSubmodule.video.fileName}
+                            </p>
+                          ) : null}
+                          <Link
+                            to={paths.content.media}
+                            className="inline-flex text-xs font-semibold text-brand hover:text-blue-700"
+                          >
+                            {editorCopy.openLibrary}
+                          </Link>
+                        </div>
                       ) : (
                         <ContentField label={editorCopy.url} htmlFor="cb-video-url">
                           <ContentTextInput
@@ -610,6 +953,7 @@ export function CourseBuilderContentPage() {
                                   url: event.target.value,
                                   previewUrl: event.target.value.trim(),
                                   fileName: '',
+                                  mediaId: '',
                                 },
                               })
                             }

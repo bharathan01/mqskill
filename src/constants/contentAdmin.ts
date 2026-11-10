@@ -38,7 +38,7 @@ export const contentAdminNavGroups = [
     icon: 'scorm' as const,
     children: [
       { id: 'packages', label: 'SCORM Packages', to: paths.content.scorm },
-      { id: 'validation', label: 'Validation report', to: paths.content.scormValidation },
+      { id: 'validation', label: 'Package Validation', to: paths.content.scormValidation },
     ],
   },
   {
@@ -46,7 +46,8 @@ export const contentAdminNavGroups = [
     label: 'Assessments & Quizzes',
     icon: 'assessments' as const,
     children: [
-      { id: 'builder', label: 'Final Assessment builder', to: paths.content.assessments },
+      { id: 'quizzes', label: 'Quizzes', to: paths.content.quizzes },
+      { id: 'assignments', label: 'Assignments', to: paths.content.assignments },
       { id: 'bank', label: 'Question Bank', to: paths.content.questionBank },
     ],
   },
@@ -85,11 +86,24 @@ export const contentAdminNavGroups = [
   },
 ] as const
 
+export type ContentDashboardRangeId = '7d' | '30d' | '90d' | 'all'
+
+export const contentAdminDashboardRanges: Array<{
+  id: ContentDashboardRangeId
+  label: string
+  days: number | null
+}> = [
+  { id: '7d', label: 'Last 7 days', days: 7 },
+  { id: '30d', label: 'Last 30 days', days: 30 },
+  { id: '90d', label: 'Last 90 days', days: 90 },
+  { id: 'all', label: 'All time', days: null },
+]
+
 export const contentAdminDashboardPage = {
   title: 'Content Dashboard',
   badge: 'Sample data',
   subtitle: 'Create, manage and publish learning content across MaqSkillz.',
-  range: 'Last 30 days',
+  rangeLabel: 'Date range',
   viewAll: 'View All Courses',
   createCourse: 'Create New Course',
   recentCourses: 'Recent Courses',
@@ -106,19 +120,56 @@ export const contentAdminDashboardPage = {
     updated: 'Last Updated',
     actions: 'Actions',
   },
+  actions: {
+    edit: 'Edit course',
+    view: 'View course',
+    versions: 'Version history',
+    archive: 'Archive course',
+    restore: 'Restore course',
+  },
   status: {
     published: 'Published',
     draft: 'Draft',
     archived: 'Archived',
   },
+  metrics: {
+    total: 'Total Courses',
+    published: 'Published Courses',
+    draft: 'Draft Courses',
+    updates: 'Recent Course Updates',
+    totalDetail: (count: number) =>
+      count === 1 ? '1 course in this period' : `${count} courses in this period`,
+    publishedDetail: 'Live and available to learners',
+    draftDetail: 'In preparation',
+    updatesDetail: 'Published or revised this period',
+  },
+  archiveNotice: 'moved to Archived.',
+  restoreNotice: 'restored as a draft.',
+  emptyCourses: 'No courses match this view.',
   activityTitle: 'Recent Content Activity',
   activitySubtitle: 'Across all courses',
   viewLog: 'View log',
   attentionTitle: 'Content Requiring Attention',
-  issues: '5 issues',
+  issues: 'issues',
   quickTitle: 'Quick Actions',
   quickSubtitle: 'Common content workflows',
 } as const
+
+/** Reference "today" aligned with sample content dates. */
+export const contentAdminReferenceDate = new Date('2026-11-10T12:00:00')
+
+export function parseContentUpdatedAt(value: string) {
+  return new Date(value.replace(' · ', ' ')).getTime() || 0
+}
+
+export function isWithinDashboardRange(updated: string, rangeId: ContentDashboardRangeId) {
+  const range = contentAdminDashboardRanges.find((item) => item.id === rangeId)
+  if (!range || range.days == null) return true
+  const updatedAt = parseContentUpdatedAt(updated)
+  if (!updatedAt) return false
+  const start = contentAdminReferenceDate.getTime() - range.days * 24 * 60 * 60 * 1000
+  return updatedAt >= start && updatedAt <= contentAdminReferenceDate.getTime() + 24 * 60 * 60 * 1000
+}
 
 export const contentAdminMetrics = [
   {
@@ -236,6 +287,7 @@ export const contentAdminActivity = [
     title: 'ISO 9001 Training',
     detail: 'Version 2.0 published',
     time: '10:24 AM',
+    daysAgo: 0,
     tone: 'green' as const,
   },
   {
@@ -243,6 +295,7 @@ export const contentAdminActivity = [
     title: 'Workplace Safety Essentials',
     detail: 'Module 2.3 updated in draft',
     time: '09:05 AM',
+    daysAgo: 0,
     tone: 'blue' as const,
   },
   {
@@ -250,6 +303,7 @@ export const contentAdminActivity = [
     title: 'ISO 27001 Awareness',
     detail: 'Module 1 Quiz edited',
     time: 'Yesterday',
+    daysAgo: 1,
     tone: 'blue' as const,
   },
   {
@@ -257,6 +311,7 @@ export const contentAdminActivity = [
     title: 'Fire Safety Awareness',
     detail: 'Captions uploaded for Lesson 04',
     time: 'Yesterday',
+    daysAgo: 1,
     tone: 'purple' as const,
   },
   {
@@ -264,6 +319,23 @@ export const contentAdminActivity = [
     title: 'GDPR Basics',
     detail: 'SCORM validation failed',
     time: '2 days ago',
+    daysAgo: 2,
+    tone: 'red' as const,
+  },
+  {
+    id: 'a6',
+    title: 'Project Management Fundamentals',
+    detail: 'Outline draft saved',
+    time: '12 days ago',
+    daysAgo: 12,
+    tone: 'blue' as const,
+  },
+  {
+    id: 'a7',
+    title: 'Data Privacy & GDPR Basics',
+    detail: 'Archived from catalogue',
+    time: '45 days ago',
+    daysAgo: 45,
     tone: 'red' as const,
   },
 ]
@@ -274,6 +346,7 @@ export const contentAdminAttention = [
     title: 'SCORM validation failed',
     detail: 'GDPR Basics · package upload',
     action: 'Validate',
+    to: paths.content.scormValidation,
     tone: 'red' as const,
   },
   {
@@ -281,6 +354,7 @@ export const contentAdminAttention = [
     title: 'Draft missing mandatory content',
     detail: 'Workplace Safety · Module 3',
     action: 'Open builder',
+    to: paths.content.courseBuilder,
     tone: 'amber' as const,
   },
   {
@@ -288,6 +362,7 @@ export const contentAdminAttention = [
     title: 'Submodule missing primary video',
     detail: 'Project Management · 1.2',
     action: 'Add media',
+    to: paths.content.media,
     tone: 'amber' as const,
   },
   {
@@ -295,6 +370,7 @@ export const contentAdminAttention = [
     title: 'Certificate template outdated',
     detail: 'ISO 9001 CPD certificate',
     action: 'Update',
+    to: paths.content.certificates,
     tone: 'blue' as const,
   },
   {
@@ -302,6 +378,7 @@ export const contentAdminAttention = [
     title: 'Quiz below pass threshold',
     detail: 'Fire Safety · Module Quiz',
     action: 'Review',
+    to: paths.content.quizzes,
     tone: 'red' as const,
   },
 ]
@@ -317,18 +394,106 @@ export const contentAdminQuickActions = [
     id: 'scorm',
     title: 'Upload / Generate SCORM',
     detail: 'Package and validate SCORM content',
-    to: paths.content.dashboard,
+    to: paths.content.scorm,
   },
   {
     id: 'quiz',
-    title: 'Create Module Quiz',
-    detail: 'Add a quiz after a module’s submodules',
-    to: paths.content.courseQuiz,
+    title: 'Create Quiz',
+    detail: 'Build a reusable quiz from the question bank',
+    to: paths.content.quizzes,
   },
   {
     id: 'cpd',
     title: 'Configure CPD Requirements',
     detail: 'Hours, accreditation and certificates',
-    to: paths.content.dashboard,
+    to: paths.content.cpd,
   },
 ]
+
+/* ----------------------------- Notifications ----------------------------- */
+
+export type ContentNotificationTone = 'publish' | 'draft' | 'media' | 'scorm' | 'qa' | 'system'
+
+export type ContentNotification = {
+  id: string
+  title: string
+  detail: string
+  time: string
+  unread: boolean
+  tone: ContentNotificationTone
+  to: string
+}
+
+export const contentNotificationsPage = {
+  title: 'Notifications',
+  subtitle: 'Publishing, validation and learner feedback for content ops.',
+  markAll: 'Mark all as read',
+  markedToast: 'All notifications marked as read.',
+  empty: 'You’re all caught up. No notifications in this view.',
+  filters: {
+    all: 'All',
+    unread: 'Unread',
+  },
+  unreadBadge: 'Unread',
+} as const
+
+export const contentNotifications: ContentNotification[] = [
+  {
+    id: 'n1',
+    title: 'ISO 9001 v2.0 published',
+    detail: 'Learners can enrol in the updated Quality Management course.',
+    time: '10:24 AM',
+    unread: true,
+    tone: 'publish',
+    to: paths.content.courses,
+  },
+  {
+    id: 'n2',
+    title: 'SCORM validation failed',
+    detail: 'GDPR Basics package needs fixes before publishing.',
+    time: '2 hours ago',
+    unread: true,
+    tone: 'scorm',
+    to: paths.content.scormValidation,
+  },
+  {
+    id: 'n3',
+    title: 'New student question',
+    detail: 'Aarav Sharma asked about ISO 9001 clause 5.2.',
+    time: '3 hours ago',
+    unread: true,
+    tone: 'qa',
+    to: paths.content.qa,
+  },
+  {
+    id: 'n4',
+    title: 'Draft auto-saved',
+    detail: 'Workplace Safety Essentials · Module 2.3',
+    time: 'Yesterday',
+    unread: false,
+    tone: 'draft',
+    to: paths.content.drafts,
+  },
+  {
+    id: 'n5',
+    title: 'Captions ready',
+    detail: 'Fire Safety Lesson 04 captions finished processing.',
+    time: 'Yesterday',
+    unread: false,
+    tone: 'media',
+    to: paths.content.media,
+  },
+  {
+    id: 'n6',
+    title: 'Certificate template reminder',
+    detail: 'ISO 9001 CPD certificate template is outdated.',
+    time: '2 days ago',
+    unread: true,
+    tone: 'system',
+    to: paths.content.certificates,
+  },
+]
+
+export function contentUnreadNotificationCount(items: ContentNotification[] = contentNotifications) {
+  return items.filter((item) => item.unread).length
+}

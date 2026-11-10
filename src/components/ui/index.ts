@@ -72,6 +72,7 @@ export {
   MoreVerticalIcon,
   NetworkIcon,
   MenuIcon,
+  MinusCircleIcon,
   MonitorIcon,
   PaperclipIcon,
   PathIcon,
@@ -113,5 +114,6 @@ export {
   VideoIcon,
   VolumeIcon,
   UsersIcon,
+  XCircleIcon,
   YouTubeIcon,
 } from './icons'

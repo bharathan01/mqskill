@@ -1,21 +1,26 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { useSearchParams } from 'react-router'
 import {
   contentAssessmentTypes,
   contentDifficulties,
   contentQuestionBank,
   contentQuestionBankPage,
+  createAssessmentQuestion,
   queueReusedQuestion,
   type QuestionBankItem,
   type QuestionDifficulty,
   type AssessmentQuestionType,
 } from '@/constants'
-import { paths } from '@/routes/paths'
 import {
   ContentBadge,
+  ContentCard,
   ContentEmptyState,
+  ContentField,
   ContentNotice,
   ContentRowAction,
+  ContentSelect,
+  ContentTextArea,
+  ContentTextInput,
 } from '@/components/common'
 import {
   ChartIcon,
@@ -24,6 +29,7 @@ import {
   CopyIcon,
   EyeIcon,
   FilterIcon,
+  PencilIcon,
   PlusIcon,
   RepeatIcon,
   SearchIcon,
@@ -55,8 +61,32 @@ function truncate(value: string, max = 90) {
   return value.length > max ? `${value.slice(0, max)}…` : value
 }
 
+type EditorDraft = {
+  id: string | null
+  prompt: string
+  type: AssessmentQuestionType
+  points: number
+  difficulty: QuestionDifficulty
+  course: string
+  tags: string
+  options: { text: string; correct: boolean }[]
+}
+
+function blankDraft(): EditorDraft {
+  const fresh = createAssessmentQuestion('single')
+  return {
+    id: null,
+    prompt: '',
+    type: 'single',
+    points: 1,
+    difficulty: 'easy',
+    course: 'General',
+    tags: '',
+    options: fresh.options.map((option) => ({ text: option.text, correct: option.correct })),
+  }
+}
+
 export function ContentQuestionBankPage() {
-  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [items, setItems] = useState<QuestionBankItem[]>(contentQuestionBank)
   const [query, setQuery] = useState(() => searchParams.get('q') ?? '')
@@ -66,6 +96,7 @@ export function ContentQuestionBankPage() {
   const [selected, setSelected] = useState<string[]>([])
   const [preview, setPreview] = useState<QuestionBankItem | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [editor, setEditor] = useState<EditorDraft | null>(null)
 
   useEffect(() => {
     setQuery(searchParams.get('q') ?? '')
@@ -169,6 +200,49 @@ export function ContentQuestionBankPage() {
     setNotice(`“${truncate(item.prompt, 40)}” ${copy.removeNotice}`)
   }
 
+  function openCreate() {
+    setEditor(blankDraft())
+  }
+
+  function openEdit(item: QuestionBankItem) {
+    setEditor({
+      id: item.id,
+      prompt: item.prompt,
+      type: item.type,
+      points: item.points,
+      difficulty: item.difficulty,
+      course: item.course,
+      tags: item.tags.join(', '),
+      options: item.options.map((option) => ({ ...option })),
+    })
+  }
+
+  function saveEditor() {
+    if (!editor || !editor.prompt.trim()) return
+    const next: QuestionBankItem = {
+      id: editor.id ?? `qb-${Math.random().toString(36).slice(2, 8)}`,
+      prompt: editor.prompt.trim(),
+      type: editor.type,
+      tags: editor.tags
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+      difficulty: editor.difficulty,
+      points: editor.points,
+      course: editor.course.trim() || 'General',
+      usedIn: items.find((item) => item.id === editor.id)?.usedIn ?? 0,
+      updated: 'Just now',
+      options: editor.options,
+    }
+    setItems((current) =>
+      editor.id
+        ? current.map((item) => (item.id === editor.id ? next : item))
+        : [next, ...current],
+    )
+    setNotice(editor.id ? copy.updateNotice : copy.createNotice)
+    setEditor(null)
+  }
+
   return (
     <div className="space-y-6">
       <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -178,13 +252,153 @@ export function ContentQuestionBankPage() {
         </div>
         <button
           type="button"
-          onClick={() => navigate(paths.content.assessments)}
+          onClick={openCreate}
           className="inline-flex h-10 items-center gap-2 self-start rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-blue-700 lg:self-auto"
         >
           <PlusIcon className="h-4 w-4" />
           {copy.addQuestion}
         </button>
       </header>
+
+      {editor ? (
+        <ContentCard title={editor.id ? copy.editQuestion : copy.addQuestion}>
+          <div className="grid gap-4 md:grid-cols-2">
+            <ContentField label={copy.fields.prompt} htmlFor="qb-prompt" className="md:col-span-2">
+              <ContentTextArea
+                id="qb-prompt"
+                rows={3}
+                value={editor.prompt}
+                onChange={(event) => setEditor({ ...editor, prompt: event.target.value })}
+              />
+            </ContentField>
+            <ContentField label={copy.fields.type} htmlFor="qb-type">
+              <ContentSelect
+                id="qb-type"
+                value={editor.type}
+                onChange={(event) => {
+                  const nextType = event.target.value as AssessmentQuestionType
+                  const fresh = createAssessmentQuestion(nextType)
+                  setEditor({
+                    ...editor,
+                    type: nextType,
+                    options: fresh.options.map((option) => ({
+                      text: option.text,
+                      correct: option.correct,
+                    })),
+                  })
+                }}
+              >
+                {contentAssessmentTypes.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.label}
+                  </option>
+                ))}
+              </ContentSelect>
+            </ContentField>
+            <ContentField label={copy.fields.points} htmlFor="qb-points">
+              <ContentTextInput
+                id="qb-points"
+                type="number"
+                min={1}
+                value={editor.points}
+                onChange={(event) =>
+                  setEditor({ ...editor, points: Math.max(1, Number(event.target.value) || 1) })
+                }
+              />
+            </ContentField>
+            <ContentField label={copy.fields.difficulty} htmlFor="qb-diff">
+              <ContentSelect
+                id="qb-diff"
+                value={editor.difficulty}
+                onChange={(event) =>
+                  setEditor({ ...editor, difficulty: event.target.value as QuestionDifficulty })
+                }
+              >
+                {contentDifficulties.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.label}
+                  </option>
+                ))}
+              </ContentSelect>
+            </ContentField>
+            <ContentField label={copy.fields.course} htmlFor="qb-course">
+              <ContentTextInput
+                id="qb-course"
+                value={editor.course}
+                onChange={(event) => setEditor({ ...editor, course: event.target.value })}
+              />
+            </ContentField>
+            <ContentField label={copy.fields.tags} htmlFor="qb-tags" className="md:col-span-2">
+              <ContentTextInput
+                id="qb-tags"
+                value={editor.tags}
+                placeholder="Fire safety, Emergency"
+                onChange={(event) => setEditor({ ...editor, tags: event.target.value })}
+              />
+            </ContentField>
+          </div>
+          {editor.type !== 'short' ? (
+            <div className="mt-4">
+              <p className="mb-2 text-sm font-semibold text-navy">Options</p>
+              <ul className="space-y-2">
+                {editor.options.map((option, index) => (
+                  <li key={index} className="flex items-center gap-2">
+                    <ContentTextInput
+                      value={option.text}
+                      className="flex-1"
+                      onChange={(event) =>
+                        setEditor({
+                          ...editor,
+                          options: editor.options.map((entry, entryIndex) =>
+                            entryIndex === index ? { ...entry, text: event.target.value } : entry,
+                          ),
+                        })
+                      }
+                    />
+                    <label className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+                      <input
+                        type={editor.type === 'multiple' ? 'checkbox' : 'radio'}
+                        name="qb-correct"
+                        checked={option.correct}
+                        onChange={(event) =>
+                          setEditor({
+                            ...editor,
+                            options: editor.options.map((entry, entryIndex) =>
+                              editor.type === 'multiple'
+                                ? entryIndex === index
+                                  ? { ...entry, correct: event.target.checked }
+                                  : entry
+                                : { ...entry, correct: entryIndex === index },
+                            ),
+                          })
+                        }
+                        className="accent-[#004ea8]"
+                      />
+                      Correct
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setEditor(null)}
+              className="inline-flex h-10 items-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-navy hover:bg-slate-50"
+            >
+              {copy.cancelEdit}
+            </button>
+            <button
+              type="button"
+              onClick={saveEditor}
+              className="inline-flex h-10 items-center rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-blue-700"
+            >
+              {copy.saveQuestion}
+            </button>
+          </div>
+        </ContentCard>
+      ) : null}
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric) => (
@@ -362,6 +576,9 @@ export function ContentQuestionBankPage() {
                   <td className="px-3 py-3 whitespace-nowrap text-slate-500">{item.updated}</td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-1.5">
+                      <ContentRowAction label={copy.actions.edit} onClick={() => openEdit(item)}>
+                        <PencilIcon className="h-3.5 w-3.5" />
+                      </ContentRowAction>
                       <ContentRowAction label={copy.actions.reuse} onClick={() => reuse([item.id])}>
                         <RepeatIcon className="h-3.5 w-3.5" />
                       </ContentRowAction>

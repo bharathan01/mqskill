@@ -8,7 +8,16 @@ import type {
 export type CourseBuilderPublishState = 'idle' | 'confirm' | 'publishing' | 'published'
 
 export type CourseBuilderDetailsErrors = Partial<
-  Record<'title' | 'code' | 'category' | 'shortDescription', string>
+  Record<
+    | 'title'
+    | 'code'
+    | 'category'
+    | 'shortDescription'
+    | 'versionKind'
+    | 'parentCourse'
+    | 'versionName',
+    string
+  >
 >
 
 export type CourseBuilderContextValue = {

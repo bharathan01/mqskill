@@ -1,4 +1,8 @@
-import { courseBuilderSettingsCopy } from '@/constants'
+import {
+  contentLibraryAssignments,
+  contentLibraryQuizzes,
+  courseBuilderSettingsCopy,
+} from '@/constants'
 import {
   ContentCard,
   ContentField,
@@ -134,7 +138,19 @@ export function CourseBuilderSettingsPage() {
             <ContentToggle
               checked={settings.finalAssessment}
               label={fields.finalAssessment}
-              onChange={(finalAssessment) => updateSettings({ finalAssessment })}
+              onChange={(finalAssessment) =>
+                updateSettings({
+                  finalAssessment,
+                  ...(finalAssessment
+                    ? {}
+                    : {
+                        finalQuizId: '',
+                        finalAssignmentId: '',
+                        finalQuizMandatory: false,
+                        finalAssignmentMandatory: false,
+                      }),
+                })
+              }
             />
           </div>
           {settings.finalAssessment ? (
@@ -173,6 +189,89 @@ export function CourseBuilderSettingsPage() {
                 />
               </ContentField>
             </>
+          ) : null}
+        </div>
+      </ContentCard>
+
+      <ContentCard title={copy.sections.endAssessments}>
+        <div className="grid gap-4 md:grid-cols-2">
+          <ContentField
+            label={fields.finalQuiz}
+            htmlFor="cs-final-quiz"
+            hint={fields.finalQuizHint}
+            className="md:col-span-2"
+          >
+            <ContentSelect
+              id="cs-final-quiz"
+              value={settings.finalQuizId}
+              onChange={(event) =>
+                updateSettings({
+                  finalQuizId: event.target.value,
+                  finalAssessment: Boolean(event.target.value || settings.finalAssignmentId),
+                })
+              }
+            >
+              <option value="">{fields.finalQuizNone}</option>
+              {contentLibraryQuizzes
+                .filter((item) => item.status === 'ready')
+                .map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.title}
+                    {item.usedInCourses.length
+                      ? ` · ${item.usedInCourses.map((c) => c.title).join(', ')}`
+                      : ''}
+                  </option>
+                ))}
+            </ContentSelect>
+          </ContentField>
+          {settings.finalQuizId ? (
+            <div className="md:col-span-2">
+              <ContentToggle
+                checked={settings.finalQuizMandatory}
+                label={fields.finalQuizMandatory}
+                onChange={(finalQuizMandatory) => updateSettings({ finalQuizMandatory })}
+              />
+            </div>
+          ) : null}
+          <ContentField
+            label={fields.finalAssignment}
+            htmlFor="cs-final-asg"
+            hint={fields.finalAssignmentHint}
+            className="md:col-span-2"
+          >
+            <ContentSelect
+              id="cs-final-asg"
+              value={settings.finalAssignmentId}
+              onChange={(event) =>
+                updateSettings({
+                  finalAssignmentId: event.target.value,
+                  finalAssessment: Boolean(event.target.value || settings.finalQuizId),
+                })
+              }
+            >
+              <option value="">{fields.finalAssignmentNone}</option>
+              {contentLibraryAssignments
+                .filter((item) => item.status === 'ready')
+                .map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.title}
+                    {item.usedInCourses.length
+                      ? ` · ${item.usedInCourses.map((c) => c.title).join(', ')}`
+                      : ''}
+                  </option>
+                ))}
+            </ContentSelect>
+          </ContentField>
+          {settings.finalAssignmentId ? (
+            <div className="md:col-span-2">
+              <ContentToggle
+                checked={settings.finalAssignmentMandatory}
+                label={fields.finalAssignmentMandatory}
+                onChange={(finalAssignmentMandatory) =>
+                  updateSettings({ finalAssignmentMandatory })
+                }
+              />
+            </div>
           ) : null}
         </div>
       </ContentCard>
