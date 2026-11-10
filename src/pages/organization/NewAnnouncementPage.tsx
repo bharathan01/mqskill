@@ -31,16 +31,16 @@ const copy = organizationNewAnnouncementPage
 
 export function OrganizationNewAnnouncementPage() {
   const navigate = useNavigate()
-  const [title, setTitle] = useState(copy.defaults.title)
-  const [message, setMessage] = useState(copy.defaults.message)
+  const [title, setTitle] = useState<string>(copy.defaults.title)
+  const [message, setMessage] = useState<string>(copy.defaults.message)
   const [audienceMode, setAudienceMode] = useState<AudienceMode>('departments')
   const [departmentIds, setDepartmentIds] = useState<string[]>([...copy.defaults.departmentIds])
   const [peopleIds, setPeopleIds] = useState<string[]>([])
   const [showDeptPicker, setShowDeptPicker] = useState(false)
-  const [courseId, setCourseId] = useState(copy.defaults.courseId)
-  const [when, setWhen] = useState(copy.defaults.when)
-  const [showInPortal, setShowInPortal] = useState(copy.defaults.showInPortal)
-  const [sendByEmail, setSendByEmail] = useState(copy.defaults.sendByEmail)
+  const [courseId, setCourseId] = useState<string>(copy.defaults.courseId)
+  const [when, setWhen] = useState<string>(copy.defaults.when)
+  const [showInPortal, setShowInPortal] = useState<boolean>(copy.defaults.showInPortal)
+  const [sendByEmail, setSendByEmail] = useState<boolean>(copy.defaults.sendByEmail)
   const [toast, setToast] = useState('')
 
   const selectedDepartments = useMemo(

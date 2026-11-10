@@ -8,10 +8,10 @@ const copy = employeeNewTicketPage
 
 export function EmployeeNewTicketPage() {
   const navigate = useNavigate()
-  const [category, setCategory] = useState(copy.defaults.category)
-  const [relatedCourse, setRelatedCourse] = useState(copy.defaults.relatedCourse)
-  const [subject, setSubject] = useState(copy.defaults.subject)
-  const [message, setMessage] = useState(copy.defaults.message)
+  const [category, setCategory] = useState<string>(copy.defaults.category)
+  const [relatedCourse, setRelatedCourse] = useState<string>(copy.defaults.relatedCourse)
+  const [subject, setSubject] = useState<string>(copy.defaults.subject)
+  const [message, setMessage] = useState<string>(copy.defaults.message)
   const [priority, setPriority] = useState<'normal' | 'high'>(copy.defaults.priority)
   const [attachmentName, setAttachmentName] = useState('')
   const [toast, setToast] = useState('')

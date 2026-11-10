@@ -544,22 +544,6 @@ export function createDefaultCourseBuilderDetails(): CourseBuilderDetails {
   }
 }
 
-function seedSubmodule(
-  title: string,
-  durationMin: number,
-  fileName: string,
-  options: Partial<Pick<BuilderSubmodule, 'type' | 'required'>> = {},
-): BuilderSubmodule {
-  const base = createBuilderSubmodule(title)
-  return {
-    ...base,
-    ...options,
-    durationMin,
-    description: `Learning objective for “${title}”.`,
-    video: { ...base.video, fileName, captions: Boolean(fileName) },
-  }
-}
-
 export function createDefaultCourseBuilderModules(): BuilderModule[] {
   return []
 }

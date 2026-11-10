@@ -191,7 +191,7 @@ export function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const [code, setCode] = useState<string[]>(emptyCode)
-  const [secondsLeft, setSecondsLeft] = useState(signupPage.otp.seconds)
+  const [secondsLeft, setSecondsLeft] = useState<number>(signupPage.otp.seconds)
   const inputsRef = useRef<Array<HTMLInputElement | null>>([])
 
   const checks = getPasswordChecks(password)

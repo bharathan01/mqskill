@@ -56,7 +56,7 @@ export function AdminLoginPage() {
   const [pendingUser, setPendingUser] = useState<AdminDemoUser | null>(null)
   const [error, setError] = useState('')
   const [code, setCode] = useState<string[]>(emptyCode)
-  const [secondsLeft, setSecondsLeft] = useState(copy.verify.seconds)
+  const [secondsLeft, setSecondsLeft] = useState<number>(copy.verify.seconds)
   const inputsRef = useRef<Array<HTMLInputElement | null>>([])
 
   useEffect(() => {

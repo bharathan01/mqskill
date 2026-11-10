@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactElement } from 'react'
 import { useLocation, useNavigate, useOutletContext } from 'react-router'
 import {
   organizationCatalogCategories,
@@ -37,7 +37,7 @@ const iconMap = {
   chat: ChatIcon,
 } satisfies Record<
   OrganizationCatalogIcon,
-  (props: { className?: string }) => JSX.Element
+  (props: { className?: string }) => ReactElement
 >
 
 type TrainingRequestState = {

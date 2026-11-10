@@ -47,7 +47,7 @@ function StatusBadge({ status }: { status: InvoiceStatus }) {
 
 export function OrganizationBillingPage() {
   const navigate = useNavigate()
-  const [year, setYear] = useState(organizationBillingPage.year)
+  const [year, setYear] = useState<string>(organizationBillingPage.year)
   const [toast, setToast] = useState('')
 
   const invoices = useMemo(

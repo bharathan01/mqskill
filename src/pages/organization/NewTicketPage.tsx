@@ -17,10 +17,10 @@ const selectClass = `${inputClass} appearance-none pr-10`
 
 export function OrganizationNewTicketPage() {
   const navigate = useNavigate()
-  const [topic, setTopic] = useState(copy.defaults.topic)
-  const [related, setRelated] = useState(copy.defaults.related)
-  const [subject, setSubject] = useState(copy.defaults.subject)
-  const [message, setMessage] = useState(copy.defaults.message)
+  const [topic, setTopic] = useState<string>(copy.defaults.topic)
+  const [related, setRelated] = useState<string>(copy.defaults.related)
+  const [subject, setSubject] = useState<string>(copy.defaults.subject)
+  const [message, setMessage] = useState<string>(copy.defaults.message)
   const [urgency, setUrgency] = useState<'normal' | 'urgent'>(copy.defaults.urgency)
   const [fileName, setFileName] = useState('')
   const [toast, setToast] = useState('')

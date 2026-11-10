@@ -85,7 +85,12 @@ export function OrganizationSettingsPage() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [logoName, setLogoName] = useState('')
   const [contactModalOpen, setContactModalOpen] = useState(false)
-  const [contact, setContact] = useState({
+  const [contact, setContact] = useState<{
+    name: string
+    role: string
+    email: string
+    phone: string
+  }>({
     name: copy.defaults.contactName,
     role: copy.defaults.contactRole,
     email: copy.defaults.contactEmail,
@@ -93,10 +98,10 @@ export function OrganizationSettingsPage() {
   })
   const [contactDraft, setContactDraft] = useState(contact)
 
-  const [companyName, setCompanyName] = useState(copy.defaults.companyName)
-  const [website, setWebsite] = useState(copy.defaults.website)
-  const [country, setCountry] = useState(copy.defaults.country)
-  const [industry, setIndustry] = useState(copy.defaults.industry)
+  const [companyName, setCompanyName] = useState<string>(copy.defaults.companyName)
+  const [website, setWebsite] = useState<string>(copy.defaults.website)
+  const [country, setCountry] = useState<string>(copy.defaults.country)
+  const [industry, setIndustry] = useState<string>(copy.defaults.industry)
 
   useEffect(() => {
     return () => {
@@ -113,11 +118,11 @@ export function OrganizationSettingsPage() {
   const [editDeptName, setEditDeptName] = useState('')
   const [editDeptHead, setEditDeptHead] = useState('')
 
-  const [minPassword, setMinPassword] = useState(copy.defaults.minPassword)
-  const [requireSymbol, setRequireSymbol] = useState(copy.defaults.requireSymbol)
-  const [askChange, setAskChange] = useState(copy.defaults.askChange)
-  const [idleTimeout, setIdleTimeout] = useState(copy.defaults.idleTimeout)
-  const [companyEmailOnly, setCompanyEmailOnly] = useState(copy.defaults.companyEmailOnly)
+  const [minPassword, setMinPassword] = useState<string>(copy.defaults.minPassword)
+  const [requireSymbol, setRequireSymbol] = useState<boolean>(copy.defaults.requireSymbol)
+  const [askChange, setAskChange] = useState<string>(copy.defaults.askChange)
+  const [idleTimeout, setIdleTimeout] = useState<string>(copy.defaults.idleTimeout)
+  const [companyEmailOnly, setCompanyEmailOnly] = useState<boolean>(copy.defaults.companyEmailOnly)
   const [twoStep, setTwoStep] = useState<'off' | 'admins' | 'everyone'>(copy.defaults.twoStep)
 
   const [notificationPrefs, setNotificationPrefs] = useState({

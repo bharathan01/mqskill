@@ -32,7 +32,7 @@ function youtubeEmbedUrl(videoId: string, startSeconds = 0, autoplay = false) {
 
 export function EmployeeSessionDetailPage() {
   const { sessionId = '' } = useParams()
-  const session = getEmployeeLiveSession(sessionId)
+  const found = getEmployeeLiveSession(sessionId)
 
   const [tab, setTab] = useState<TabId>('overview')
   const [embedUrl, setEmbedUrl] = useState('')
@@ -44,8 +44,8 @@ export function EmployeeSessionDetailPage() {
   const [toast, setToast] = useState('')
 
   useEffect(() => {
-    if (!session) return
-    setEmbedUrl(youtubeEmbedUrl(session.videoId))
+    if (!found) return
+    setEmbedUrl(youtubeEmbedUrl(found.videoId))
     setActiveMarker(0)
     setTab('overview')
     setQuestions([
@@ -62,11 +62,13 @@ export function EmployeeSessionDetailPage() {
         likes: 2,
       },
     ])
-  }, [session])
+  }, [found])
 
-  if (!session) {
+  if (!found) {
     return <Navigate to={paths.employee.sessions} replace />
   }
+
+  const session = found
 
   function showToast(message: string) {
     setToast(message)

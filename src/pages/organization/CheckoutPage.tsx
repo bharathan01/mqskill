@@ -101,9 +101,9 @@ function Stepper({ current }: { current: 1 | 2 | 3 }) {
 export function OrganizationCheckoutPage() {
   const navigate = useNavigate()
   const { cartItems, clearCart, setLastOrder } = useOutletContext<OrganizationOutletContext>()
-  const [email, setEmail] = useState(organizationCheckoutPage.defaults.email)
-  const [address, setAddress] = useState(organizationCheckoutPage.defaults.address)
-  const [poNumber, setPoNumber] = useState(organizationCheckoutPage.defaults.poNumber)
+  const [email, setEmail] = useState<string>(organizationCheckoutPage.defaults.email)
+  const [address, setAddress] = useState<string>(organizationCheckoutPage.defaults.address)
+  const [poNumber, setPoNumber] = useState<string>(organizationCheckoutPage.defaults.poNumber)
   const [method, setMethod] = useState<CheckoutPaymentMethod>('knet')
   const [agreed, setAgreed] = useState(true)
   const [error, setError] = useState('')

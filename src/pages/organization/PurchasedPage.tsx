@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, type ReactElement } from 'react'
 import { Link, useNavigate } from 'react-router'
 import {
   organizationPurchasedCourses,
@@ -40,7 +40,7 @@ function MetricCard({
   label: string
   value: string
   detail: string
-  icon: JSX.Element
+  icon: ReactElement
   iconClass: string
 }) {
   return (

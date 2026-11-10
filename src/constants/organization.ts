@@ -30,7 +30,15 @@ export const organizationCartItems = [
   },
 ] as const
 
-export const organizationNotifications = [
+export type OrganizationNotification = {
+  id: string
+  title: string
+  detail: string
+  time: string
+  unread: boolean
+}
+
+export const organizationNotifications: OrganizationNotification[] = [
   {
     id: 'n1',
     title: 'Training request pending',
@@ -52,7 +60,7 @@ export const organizationNotifications = [
     time: 'Yesterday',
     unread: false,
   },
-] as const
+]
 
 export type OrganizationRangeId = '7d' | '30d' | '90d' | '12m'
 

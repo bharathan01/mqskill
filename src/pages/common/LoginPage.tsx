@@ -55,7 +55,7 @@ export function LoginPage() {
   const [pendingUser, setPendingUser] = useState<DemoUser | null>(null)
   const [error, setError] = useState('')
   const [code, setCode] = useState<string[]>(emptyCode)
-  const [secondsLeft, setSecondsLeft] = useState(loginPage.verify.seconds)
+  const [secondsLeft, setSecondsLeft] = useState<number>(loginPage.verify.seconds)
   const inputsRef = useRef<Array<HTMLInputElement | null>>([])
 
   useEffect(() => {

@@ -103,7 +103,19 @@ export const contentCpdPage = {
   },
 } as const
 
-export const contentCpdDefaults = {
+export type ContentCpdRules = {
+  method: string
+  rounding: string
+  maxPerCourse: number | ''
+  maxPerYear: number | ''
+  expiry: number | ''
+  minScore: number | ''
+  requireAssessment: boolean
+  autoAward: boolean
+  showOnCertificate: boolean
+}
+
+export const contentCpdDefaults: ContentCpdRules = {
   method: '',
   rounding: '',
   maxPerCourse: '',

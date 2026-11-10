@@ -34,13 +34,14 @@ function downloadCertificatePdf(certificateId: string, courseTitle: string) {
 
 export function EmployeeCertificateDetailPage() {
   const { certificateId = '' } = useParams()
-  const certificate = getEmployeeCertificate(certificateId)
+  const found = getEmployeeCertificate(certificateId)
   const [toast, setToast] = useState('')
 
-  if (!certificate) {
+  if (!found) {
     return <Navigate to={paths.employee.certificates} replace />
   }
 
+  const certificate = found
   const view = employeeCertificateView(certificate)
   const statusLabel =
     certificate.status === 'valid'

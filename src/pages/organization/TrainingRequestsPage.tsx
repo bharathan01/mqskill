@@ -58,7 +58,7 @@ function RequestCard({
           <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0" />
         )}
         <span>
-          {owned
+          {owned && request.availability.kind === 'owned'
             ? organizationRequestsPage.freeSeats(request.availability.freeSeats)
             : organizationRequestsPage.purchaseHint}
         </span>

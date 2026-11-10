@@ -76,7 +76,7 @@ export function OrganizationPurchasedDetailPage() {
   const [assignQuery, setAssignQuery] = useState('')
   const [assignDepartment, setAssignDepartment] = useState('all')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
-  const [deadline, setDeadline] = useState(
+  const [deadline, setDeadline] = useState<string>(
     organizationPurchasedDetailPage.assignModal.defaultDeadline,
   )
   const [emailNow, setEmailNow] = useState(true)

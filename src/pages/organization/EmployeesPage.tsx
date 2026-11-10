@@ -123,7 +123,7 @@ export function OrganizationEmployeesPage() {
 
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
-  const [formDepartment, setFormDepartment] = useState(
+  const [formDepartment, setFormDepartment] = useState<string>(
     organizationEmployeeDepartments[0] ?? 'Operations',
   )
   const [jobTitle, setJobTitle] = useState('')
@@ -171,21 +171,22 @@ export function OrganizationEmployeesPage() {
 
   useEffect(() => {
     if (!menuOpenId) return
+    const openId = menuOpenId
 
     function handlePointerDown(event: MouseEvent) {
       const target = event.target as Node
       if (menuRef.current?.contains(target)) return
-      if (menuButtonRefs.current[menuOpenId]?.contains(target)) return
+      if (menuButtonRefs.current[openId]?.contains(target)) return
       closeMenu()
     }
 
     function handleReposition() {
-      const button = menuButtonRefs.current[menuOpenId]
+      const button = menuButtonRefs.current[openId]
       if (!button) {
         closeMenu()
         return
       }
-      openRowMenu(menuOpenId, button)
+      openRowMenu(openId, button)
     }
 
     document.addEventListener('mousedown', handlePointerDown)

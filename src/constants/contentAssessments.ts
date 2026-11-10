@@ -139,7 +139,17 @@ export function createAssessmentQuestion(
   }
 }
 
-export const contentAssessmentDefaults = {
+export type ContentAssessmentDefaults = {
+  course: string
+  title: string
+  passScore: number | ''
+  timeLimit: number | ''
+  attempts: number | ''
+  shuffle: boolean
+  showResults: boolean
+}
+
+export const contentAssessmentDefaults: ContentAssessmentDefaults = {
   course: '',
   title: '',
   passScore: '',
