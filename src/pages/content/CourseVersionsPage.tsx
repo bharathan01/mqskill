@@ -6,7 +6,7 @@ import {
   type ContentCourseVersion,
   type ContentVersionStatus,
 } from '@/constants'
-import { paths } from '@/routes/paths'
+import { useContentWorkspace } from '@/routes/contentWorkspace'
 import {
   ContentBadge,
   ContentEmptyState,
@@ -40,6 +40,7 @@ const metricTone = {
 
 export function ContentCourseVersionsPage() {
   const navigate = useNavigate()
+  const workspace = useContentWorkspace()
   const [searchParams, setSearchParams] = useSearchParams()
   const [versions, setVersions] = useState<ContentCourseVersion[]>(contentCourseVersions)
   const [query, setQuery] = useState('')
@@ -122,7 +123,7 @@ export function ContentCourseVersionsPage() {
           <p className="mt-1 text-sm text-slate-500">{copy.subtitle}</p>
         </div>
         <Link
-          to={paths.content.createCourse}
+          to={workspace.createCourse}
           className="inline-flex h-10 items-center gap-2 self-start rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-blue-700 lg:self-auto"
         >
           <PlusIcon className="h-4 w-4" />
@@ -238,7 +239,7 @@ export function ContentCourseVersionsPage() {
                     <div className="flex items-center gap-1.5">
                       <ContentRowAction
                         label={copy.actions.view}
-                        onClick={() => navigate(paths.content.coursePreview)}
+                        onClick={() => navigate(workspace.coursePreview)}
                       >
                         <EyeIcon className="h-3.5 w-3.5" />
                       </ContentRowAction>

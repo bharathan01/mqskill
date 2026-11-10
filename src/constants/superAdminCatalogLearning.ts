@@ -1,0 +1,408 @@
+import { paths } from '@/routes/paths'
+import {
+  buildForm,
+  buildList,
+  c,
+  courseCatalog,
+  courseNames,
+  future,
+  instructors,
+  kpi,
+  kpiCount,
+  num,
+  past,
+  pct,
+  people,
+  pick,
+  rnd,
+} from './superAdminCatalogKit'
+import { superAdminReferenceDate, type SuperAdminCatalogPage } from './superAdminCatalogTypes'
+
+const a = paths.admin
+const course = (i: number, offset = 0) => pick(courseCatalog, i, 1, offset)
+const who = (offset = 0) => (i: number) => pick(people, i, 1, offset)
+
+/* ------------------------------ Assessments ------------------------------ */
+
+const assessmentPages: SuperAdminCatalogPage[] = []
+
+/* ------------------------------ Certificates ----------------------------- */
+
+const certId = (i: number) => `MQ-CERT-${26100 + i * 7}`
+
+const certificatePages: SuperAdminCatalogPage[] = [
+  buildList({
+    path: a.certificates,
+    title: 'All Issued Certificates',
+    subtitle: 'Every certificate issued to students and organization employees.',
+    section: 'Certificates',
+    entity: 'certificate',
+    count: 14,
+    kpis: [kpi('Issued (all time)', '18,420'), kpi('Issued this month', '418', '−3.2%'), kpiCount('Valid', undefined, 'status', 'Valid'), kpi('Revoked', '12')],
+    cols: [
+      c('id', 'Certificate ID', certId, 'text', false),
+      c('holder', 'Holder', who()),
+      c('course', 'Course', (i) => course(i).name),
+      c('issued', 'Issued', (i) => past(i, 5, 1), 'date'),
+      c('expires', 'Expires', (i) => future(i, 40, 200), 'date'),
+      c('status', 'Status', (i) => pick(['Valid', 'Valid', 'Valid', 'Expired', 'Valid', 'Revoked'], i), 'status'),
+    ],
+    filters: ['status', 'course'],
+    period: 'issued',
+    primary: 'Issue certificate',
+    rowActions: ['view', 'edit', 'export', 'delete'],
+    statusActions: [
+      { label: 'Revoke', to: 'Revoked', from: ['Valid'] },
+      { label: 'Reinstate', to: 'Valid', from: ['Revoked'] },
+    ],
+  }),
+  buildList({
+    path: a.certificateVerify,
+    title: 'Certificate Verification',
+    subtitle: 'Verification requests from employers, regulators and the public portal.',
+    section: 'Certificates',
+    entity: 'verification',
+    count: 12,
+    kpis: [kpi('Checks (30d)', '1,284', '+14%'), kpi('Verified', '97%'), kpi('Not found', '9')],
+    cols: [
+      c('code', 'Verification code', (i) => `VRF-${88400 + i * 13}`, 'text', false),
+      c('certificate', 'Certificate', certId, 'text', false),
+      c('holder', 'Holder', who(3), 'text', false),
+      c('requester', 'Requested by', (i) => pick(['Public portal', 'ABC Corp HR', 'Employer API', 'Public portal', 'Kuwait Industrial Partners'], i), 'text', false),
+      c('result', 'Result', (i) => pick(['Verified', 'Verified', 'Verified', 'Expired', 'Not found', 'Verified'], i), 'status'),
+      c('date', 'Date', (i) => past(i, 1, 0), 'date'),
+    ],
+    filters: ['result', 'requester'],
+    period: 'date',
+    primary: 'Verify certificate',
+    rowActions: ['view', 'export', 'delete'],
+    statusActions: [{ label: 'Flag for review', to: 'Flagged', from: ['Verified', 'Not found'] }],
+  }),
+  buildList({
+    path: a.certificateStatus,
+    title: 'Valid / Expired Certificates',
+    subtitle: 'Track certificate validity and send renewal reminders.',
+    section: 'Certificates',
+    entity: 'certificate',
+    count: 12,
+    kpis: [kpi('Valid', '16,902'), kpi('Expiring in 60 days', '312', '+18'), kpi('Expired', '1,506')],
+    cols: [
+      c('id', 'Certificate ID', certId, 'text', false),
+      c('holder', 'Holder', who(5), 'text', false),
+      c('course', 'Course', (i) => course(i, 4).name, 'text', false),
+      c('expires', 'Expiry date', (i) => past(i, 30, -140), 'date', false),
+      c('status', 'Status', (i) => pick(['Valid', 'Expiring soon', 'Expired', 'Valid', 'Expiring soon'], i), 'status'),
+    ],
+    filters: ['status', 'course'],
+    period: 'expires',
+    primary: false,
+    rowActions: ['view', 'export'],
+    statusActions: [
+      { label: 'Send renewal reminder', to: 'Reminder sent', from: ['Expiring soon', 'Expired'] },
+      { label: 'Extend validity 12 months', to: 'Valid', from: ['Expired', 'Expiring soon'] },
+    ],
+  }),
+  buildList({
+    path: a.cpd,
+    title: 'CPD Hours and Credits',
+    subtitle: 'Continuing professional development hours awarded per course.',
+    section: 'Certificates',
+    entity: 'CPD record',
+    count: 10,
+    kpis: [kpi('CPD hours awarded', '92,640'), kpi('Accredited courses', '58'), kpiCount('Approved', undefined, 'status', 'Approved')],
+    cols: [
+      c('course', 'Course', (i) => course(i, 7).name),
+      c('hours', 'CPD hours', (i) => course(i, 7).hours, 'number'),
+      c('body', 'Accrediting body', (i) => pick(['CPD Standards Office', 'PMI (PDUs)', 'IRCA', 'IOSH', 'KSA SCFHS'], i)),
+      c('credits', 'Credits', (i) => rnd(i, 35, 2, 40), 'number'),
+      c('status', 'Status', (i) => pick(['Approved', 'Approved', 'Pending', 'Approved', 'Expired'], i), 'status'),
+      c('renewal', 'Renewal date', (i) => future(i, 45, 30), 'date'),
+    ],
+    filters: ['status', 'body'],
+    primary: 'Add CPD mapping',
+    rowActions: ['view', 'edit', 'delete'],
+    statusActions: [{ label: 'Approve', to: 'Approved', from: ['Pending', 'Expired'] }],
+  }),
+  buildList({
+    path: a.certificateRequirements,
+    title: 'Certification Requirements',
+    subtitle: 'Rules a learner must satisfy before a certificate is issued.',
+    section: 'Certificates',
+    entity: 'requirement',
+    count: 10,
+    kpis: [kpi('Rule sets', '128'), kpi('Using default rules', '74'), kpi('Custom rules', '54')],
+    cols: [
+      c('course', 'Course', (i) => course(i, 9).name),
+      c('minScore', 'Min. score', (i) => pct(pick([70, 75, 80], i)), 'percent'),
+      c('attendance', 'Min. progress', (i) => pct(pick([100, 90, 100, 85], i)), 'percent'),
+      c('final', 'Final assessment', (i) => pick(['Required', 'Required', 'Optional'], i)),
+      c('validity', 'Validity', (i) => pick(['2 years', '3 years', 'Lifetime', '1 year', '2 years'], i)),
+      c('status', 'Status', (i) => pick(['Active', 'Active', 'Draft'], i), 'status'),
+    ],
+    filters: ['status', 'final'],
+    primary: 'Add requirement',
+    rowActions: ['view', 'edit', 'delete'],
+    statusActions: [{ label: 'Activate', to: 'Active', from: ['Draft'] }],
+  }),
+  buildList({
+    path: a.certificateTemplates,
+    title: 'Certificate Templates',
+    subtitle: 'Branded certificate layouts in English, Arabic or bilingual.',
+    section: 'Certificates',
+    entity: 'template',
+    count: 8,
+    kpis: [kpi('Templates', '14'), kpi('Bilingual', '6'), kpiCount('Active', undefined, 'status', 'Active')],
+    cols: [
+      c('template', 'Template', (i) => pick(['Classic Navy', 'Gulf Gold Border', 'ISO Professional', 'Safety Red Stripe', 'Corporate Minimal', 'CPD Accredited', 'Arabic Calligraphy', 'Executive Seal'], i)),
+      c('category', 'Used for', (i) => pick(['All courses', 'Health & Safety', 'Quality & ISO', 'Health & Safety', 'Business Skills', 'Project Management', 'All courses', 'Finance & Compliance'], i)),
+      c('language', 'Language', (i) => pick(['English', 'Bilingual', 'English', 'Arabic', 'Bilingual'], i)),
+      c('orientation', 'Orientation', (i) => pick(['Landscape', 'Landscape', 'Portrait'], i)),
+      c('edited', 'Last edited', (i) => past(i, 19, 3), 'date'),
+      c('status', 'Status', (i) => pick(['Active', 'Active', 'Draft', 'Active'], i), 'status'),
+    ],
+    filters: ['status', 'language'],
+    period: 'edited',
+    primary: 'New template',
+    rowActions: ['view', 'edit', 'duplicate', 'delete'],
+    statusActions: [
+      { label: 'Activate', to: 'Active', from: ['Draft'] },
+      { label: 'Deactivate', to: 'Draft', from: ['Active'] },
+    ],
+  }),
+  buildList({
+    path: a.certificateReports,
+    title: 'Certificate Reports',
+    subtitle: 'Scheduled and on-demand certification reports.',
+    section: 'Certificates',
+    entity: 'report',
+    count: 8,
+    kpis: [kpi('Reports generated (30d)', '24'), kpi('Scheduled', '5'), kpiCount('Ready', undefined, 'status', 'Ready')],
+    cols: [
+      c('report', 'Report', (i) => pick(['Certificates issued by course', 'Expiring certificates', 'Verification activity', 'Revoked certificates', 'CPD hours by organization', 'Certificates by country', 'Template usage', 'Pass-to-certificate funnel'], i)),
+      c('period', 'Period', (i) => pick(['Oct 2026', 'Q3 2026', 'Last 90 days', 'YTD 2026'], i)),
+      c('records', 'Records', (i) => num(rnd(i, 36, 120, 5200)), 'number'),
+      c('generated', 'Generated', (i) => past(i, 4, 0), 'date'),
+      c('status', 'Status', (i) => pick(['Ready', 'Ready', 'Generating', 'Scheduled'], i), 'status'),
+    ],
+    filters: ['status', 'period'],
+    period: 'generated',
+    primary: { label: 'Generate report', kind: 'sample', notice: 'Certificate report queued and added to the list (sample).' },
+    rowActions: ['view', 'export', 'delete'],
+    statusActions: [{ label: 'Regenerate', to: 'Ready', from: ['Generating', 'Scheduled'] }],
+  }),
+]
+
+/* ------------------------------ Live classes ----------------------------- */
+
+const liveTitle = (i: number) => `${course(i, 3).name} — Live ${pick(['Workshop', 'Masterclass', 'Q&A', 'Revision', 'Practical'], i)}`
+
+const livePages: SuperAdminCatalogPage[] = [
+  buildList({
+    path: a.liveClasses,
+    title: 'All Live Classes',
+    subtitle: 'Every scheduled, live and completed Zoom class.',
+    section: 'Live Classes',
+    entity: 'live class',
+    count: 14,
+    kpis: [kpi('Sessions this month', '64', '+8'), kpi('Avg. attendance', '82%', '+3%'), kpiCount('Scheduled', undefined, 'status', 'Scheduled')],
+    cols: [
+      c('class', 'Class', liveTitle),
+      c('instructor', 'Instructor', (i) => pick(instructors, i)),
+      c('date', 'Date', (i) => (i % 3 === 0 ? future(i, 2, 1) : past(i, 3, 1)), 'date'),
+      c('time', 'Time (AST)', (i) => pick(['09:00', '14:00', '17:30', '19:00'], i)),
+      c('registered', 'Registered', (i) => `${rnd(i, 40, 18, 120)} / 150`, 'number'),
+      c('status', 'Status', (i) => (i % 3 === 0 ? 'Scheduled' : pick(['Completed', 'Completed', 'Live', 'Cancelled'], i)), 'status'),
+    ],
+    filters: ['status', 'instructor'],
+    period: 'date',
+    primary: 'Schedule class',
+    rowActions: ['view', 'edit', 'delete'],
+    statusActions: [
+      { label: 'Cancel class', to: 'Cancelled', from: ['Scheduled'] },
+      { label: 'Mark completed', to: 'Completed', from: ['Live'] },
+    ],
+  }),
+  buildForm({
+    path: a.scheduleLive,
+    title: 'Schedule Live Class',
+    subtitle: 'Create a Zoom session, invite learners and send reminders automatically.',
+    section: 'Live Classes',
+    entity: 'live class',
+    form: {
+      kind: 'create',
+      submitLabel: 'Schedule class',
+      successNotice: 'Live class “{title}” scheduled for {date} at {startTime}. Learners will be notified.',
+      recordsTitle: 'Recently scheduled',
+      recordColumns: [
+        { key: 'title', label: 'Class' },
+        { key: 'date', label: 'Date' },
+        { key: 'startTime', label: 'Start' },
+        { key: 'instructor', label: 'Instructor' },
+      ],
+      records: [
+        { id: 'sch-1', values: { title: 'Fire Warden Refresher — Live Practical', date: future(0, 1, 2), startTime: '17:30', instructor: 'Capt. Mubarak Al-Rushaid' } },
+        { id: 'sch-2', values: { title: 'ISO 9001 Audit Clinic', date: future(0, 1, 5), startTime: '14:00', instructor: 'Dr. Aisha Karim' } },
+      ],
+      sections: [
+        {
+          title: 'Class details',
+          fields: [
+            { key: 'title', label: 'Class title', type: 'text', required: true, placeholder: 'e.g. ISO 45001 Implementation Workshop', wide: true },
+            { key: 'course', label: 'Course', type: 'select', required: true, options: courseNames },
+            { key: 'instructor', label: 'Instructor', type: 'select', required: true, options: [...instructors] },
+            { key: 'description', label: 'Description', type: 'textarea', placeholder: 'What will learners cover?', wide: true },
+          ],
+        },
+        {
+          title: 'Schedule',
+          fields: [
+            { key: 'date', label: 'Date', type: 'date', required: true },
+            { key: 'startTime', label: 'Start time (AST)', type: 'time', required: true },
+            { key: 'duration', label: 'Duration (minutes)', type: 'number', required: true, default: '90' },
+            { key: 'capacity', label: 'Capacity', type: 'number', required: true, default: '100' },
+          ],
+        },
+        {
+          title: 'Audience & Zoom',
+          fields: [
+            { key: 'audience', label: 'Audience', type: 'select', options: ['All enrolled students', 'Organization cohort', 'Invite only'], default: 'All enrolled students' },
+            { key: 'zoom', label: 'Zoom meeting link', type: 'url', placeholder: 'Leave blank to auto-generate', hint: 'A unique Zoom link is generated if empty.' },
+            { key: 'record', label: 'Record session', type: 'toggle', default: 'true' },
+            { key: 'reminders', label: 'Send 24h and 1h reminders', type: 'toggle', default: 'true' },
+          ],
+        },
+      ],
+      validate: (values) => {
+        const errors: Record<string, string> = {}
+        if (values.date && values.date < superAdminReferenceDate) errors.date = 'Date cannot be in the past.'
+        if (Number(values.duration) < 15) errors.duration = 'Minimum duration is 15 minutes.'
+        if (Number(values.capacity) < 1) errors.capacity = 'Capacity must be at least 1.'
+        if (values.zoom && !/^https?:\/\//.test(values.zoom)) errors.zoom = 'Enter a link starting with https://'
+        return errors
+      },
+    },
+  }),
+  buildList({
+    path: a.upcomingSessions,
+    title: 'Upcoming Sessions',
+    subtitle: 'Sessions scheduled for the coming weeks.',
+    section: 'Live Classes',
+    entity: 'session',
+    count: 10,
+    kpis: [kpi('Next 7 days', '9'), kpi('Registered learners', '1,046'), kpiCount('Needs host', undefined, 'status', 'Needs host')],
+    cols: [
+      c('class', 'Class', (i) => liveTitle(i + 2)),
+      c('date', 'Date', (i) => future(i, 2, 1), 'date'),
+      c('time', 'Time (AST)', (i) => pick(['09:00', '14:00', '17:30', '19:00'], i)),
+      c('instructor', 'Instructor', (i) => pick(instructors, i, 1, 2)),
+      c('registered', 'Registered', (i) => rnd(i, 41, 22, 140), 'number'),
+      c('status', 'Status', (i) => pick(['Confirmed', 'Confirmed', 'Pending', 'Needs host', 'Confirmed'], i), 'status'),
+    ],
+    filters: ['status', 'instructor'],
+    period: 'date',
+    primary: 'Schedule session',
+    rowActions: ['view', 'edit', 'delete'],
+    statusActions: [
+      { label: 'Confirm', to: 'Confirmed', from: ['Pending', 'Needs host'] },
+      { label: 'Send reminder', to: 'Reminder sent', from: ['Confirmed'] },
+    ],
+  }),
+  buildList({
+    path: a.completedSessions,
+    title: 'Completed Sessions',
+    subtitle: 'Past sessions with attendance, ratings and recordings.',
+    section: 'Live Classes',
+    entity: 'session',
+    count: 12,
+    kpis: [kpi('Completed (30d)', '41'), kpi('Avg. rating', '4.7 / 5'), kpi('Recordings ready', '38')],
+    cols: [
+      c('class', 'Class', (i) => liveTitle(i + 5)),
+      c('date', 'Date', (i) => past(i, 3, 1), 'date'),
+      c('instructor', 'Instructor', (i) => pick(instructors, i, 1, 3)),
+      c('attendees', 'Attendees', (i) => rnd(i, 42, 24, 118), 'number'),
+      c('rating', 'Rating', (i) => (4.3 + rnd(i, 43, 0, 6) / 10).toFixed(1), 'number'),
+      c('recording', 'Recording', (i) => pick(['Available', 'Available', 'Processing', 'Not recorded', 'Available'], i), 'status'),
+    ],
+    filters: ['recording', 'instructor'],
+    period: 'date',
+    primary: false,
+    rowActions: ['view', 'export', 'delete'],
+    statusActions: [{ label: 'Publish recording', to: 'Available', from: ['Processing'] }],
+  }),
+  buildList({
+    path: a.zoomLinks,
+    title: 'Zoom Links',
+    subtitle: 'Meeting links, host accounts and access passcodes.',
+    section: 'Live Classes',
+    entity: 'Zoom link',
+    count: 10,
+    kpis: [kpi('Active links', '27'), kpi('Host accounts', '5'), kpiCount('Expired', undefined, 'status', 'Expired')],
+    cols: [
+      c('class', 'Class', (i) => liveTitle(i + 1)),
+      c('meetingId', 'Meeting ID', (i) => `${812 + i} ${3400 + i * 17} ${5600 + i * 9}`, 'text', false),
+      c('url', 'Join URL', (i) => `zoom.us/j/${81234005600 + i * 9}`, 'text', false),
+      c('host', 'Host account', (i) => pick(['training1@maqskillz.com', 'training2@maqskillz.com', 'hse@maqskillz.com'], i)),
+      c('status', 'Status', (i) => pick(['Active', 'Active', 'Expired', 'Active', 'Revoked'], i), 'status'),
+      c('expires', 'Expires', (i) => past(i, 5, -30), 'date'),
+    ],
+    filters: ['status', 'host'],
+    primary: 'Generate link',
+    rowActions: ['view', 'edit', 'delete'],
+    statusActions: [
+      { label: 'Revoke link', to: 'Revoked', from: ['Active'] },
+      { label: 'Regenerate', to: 'Active', from: ['Expired', 'Revoked'] },
+    ],
+  }),
+  buildList({
+    path: a.attendance,
+    title: 'Attendance',
+    subtitle: 'Per-learner attendance for live sessions.',
+    section: 'Live Classes',
+    entity: 'attendance record',
+    count: 14,
+    kpis: [kpi('Avg. attendance', '82%', '+3%'), kpi('Late joiners', '11%'), kpiCount('Absent', undefined, 'status', 'Absent')],
+    cols: [
+      c('student', 'Student', who(2)),
+      c('class', 'Class', (i) => liveTitle(i + 3)),
+      c('joined', 'Joined at', (i) => pick(['09:02', '14:11', '17:34', '19:00', '09:25'], i), 'text', false),
+      c('duration', 'Duration', (i) => `${rnd(i, 44, 20, 90)} min`, 'number', false),
+      c('percent', 'Attendance', (i) => pct(rnd(i, 45, 30, 100)), 'percent', false),
+      c('status', 'Status', (i) => pick(['Present', 'Present', 'Late', 'Absent', 'Present'], i), 'status'),
+    ],
+    filters: ['status'],
+    primary: 'Add attendance',
+    rowActions: ['view', 'edit', 'export'],
+    statusActions: [
+      { label: 'Mark present', to: 'Present', from: ['Late', 'Absent'] },
+      { label: 'Mark absent', to: 'Absent', from: ['Present', 'Late'] },
+    ],
+  }),
+  buildList({
+    path: a.liveReports,
+    title: 'Live Class Reports',
+    subtitle: 'Delivery, attendance and engagement summaries.',
+    section: 'Live Classes',
+    entity: 'report',
+    count: 8,
+    kpis: [kpi('Hours delivered (30d)', '96'), kpi('Avg. attendance', '82%'), kpi('Cancellation rate', '3.1%')],
+    cols: [
+      c('report', 'Report', (i) => pick(['Attendance by instructor', 'Sessions by course', 'Cancellations & reschedules', 'Recording views', 'Peak attendance times', 'Org cohort attendance', 'Learner engagement', 'Zoom minutes usage'], i)),
+      c('period', 'Period', (i) => pick(['Oct 2026', 'Q3 2026', 'Last 30 days'], i)),
+      c('sessions', 'Sessions', (i) => rnd(i, 46, 12, 80), 'number'),
+      c('attendance', 'Avg. attendance', (i) => pct(rnd(i, 47, 70, 91)), 'percent'),
+      c('generated', 'Generated', (i) => past(i, 5, 0), 'date'),
+      c('status', 'Status', (i) => pick(['Ready', 'Ready', 'Generating'], i), 'status'),
+    ],
+    filters: ['status', 'period'],
+    period: 'generated',
+    primary: { label: 'Generate report', kind: 'sample', notice: 'Live class report queued (sample).' },
+    rowActions: ['view', 'export', 'delete'],
+    statusActions: [{ label: 'Regenerate', to: 'Ready', from: ['Generating'] }],
+  }),
+]
+
+export const superAdminLearningPages: SuperAdminCatalogPage[] = [
+  ...assessmentPages,
+  ...certificatePages,
+  ...livePages,
+]

@@ -48,7 +48,8 @@ export const tutorNavLinks = [
 ] as const
 
 export const adminNavLinks = [
-  { label: 'Dashboard', to: paths.admin.dashboard },
+  { label: 'Executive Overview', to: paths.admin.dashboard },
+  { label: 'Business Performance', to: paths.admin.businessPerformance },
 ] as const
 
 export const contentAdminNavLinks = [

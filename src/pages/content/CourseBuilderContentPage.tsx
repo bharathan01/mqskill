@@ -16,7 +16,7 @@ import {
   type BuilderSubmodule,
   type SubmoduleType,
 } from '@/constants'
-import { paths } from '@/routes/paths'
+import { useContentWorkspace } from '@/routes/contentWorkspace'
 import {
   ContentCard,
   ContentEmptyState,
@@ -113,6 +113,7 @@ function swap<T>(items: T[], from: number, to: number) {
 
 export function CourseBuilderContentPage() {
   const navigate = useNavigate()
+  const workspace = useContentWorkspace()
   const { modules, updateModules } = useCourseBuilder()
   const videoInputRef = useRef<HTMLInputElement>(null)
   const [selection, setSelection] = useState<Selection>(() => ({
@@ -159,13 +160,13 @@ export function CourseBuilderContentPage() {
   function enableModuleQuiz(moduleId: string, openEditor = true) {
     patchModuleQuiz(moduleId, { enabled: true, mandatory: true })
     setSelection({ moduleId, submoduleId: null })
-    if (openEditor) navigate(`${paths.content.courseQuiz}?module=${moduleId}`)
+    if (openEditor) navigate(`${workspace.courseQuiz}?module=${moduleId}`)
   }
 
   function enableModuleAssignment(moduleId: string, openEditor = true) {
     patchModuleAssignment(moduleId, { enabled: true, mandatory: true })
     setSelection({ moduleId, submoduleId: null })
-    if (openEditor) navigate(`${paths.content.courseQuiz}?module=${moduleId}`)
+    if (openEditor) navigate(`${workspace.courseQuiz}?module=${moduleId}`)
   }
 
   function attachQuizFromLibrary(moduleId: string, libraryId: string) {
@@ -489,7 +490,7 @@ export function CourseBuilderContentPage() {
                             <button
                               type="button"
                               onClick={() =>
-                                navigate(`${paths.content.courseQuiz}?module=${module.id}`)
+                                navigate(`${workspace.courseQuiz}?module=${module.id}`)
                               }
                               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm text-violet-700 hover:bg-violet-50"
                             >
@@ -510,7 +511,7 @@ export function CourseBuilderContentPage() {
                             <button
                               type="button"
                               onClick={() =>
-                                navigate(`${paths.content.courseQuiz}?module=${module.id}`)
+                                navigate(`${workspace.courseQuiz}?module=${module.id}`)
                               }
                               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm text-amber-700 hover:bg-amber-50"
                             >
@@ -540,7 +541,7 @@ export function CourseBuilderContentPage() {
                       </button>
                       {module.quiz.enabled ? (
                         <Link
-                          to={`${paths.content.courseQuiz}?module=${module.id}`}
+                          to={`${workspace.courseQuiz}?module=${module.id}`}
                           className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700"
                         >
                           <ClipboardIcon className="h-3.5 w-3.5" />
@@ -558,7 +559,7 @@ export function CourseBuilderContentPage() {
                       )}
                       {module.assignment?.enabled ? (
                         <Link
-                          to={`${paths.content.courseQuiz}?module=${module.id}`}
+                          to={`${workspace.courseQuiz}?module=${module.id}`}
                           className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700"
                         >
                           <FileIcon className="h-3.5 w-3.5" />
@@ -663,7 +664,7 @@ export function CourseBuilderContentPage() {
                         onChange={(mandatory) => patchModuleQuiz(activeModule.id, { mandatory })}
                       />
                       <Link
-                        to={`${paths.content.courseQuiz}?module=${activeModule.id}`}
+                        to={`${workspace.courseQuiz}?module=${activeModule.id}`}
                         className="inline-flex text-sm font-semibold text-brand hover:text-blue-700"
                       >
                         {copy.configureQuiz}
@@ -934,7 +935,7 @@ export function CourseBuilderContentPage() {
                             </p>
                           ) : null}
                           <Link
-                            to={paths.content.media}
+                            to={workspace.media}
                             className="inline-flex text-xs font-semibold text-brand hover:text-blue-700"
                           >
                             {editorCopy.openLibrary}

@@ -11,7 +11,7 @@ import {
   type CourseBuilderDetails,
   type CourseBuilderSettings,
 } from '@/constants'
-import { paths } from '@/routes/paths'
+import { useContentWorkspace, type ContentWorkspacePaths } from '@/routes/contentWorkspace'
 import {
   CheckCircleIcon,
   CheckIcon,
@@ -29,11 +29,11 @@ import {
 
 const copy = courseBuilderShell
 
-function stepIndexForPath(pathname: string) {
+function stepIndexForPath(pathname: string, workspace: ContentWorkspacePaths) {
   const clean = pathname.replace(/\/+$/, '')
-  if (clean === paths.content.coursePreview) return 3
-  if (clean === paths.content.courseSettings) return 2
-  if (clean === paths.content.courseBuilder || clean === paths.content.courseQuiz) return 1
+  if (clean === workspace.coursePreview) return 3
+  if (clean === workspace.courseSettings) return 2
+  if (clean === workspace.courseBuilder || clean === workspace.courseQuiz) return 1
   return 0
 }
 
@@ -54,7 +54,23 @@ function computeDetailsErrors(details: CourseBuilderDetails): CourseBuilderDetai
 export function CourseBuilderShell() {
   const location = useLocation()
   const navigate = useNavigate()
-  const stepIndex = stepIndexForPath(location.pathname)
+  const workspace = useContentWorkspace()
+  const stepIndex = stepIndexForPath(location.pathname, workspace)
+  const steps = useMemo(
+    () =>
+      courseBuilderSteps.map((step) => ({
+        ...step,
+        to:
+          step.id === 'details'
+            ? workspace.createCourse
+            : step.id === 'content'
+              ? workspace.courseBuilder
+              : step.id === 'settings'
+                ? workspace.courseSettings
+                : workspace.coursePreview,
+      })),
+    [workspace],
+  )
 
   const [details, setDetails] = useState<CourseBuilderDetails>(createDefaultCourseBuilderDetails)
   const [modules, setModules] = useState<BuilderModule[]>(createDefaultCourseBuilderModules)
@@ -111,11 +127,11 @@ export function CourseBuilderShell() {
       }
     }
     saveDraft()
-    navigate(courseBuilderSteps[Math.min(stepIndex + 1, courseBuilderSteps.length - 1)].to)
+    navigate(steps[Math.min(stepIndex + 1, steps.length - 1)].to)
   }
 
   function goBack() {
-    navigate(courseBuilderSteps[Math.max(stepIndex - 1, 0)].to)
+    navigate(steps[Math.max(stepIndex - 1, 0)].to)
   }
 
   const value: CourseBuilderContextValue = {
@@ -130,7 +146,7 @@ export function CourseBuilderShell() {
   }
 
   const isPublished = publishState === 'published'
-  const isLastStep = stepIndex === courseBuilderSteps.length - 1
+  const isLastStep = stepIndex === steps.length - 1
   const publishing = publishState === 'publishing'
   const versionLabel = details.versionName.trim() || 'v1.0'
 
@@ -140,7 +156,7 @@ export function CourseBuilderShell() {
         <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <Link
-              to={paths.content.courses}
+              to={workspace.courses}
               className="inline-flex items-center gap-1 text-sm font-semibold text-brand hover:text-blue-700"
             >
               <ChevronLeftIcon className="h-4 w-4" />
@@ -161,7 +177,7 @@ export function CourseBuilderShell() {
             <p className="mt-1 text-sm text-slate-500">{copy.subtitle}</p>
           </div>
           <p className="text-sm font-medium text-slate-400">
-            {copy.stepOf} {stepIndex + 1} {copy.of} {courseBuilderSteps.length}
+            {copy.stepOf} {stepIndex + 1} {copy.of} {steps.length}
           </p>
         </header>
 
@@ -170,7 +186,7 @@ export function CourseBuilderShell() {
           className="rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-[0_1px_2px_rgba(15,40,80,0.04)] sm:px-6"
         >
           <ol className="flex items-center">
-            {courseBuilderSteps.map((step, index) => {
+            {steps.map((step, index) => {
               const complete = isPublished || index < stepIndex
               const current = !isPublished && index === stepIndex
               return (
@@ -202,7 +218,7 @@ export function CourseBuilderShell() {
                       <span className="block text-xs text-slate-400">{step.hint}</span>
                     </span>
                   </Link>
-                  {index < courseBuilderSteps.length - 1 ? (
+                  {index < steps.length - 1 ? (
                     <span
                       className={`mx-2 h-0.5 flex-1 rounded-full sm:mx-4 ${
                         index < stepIndex || isPublished ? 'bg-brand' : 'bg-slate-200'
@@ -235,13 +251,13 @@ export function CourseBuilderShell() {
             </p>
             <div className="mt-7 flex flex-wrap items-center justify-center gap-2.5">
               <Link
-                to={paths.content.courses}
+                to={workspace.courses}
                 className="inline-flex h-10 items-center rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-blue-700"
               >
                 {copy.published.allCourses}
               </Link>
               <Link
-                to={paths.content.versions}
+                to={workspace.versions}
                 className="inline-flex h-10 items-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-navy hover:bg-slate-50"
               >
                 {copy.published.versions}
@@ -255,7 +271,7 @@ export function CourseBuilderShell() {
                   setShowErrors(false)
                   setSavedAt(null)
                   setPublishState('idle')
-                  navigate(paths.content.createCourse)
+                  navigate(workspace.createCourse)
                 }}
                 className="inline-flex h-10 items-center rounded-lg px-4 text-sm font-semibold text-brand hover:bg-[#EFF4FF]"
               >
@@ -274,7 +290,7 @@ export function CourseBuilderShell() {
             <div className="flex items-center gap-3">
               {stepIndex === 0 ? (
                 <Link
-                  to={paths.content.courses}
+                  to={workspace.courses}
                   className="inline-flex h-10 items-center rounded-lg px-4 text-sm font-semibold text-slate-500 hover:bg-slate-50"
                 >
                   {copy.cancel}

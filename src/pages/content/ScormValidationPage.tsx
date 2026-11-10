@@ -8,7 +8,7 @@ import {
   getScormValidationHistory,
   type ScormCheckResult,
 } from '@/constants'
-import { paths } from '@/routes/paths'
+import { useContentWorkspace } from '@/routes/contentWorkspace'
 import {
   ContentBadge,
   ContentCard,
@@ -52,6 +52,7 @@ function CheckResultIcon({ result }: { result: ScormCheckResult }) {
 }
 
 export function ContentScormValidationPage() {
+  const workspace = useContentWorkspace()
   const [searchParams, setSearchParams] = useSearchParams()
   const [filter, setFilter] = useState<FilterId>('all')
   const [notice, setNotice] = useState<string | null>(null)
@@ -137,12 +138,12 @@ export function ContentScormValidationPage() {
   return (
     <div className="space-y-6">
       <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-sm">
-        <Link to={paths.content.scorm} className="font-medium text-slate-500 hover:text-brand">
+        <Link to={workspace.scorm} className="font-medium text-slate-500 hover:text-brand">
           {copy.crumbScorm}
         </Link>
         <ChevronRightIcon className="h-3.5 w-3.5 text-slate-300" />
         <Link
-          to={paths.content.scormValidation}
+          to={workspace.scormValidation}
           className="font-medium text-slate-500 hover:text-brand"
         >
           {copy.crumbValidation}
@@ -370,7 +371,7 @@ export function ContentScormValidationPage() {
             title={copy.historyTitle}
             action={
               <Link
-                to={paths.content.history}
+                to={workspace.history}
                 className="inline-flex items-center text-xs font-semibold text-brand hover:text-blue-700"
               >
                 {copy.historyLink}

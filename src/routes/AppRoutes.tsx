@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router'
+import { Navigate, Route, Routes } from 'react-router'
 import {
   ContentAdminLayout,
   CourseBuilderShell,
@@ -7,11 +7,54 @@ import {
   PublicLayout,
   RoleLayout,
   StudentLayout,
+  SuperAdminLayout,
 } from '@/components/common'
 import {
   AboutPage,
-  AdminDashboardPage,
+  AdminBusinessPerformancePage,
+  AdminCatalogPage,
+  AdminCertificateReportsPage,
+  AdminCertificateStatusPage,
+  AdminCertificateVerificationPage,
+  AdminCertificationRequirementsPage,
+  AdminCpdHoursPage,
+  AdminIssuedCertificatesPage,
+  AdminAllLiveClassesPage,
+  AdminAllOrganizationsPage,
+  AdminOrganizationProfilesPage,
+  AdminOrganizationPlansPage,
+  AdminOrganizationEmployeesPage,
+  AdminOrganizationPurchasesPage,
+  AdminOrganizationSeatsPage,
+  AdminOrganizationVersionAllocationsPage,
+  AdminOrganizationTrainingPage,
+  AdminOrganizationInvoicesPage,
+  AdminOrganizationPerformancePage,
+  AdminCompletedSessionsPage,
+  AdminLiveAttendancePage,
+  AdminLiveClassReportsPage,
+  AdminScheduleLiveClassPage,
+  AdminUpcomingSessionsPage,
+  AdminZoomLinksPage,
+  AdminAssessmentAnalyticsPage,
+  AdminCourseIntelligencePage,
+  AdminCoursePricingPage,
+  AdminExecutiveOverviewPage,
+  AdminKpisPage,
   AdminLoginPage,
+  AdminModuleQuizzesPage,
+  AdminQuestionBankPage,
+  AdminRecentActivityPage,
+  AdminAllStudentsPage,
+  AdminStudentDetailsPage,
+  AdminStudentsByCountryPage,
+  AdminStudentRegistrationAnalyticsPage,
+  AdminStudentPurchasesPage,
+  AdminActiveEnrollmentsPage,
+  AdminStudentLearningProgressPage,
+  AdminStudentAssessmentResultsPage,
+  AdminStudentCertificatesPage,
+  AdminStudentPaymentHistoryPage,
   BusinessPage,
   ContentAdminDashboardPage,
   ContentAllCoursesPage,
@@ -175,8 +218,83 @@ export function AppRoutes() {
         <Route index element={<TutorDashboardPage />} />
       </Route>
 
-      <Route path={paths.admin.root} element={<RoleLayout role="admin" />}>
-        <Route index element={<AdminDashboardPage />} />
+      <Route path={paths.admin.root} element={<SuperAdminLayout />}>
+        <Route index element={<AdminExecutiveOverviewPage />} />
+        <Route path="business-performance" element={<AdminBusinessPerformancePage />} />
+        <Route path="kpis" element={<AdminKpisPage />} />
+        <Route path="activity" element={<AdminRecentActivityPage />} />
+        <Route path="courses/pricing" element={<AdminCoursePricingPage />} />
+        <Route path="courses/intelligence" element={<AdminCourseIntelligencePage />} />
+        <Route path="courses/trending" element={<Navigate to={`${paths.admin.courseIntelligence}?tab=trending`} replace />} />
+        <Route path="courses/top-selling" element={<Navigate to={`${paths.admin.courseIntelligence}?tab=top-selling`} replace />} />
+        <Route path="courses/most-viewed" element={<Navigate to={`${paths.admin.courseIntelligence}?tab=most-viewed`} replace />} />
+        <Route path="courses/highest-revenue" element={<Navigate to={`${paths.admin.courseIntelligence}?tab=highest-revenue`} replace />} />
+        <Route path="courses/recently-added" element={<Navigate to={paths.admin.courses} replace />} />
+        <Route path="courses/recently-updated" element={<Navigate to={paths.admin.courses} replace />} />
+        {/* Shared Content Admin modules rendered inside the Super Admin layout */}
+        <Route path="courses/new" element={<CourseBuilderShell />}>
+          <Route index element={<ContentCourseBuilderDetailsPage />} />
+          <Route path="builder" element={<ContentCourseBuilderContentPage />} />
+          <Route path="quiz" element={<ContentCourseBuilderQuizPage />} />
+          <Route path="settings" element={<ContentCourseBuilderSettingsPage />} />
+          <Route path="preview" element={<ContentCourseBuilderPreviewPage />} />
+        </Route>
+        <Route path="courses" element={<ContentAllCoursesPage />} />
+        <Route path="courses/drafts" element={<ContentDraftCoursesPage />} />
+        <Route path="courses/versions" element={<ContentCourseVersionsPage />} />
+        <Route path="courses/publishing-history" element={<ContentPublishingHistoryPage />} />
+        <Route path="courses/analytics" element={<ContentCourseAnalyticsPage />} />
+        <Route path="scorm" element={<ContentScormPackagesPage />} />
+        <Route path="scorm/validation" element={<ContentScormValidationPage />} />
+        <Route path="quizzes" element={<AdminModuleQuizzesPage />} />
+        <Route path="assignments" element={<ContentAssignmentsLibraryPage />} />
+        <Route path="question-bank" element={<AdminQuestionBankPage />} />
+        <Route path="assessments/analytics" element={<AdminAssessmentAnalyticsPage />} />
+        <Route path="assessments/results" element={<Navigate to={paths.admin.assessmentAnalytics} replace />} />
+        <Route path="assessments/passing-statistics" element={<Navigate to={`${paths.admin.assessmentAnalytics}?tab=passing`} replace />} />
+        <Route path="assessments/performance" element={<Navigate to={`${paths.admin.assessmentAnalytics}?tab=performance`} replace />} />
+        <Route path="assessments/final" element={<Navigate to={paths.admin.quizzes} replace />} />
+        <Route path="cpd" element={<AdminCpdHoursPage />} />
+        <Route path="certificates/templates" element={<ContentCertificateTemplatesPage />} />
+        <Route path="certificates/verify" element={<AdminCertificateVerificationPage />} />
+        <Route path="certificates/status" element={<AdminCertificateStatusPage />} />
+        <Route path="certificates/requirements" element={<AdminCertificationRequirementsPage />} />
+        <Route path="certificates/reports" element={<AdminCertificateReportsPage />} />
+        <Route path="certificates" element={<AdminIssuedCertificatesPage />} />
+        <Route path="live-classes/schedule" element={<AdminScheduleLiveClassPage />} />
+        <Route path="live-classes/upcoming" element={<AdminUpcomingSessionsPage />} />
+        <Route path="live-classes/completed" element={<AdminCompletedSessionsPage />} />
+        <Route path="live-classes/zoom-links" element={<AdminZoomLinksPage />} />
+        <Route path="live-classes/attendance" element={<AdminLiveAttendancePage />} />
+        <Route path="live-classes/reports" element={<AdminLiveClassReportsPage />} />
+        <Route path="live-classes" element={<AdminAllLiveClassesPage />} />
+        <Route path="students/details" element={<AdminStudentDetailsPage />} />
+        <Route path="students/countries" element={<AdminStudentsByCountryPage />} />
+        <Route path="students/analytics" element={<AdminStudentRegistrationAnalyticsPage />} />
+        <Route path="students/purchases" element={<AdminStudentPurchasesPage />} />
+        <Route path="students/enrollments" element={<AdminActiveEnrollmentsPage />} />
+        <Route path="students/progress" element={<AdminStudentLearningProgressPage />} />
+        <Route path="students/assessments" element={<AdminStudentAssessmentResultsPage />} />
+        <Route path="students/certificates" element={<AdminStudentCertificatesPage />} />
+        <Route path="students/payments" element={<AdminStudentPaymentHistoryPage />} />
+        <Route path="students" element={<AdminAllStudentsPage />} />
+        <Route path="organizations/profiles" element={<AdminOrganizationProfilesPage />} />
+        <Route path="organizations/plans" element={<AdminOrganizationPlansPage />} />
+        <Route path="organizations/employees" element={<AdminOrganizationEmployeesPage />} />
+        <Route path="organizations/purchases" element={<AdminOrganizationPurchasesPage />} />
+        <Route path="organizations/seats" element={<AdminOrganizationSeatsPage />} />
+        <Route path="organizations/version-allocations" element={<AdminOrganizationVersionAllocationsPage />} />
+        <Route path="organizations/training-progress" element={<AdminOrganizationTrainingPage />} />
+        <Route path="organizations/invoices" element={<AdminOrganizationInvoicesPage />} />
+        <Route path="organizations/performance" element={<AdminOrganizationPerformancePage />} />
+        <Route path="organizations" element={<AdminAllOrganizationsPage />} />
+        <Route path="media" element={<ContentMediaLibraryPage />} />
+        <Route path="support/course-qa" element={<ContentCourseQaPage />} />
+        {/* Legacy aliases */}
+        <Route path="course-analytics" element={<ContentCourseAnalyticsPage />} />
+        <Route path="publishing-history" element={<ContentPublishingHistoryPage />} />
+        {/* Every other Super Admin screen resolves via superAdminCatalogByPath */}
+        <Route path="*" element={<AdminCatalogPage />} />
       </Route>
 
       <Route path={paths.content.root} element={<ContentAdminLayout />}>

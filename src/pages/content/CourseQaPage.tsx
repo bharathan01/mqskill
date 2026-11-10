@@ -6,7 +6,7 @@ import {
   type ContentQaQuestion,
   type ContentQaStatus,
 } from '@/constants'
-import { paths } from '@/routes/paths'
+import { useContentWorkspace } from '@/routes/contentWorkspace'
 import {
   ContentBadge,
   ContentEmptyState,
@@ -20,6 +20,7 @@ const copy = contentQaPage
 type TabId = 'all' | ContentQaStatus
 
 export function ContentCourseQaPage() {
+  const workspace = useContentWorkspace()
   const [searchParams] = useSearchParams()
   const [questions, setQuestions] = useState<ContentQaQuestion[]>(contentQaQuestions)
   const [tab, setTab] = useState<TabId>('all')
@@ -268,7 +269,7 @@ export function ContentCourseQaPage() {
                             </button>
                           ) : null}
                           <Link
-                            to={paths.content.coursePreview}
+                            to={workspace.coursePreview}
                             className="inline-flex h-8 items-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-navy hover:bg-slate-50"
                           >
                             {copy.viewLesson}

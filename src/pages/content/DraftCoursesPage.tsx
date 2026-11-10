@@ -5,7 +5,7 @@ import {
   contentDraftsPage,
   type ContentDraftCourse,
 } from '@/constants'
-import { paths } from '@/routes/paths'
+import { useContentWorkspace } from '@/routes/contentWorkspace'
 import { ContentCard, ContentEmptyState, ContentNotice } from '@/components/common'
 import {
   AlertTriangleIcon,
@@ -23,6 +23,7 @@ import {
 const copy = contentDraftsPage
 
 export function ContentDraftCoursesPage() {
+  const workspace = useContentWorkspace()
   const [searchParams] = useSearchParams()
   const [drafts, setDrafts] = useState<ContentDraftCourse[]>(contentDraftCourses)
   const [discarded, setDiscarded] = useState<ContentDraftCourse | null>(null)
@@ -85,7 +86,7 @@ export function ContentDraftCoursesPage() {
           <p className="mt-1 text-sm text-slate-500">{copy.subtitle}</p>
         </div>
         <Link
-          to={paths.content.createCourse}
+          to={workspace.createCourse}
           className="inline-flex h-10 items-center gap-2 self-start rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-blue-700 lg:self-auto"
         >
           <PlusIcon className="h-4 w-4" />
@@ -220,14 +221,14 @@ export function ContentDraftCoursesPage() {
                     <TrashIcon className="h-4 w-4" />
                   </button>
                   <Link
-                    to={paths.content.coursePreview}
+                    to={workspace.coursePreview}
                     className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-navy hover:bg-slate-50"
                   >
                     <EyeIcon className="h-4 w-4" />
                     {copy.preview}
                   </Link>
                   <Link
-                    to={paths.content.courseBuilder}
+                    to={workspace.courseBuilder}
                     className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-brand px-3 text-sm font-semibold text-white hover:bg-blue-700"
                   >
                     {copy.continueEditing}
@@ -257,7 +258,7 @@ export function ContentDraftCoursesPage() {
                 {copy.clearSearch}
               </button>
               <Link
-                to={paths.content.createCourse}
+                to={workspace.createCourse}
                 className="inline-flex h-10 items-center gap-2 rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-blue-700"
               >
                 <PlusIcon className="h-4 w-4" />
@@ -287,7 +288,7 @@ export function ContentDraftCoursesPage() {
               body={copy.emptyAllBody}
             >
               <Link
-                to={paths.content.createCourse}
+                to={workspace.createCourse}
                 className="inline-flex h-10 items-center gap-2 rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-blue-700"
               >
                 <PlusIcon className="h-4 w-4" />

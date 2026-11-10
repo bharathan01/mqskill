@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { toWorkspacePath, useContentWorkspace } from '@/routes/contentWorkspace'
 import { computeCourseBuilderChecks, courseBuilderPreviewCopy, courseBuilderSettingsCopy } from '@/constants'
 import { ContentBadge, ContentCard, useCourseBuilder } from '@/components/common'
 import {
@@ -19,6 +20,7 @@ const copy = courseBuilderPreviewCopy
 const labels = copy.labels
 
 export function CourseBuilderPreviewPage() {
+  const workspace = useContentWorkspace()
   const { details, modules, settings } = useCourseBuilder()
   const checks = computeCourseBuilderChecks(details, modules, settings)
   const blockers = checks.filter((check) => check.required && !check.passed)
@@ -276,7 +278,7 @@ export function CourseBuilderPreviewPage() {
                   </div>
                   {!check.passed ? (
                     <Link
-                      to={check.to}
+                      to={toWorkspacePath(check.to, workspace)}
                       className="inline-flex items-center text-xs font-semibold text-brand hover:text-blue-700"
                     >
                       {copy.fix}

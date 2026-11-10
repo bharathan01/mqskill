@@ -6,7 +6,7 @@ import {
   type ScormPackage,
   type ScormPackageStatus,
 } from '@/constants'
-import { paths } from '@/routes/paths'
+import { useContentWorkspace } from '@/routes/contentWorkspace'
 import {
   ContentBadge,
   ContentEmptyState,
@@ -46,6 +46,7 @@ function formatSize(bytes: number) {
 
 export function ContentScormPackagesPage() {
   const navigate = useNavigate()
+  const workspace = useContentWorkspace()
   const fileInput = useRef<HTMLInputElement>(null)
   const [packages, setPackages] = useState<ScormPackage[]>(contentScormPackages)
   const [searchParams] = useSearchParams()
@@ -338,7 +339,7 @@ export function ContentScormPackagesPage() {
                       <ContentRowAction
                         label={copy.actions.report}
                         onClick={() =>
-                          navigate(`${paths.content.scormValidation}?package=${encodeURIComponent(item.id)}`)
+                          navigate(`${workspace.scormValidation}?package=${encodeURIComponent(item.id)}`)
                         }
                       >
                         <EyeIcon className="h-3.5 w-3.5" />

@@ -1,13 +1,14 @@
 import { NavLink } from 'react-router'
 import { courseBuilderContentCopy } from '@/constants'
-import { paths } from '@/routes/paths'
-
-const tabs = [
-  { id: 'content', label: courseBuilderContentCopy.tabs.content, to: paths.content.courseBuilder },
-  { id: 'quiz', label: courseBuilderContentCopy.tabs.quiz, to: paths.content.courseQuiz },
-]
+import { useContentWorkspace } from '@/routes/contentWorkspace'
 
 export function CourseBuilderTabs() {
+  const workspace = useContentWorkspace()
+  const tabs = [
+    { id: 'content', label: courseBuilderContentCopy.tabs.content, to: workspace.courseBuilder },
+    { id: 'quiz', label: courseBuilderContentCopy.tabs.quiz, to: workspace.courseQuiz },
+  ]
+
   return (
     <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-[0_1px_2px_rgba(15,40,80,0.04)]">
       {tabs.map((tab) => (

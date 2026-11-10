@@ -6,7 +6,7 @@ import {
   type ContentCourseListItem,
   type ContentCourseStatus,
 } from '@/constants'
-import { paths } from '@/routes/paths'
+import { useContentWorkspace } from '@/routes/contentWorkspace'
 import {
   ContentBadge,
   ContentCourseThumb,
@@ -40,6 +40,7 @@ function parseUpdated(value: string) {
 
 export function ContentAllCoursesPage() {
   const navigate = useNavigate()
+  const workspace = useContentWorkspace()
   const [searchParams] = useSearchParams()
   const [courses, setCourses] = useState<ContentCourseListItem[]>(contentCoursesList)
   const [query, setQuery] = useState(() => searchParams.get('q') ?? '')
@@ -118,7 +119,7 @@ export function ContentAllCoursesPage() {
           <p className="mt-1 text-sm text-slate-500">{copy.subtitle}</p>
         </div>
         <Link
-          to={paths.content.createCourse}
+          to={workspace.createCourse}
           className="inline-flex h-10 items-center gap-2 self-start rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-blue-700 lg:self-auto"
         >
           <PlusIcon className="h-4 w-4" />
@@ -241,20 +242,20 @@ export function ContentAllCoursesPage() {
                       <div className="flex items-center gap-1.5">
                         <ContentRowAction
                           label={copy.actions.edit}
-                          onClick={() => navigate(paths.content.courseBuilder)}
+                          onClick={() => navigate(workspace.courseBuilder)}
                         >
                           <PencilIcon className="h-3.5 w-3.5" />
                         </ContentRowAction>
                         <ContentRowAction
                           label={copy.actions.view}
-                          onClick={() => navigate(paths.content.coursePreview)}
+                          onClick={() => navigate(workspace.coursePreview)}
                         >
                           <EyeIcon className="h-3.5 w-3.5" />
                         </ContentRowAction>
                         <ContentRowAction
                           label={copy.actions.versions}
                           onClick={() =>
-                            navigate(`${paths.content.versions}?course=${encodeURIComponent(course.id)}`)
+                            navigate(`${workspace.versions}?course=${encodeURIComponent(course.id)}`)
                           }
                         >
                           <NetworkIcon className="h-3.5 w-3.5" />
@@ -294,7 +295,7 @@ export function ContentAllCoursesPage() {
               </button>
             ) : null}
             <Link
-              to={paths.content.createCourse}
+              to={workspace.createCourse}
               className="inline-flex h-10 items-center gap-2 rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-blue-700"
             >
               <PlusIcon className="h-4 w-4" />

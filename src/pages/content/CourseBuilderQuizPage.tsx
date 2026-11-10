@@ -15,7 +15,7 @@ import {
   type BuilderQuizQuestion,
   type QuizQuestionType,
 } from '@/constants'
-import { paths } from '@/routes/paths'
+import { useContentWorkspace } from '@/routes/contentWorkspace'
 import {
   ContentCard,
   ContentEmptyState,
@@ -33,6 +33,7 @@ const copy = courseBuilderQuizCopy
 const letters = 'ABCDEFGHIJ'
 
 export function CourseBuilderQuizPage() {
+  const workspace = useContentWorkspace()
   const { modules, updateModules } = useCourseBuilder()
   const [searchParams, setSearchParams] = useSearchParams()
   const requested = searchParams.get('module')
@@ -212,7 +213,7 @@ export function CourseBuilderQuizPage() {
                 {copy.addFirstModule}
               </button>
               <Link
-                to={paths.content.courseBuilder}
+                to={workspace.courseBuilder}
                 className="inline-flex h-10 items-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-navy hover:bg-slate-50"
               >
                 {copy.goToContent}
@@ -321,7 +322,7 @@ export function CourseBuilderQuizPage() {
                     ))}
                   </ContentSelect>
                   <Link
-                    to={paths.content.quizzes}
+                    to={workspace.quizzes}
                     className="mt-2 inline-flex text-xs font-semibold text-brand hover:text-blue-700"
                   >
                     {copy.openLibrary}
@@ -415,7 +416,7 @@ export function CourseBuilderQuizPage() {
                     ))}
                   </ContentSelect>
                   <Link
-                    to={paths.content.assignments}
+                    to={workspace.assignments}
                     className="mt-2 inline-flex text-xs font-semibold text-brand hover:text-blue-700"
                   >
                     {copy.openAssignments}
