@@ -7,6 +7,7 @@ export {
   EmployeeInvitePage,
   ForgotPasswordPage,
   HomePage,
+  AdminLoginPage,
   LoginPage,
   NotFoundPage,
   SignupPage,
@@ -24,6 +25,30 @@ export {
 } from './student'
 export { TutorDashboardPage } from './tutor'
 export { AdminDashboardPage } from './admin'
+export {
+  ContentAdminDashboardPage,
+  ContentAllCoursesPage,
+  ContentCourseBuilderContentPage,
+  ContentCourseBuilderDetailsPage,
+  ContentCourseBuilderPreviewPage,
+  ContentCourseBuilderQuizPage,
+  ContentCourseBuilderSettingsPage,
+  ContentCourseVersionsPage,
+  ContentCourseAnalyticsPage,
+  ContentCourseQaPage,
+  ContentDraftCoursesPage,
+  ContentHelpSupportPage,
+  ContentMediaLibraryPage,
+  ContentPlaceholderPage,
+  ContentScormPackagesPage,
+  ContentScormValidationPage,
+  ContentFinalAssessmentPage,
+  ContentQuestionBankPage,
+  ContentCpdConfigurationPage,
+  ContentCertificateTemplatesPage,
+  ContentProfileSettingsPage,
+  ContentPublishingHistoryPage,
+} from './content'
 export {
   OrganizationAnnouncementsPage,
   OrganizationBillingPage,
@@ -46,4 +71,22 @@ export {
   OrganizationReportsPage,
   OrganizationTrainingRequestsPage,
 } from './organization'
-export { EmployeeDashboardPage } from './employee'
+export {
+  EmployeeAssessmentResultPage,
+  EmployeeAssessmentsPage,
+  EmployeeAssignmentSubmitPage,
+  EmployeeCertificateDetailPage,
+  EmployeeCertificatesPage,
+  EmployeeHelpPage,
+  EmployeeNewTicketPage,
+  EmployeeNotificationsPage,
+  EmployeeProfilePage,
+  EmployeeTicketDetailPage,
+  EmployeeCourseLessonPage,
+  EmployeeCoursesPage,
+  EmployeeDashboardPage,
+  EmployeePlaceholderPage,
+  EmployeeQuizTakePage,
+  EmployeeSessionDetailPage,
+  EmployeeSessionsPage,
+} from './employee'

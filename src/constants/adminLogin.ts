@@ -1,0 +1,52 @@
+export const adminLoginPage = {
+  brand: 'MaqSkillz',
+  brandTag: 'Admin console',
+  title: 'Operate learning across every organization.',
+  description:
+    'Sign in to manage platforms, courses, content and learner operations from one secure admin portal.',
+  features: [
+    {
+      id: 'platform',
+      title: 'Platform control',
+      body: 'Oversee organizations, seats and system-wide settings.',
+      icon: 'shield' as const,
+    },
+    {
+      id: 'content',
+      title: 'Content operations',
+      body: 'Publish courses, assessments and live-session materials.',
+      icon: 'book' as const,
+    },
+    {
+      id: 'secure',
+      title: 'Admin-only access',
+      body: 'Role is determined by your MaqSkillz admin email.',
+      icon: 'award' as const,
+    },
+  ],
+  footer: '© 2026 MaqSkillz',
+  privacy: 'Privacy',
+  terms: 'Terms',
+  welcome: 'Admin sign in',
+  subtitle: 'Use your MaqSkillz admin email. Super admin and content admin share this page.',
+  email: 'Email',
+  emailPlaceholder: 'you@maqskillz.com',
+  password: 'Password',
+  passwordPlaceholder: '••••••••••',
+  remember: 'Remember me',
+  submit: 'Sign in',
+  notice:
+    'Demo: superadmin@maqskillz.com / admin123 · content@maqskillz.com / content123 · OTP 123456',
+  learnerLogin: 'Learner or organization login',
+  verify: {
+    back: 'Back to sign in',
+    title: 'Verify it’s you',
+    subtitle: 'Enter the 6-digit code we sent to',
+    expires: 'Code expires in',
+    resend: 'Resend code',
+    trust: 'Trust this device for 30 days',
+    submit: 'Verify and continue',
+    alternate: 'Use another verification method',
+    seconds: 292,
+  },
+} as const

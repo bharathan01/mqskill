@@ -1054,6 +1054,53 @@ export function PlayIcon({ className = 'h-4 w-4' }: IconProps) {
   )
 }
 
+export function PauseIcon({ className = 'h-4 w-4' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M7 5h3.5v14H7V5zm6.5 0H17v14h-3.5V5z" />
+    </svg>
+  )
+}
+
+export function VolumeIcon({ className = 'h-4 w-4' }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor" stroke="none" />
+      <path d="M15.5 8.5a4 4 0 0 1 0 7" />
+      <path d="M18.5 5.5a8 8 0 0 1 0 13" />
+    </svg>
+  )
+}
+
+export function MaximizeIcon({ className = 'h-4 w-4' }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M9 3H3v6" />
+      <path d="M15 3h6v6" />
+      <path d="M21 15v6h-6" />
+      <path d="M3 15v6h6" />
+    </svg>
+  )
+}
+
 export function PlayCircleIcon({ className = 'h-4 w-4' }: IconProps) {
   return (
     <svg
@@ -1411,6 +1458,19 @@ export function SendIcon({ className = 'h-4 w-4' }: IconProps) {
     >
       <path d="m22 2-7 20-4-9-9-4Z" />
       <path d="M22 2 11 13" />
+    </svg>
+  )
+}
+
+export function GripVerticalIcon({ className = 'h-4 w-4' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+      <circle cx="9" cy="6" r="1.5" />
+      <circle cx="15" cy="6" r="1.5" />
+      <circle cx="9" cy="12" r="1.5" />
+      <circle cx="15" cy="12" r="1.5" />
+      <circle cx="9" cy="18" r="1.5" />
+      <circle cx="15" cy="18" r="1.5" />
     </svg>
   )
 }

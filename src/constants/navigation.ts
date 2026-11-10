@@ -35,6 +35,12 @@ export const organizationNavLinks = [
 
 export const employeeNavLinks = [
   { label: 'Dashboard', to: paths.employee.dashboard },
+  { label: 'My Courses', to: paths.employee.courses },
+  { label: 'My Assessments', to: paths.employee.assessments },
+  { label: 'Live Sessions', to: paths.employee.sessions },
+  { label: 'Certificates & CPD', to: paths.employee.certificates },
+  { label: 'Help & Support', to: paths.employee.help },
+  { label: 'Profile & Settings', to: paths.employee.profile },
 ] as const
 
 export const tutorNavLinks = [
@@ -45,12 +51,17 @@ export const adminNavLinks = [
   { label: 'Dashboard', to: paths.admin.dashboard },
 ] as const
 
+export const contentAdminNavLinks = [
+  { label: 'Dashboard', to: paths.content.dashboard },
+] as const
+
 export const roleNav = {
   student: studentNavLinks,
   organization: organizationNavLinks,
   employee: employeeNavLinks,
   tutor: tutorNavLinks,
   admin: adminNavLinks,
+  contentAdmin: contentAdminNavLinks,
 } as const
 
 export const roleLabels = {
@@ -58,5 +69,6 @@ export const roleLabels = {
   organization: 'Organization',
   employee: 'Employee',
   tutor: 'Tutor',
-  admin: 'Admin',
+  admin: 'Super Admin',
+  contentAdmin: 'Content Admin',
 } as const

@@ -51,6 +51,21 @@ export const paths = {
   employee: {
     root: '/employee',
     dashboard: '/employee',
+    courses: '/employee/courses',
+    courseDetail: '/employee/courses/:courseId',
+    assessments: '/employee/assessments',
+    assessmentQuiz: '/employee/assessments/:assessmentId/quiz',
+    assessmentSubmit: '/employee/assessments/:assessmentId/submit',
+    assessmentResult: '/employee/assessments/:assessmentId/result',
+    sessions: '/employee/sessions',
+    sessionDetail: '/employee/sessions/:sessionId',
+    certificates: '/employee/certificates',
+    certificateDetail: '/employee/certificates/:certificateId',
+    notifications: '/employee/notifications',
+    help: '/employee/help',
+    newTicket: '/employee/help/new',
+    ticketDetail: '/employee/help/:ticketId',
+    profile: '/employee/profile',
     invite: '/invite',
   },
   tutor: {
@@ -59,7 +74,32 @@ export const paths = {
   },
   admin: {
     root: '/admin',
+    login: '/admin/login',
     dashboard: '/admin',
+  },
+  content: {
+    root: '/content',
+    dashboard: '/content',
+    courses: '/content/courses',
+    versions: '/content/versions',
+    drafts: '/content/drafts',
+    createCourse: '/content/courses/new',
+    courseBuilder: '/content/courses/new/builder',
+    courseQuiz: '/content/courses/new/quiz',
+    courseSettings: '/content/courses/new/settings',
+    coursePreview: '/content/courses/new/preview',
+    scorm: '/content/scorm',
+    scormValidation: '/content/scorm/validation',
+    assessments: '/content/assessments',
+    questionBank: '/content/question-bank',
+    cpd: '/content/cpd',
+    certificates: '/content/certificates',
+    media: '/content/media',
+    qa: '/content/qa',
+    analytics: '/content/analytics',
+    history: '/content/history',
+    profile: '/content/profile',
+    help: '/content/help',
   },
 } as const
 
@@ -85,4 +125,12 @@ export function organizationInvoicePath(invoiceId: string) {
 
 export function organizationHelpTicketPath(ticketId: string) {
   return `/organization/help/${ticketId}`
+}
+
+export function employeeCoursePath(courseId: string) {
+  return `/employee/courses/${courseId}`
+}
+
+export function employeeHelpTicketPath(ticketId: string) {
+  return `/employee/help/${ticketId}`
 }
