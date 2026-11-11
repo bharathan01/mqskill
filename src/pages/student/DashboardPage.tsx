@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 import { studentDashboard } from '@/constants'
-import { paths, studentCoursePath } from '@/routes/paths'
+import { studentCoursePath } from '@/routes/paths'
 import {
   AwardIcon,
   CalendarIcon,
