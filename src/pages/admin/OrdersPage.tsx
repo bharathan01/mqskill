@@ -5,23 +5,20 @@ import { LightbulbIcon } from '@/components/ui'
 import {
   formatSalesDate,
   formatSalesKwd,
-  salesOrderTotal,
-  superAdminOrderTabs,
-  superAdminOrdersKpis,
-  superAdminOrdersSubtitle,
-  superAdminOrdersTip,
-  superAdminSalesMethods,
-  superAdminSalesOrders,
+  superAdminOrderMethods,
+  superAdminOrders,
   superAdminSalesPageSize,
-  type SuperAdminSalesOrder,
-  type SuperAdminSalesOrderStatus,
+  type SuperAdminOrder,
+  type SuperAdminOrderStatus,
+  type SuperAdminSalesKpi,
 } from '@/constants'
 import { paths } from '@/routes/paths'
 import { StatusBadge } from './catalogShared'
-import { btnOutline, cardClass } from './catalogUtils'
+import { btnOutline, btnPrimary, cardClass } from './catalogUtils'
 import {
   dangerAction,
   linkAction,
+  MoneyCell,
   paginate,
   SalesEmptyRow,
   SalesHBars,
@@ -35,88 +32,110 @@ import {
   thClass,
   toolbarClass,
   trClass,
+  updateById,
 } from './salesShared'
 
-const ALL_TYPES = 'All types'
 const ALL_METHODS = 'All methods'
-const baseCount = (status: SuperAdminSalesOrderStatus) =>
-  superAdminSalesOrders.filter((order) => order.status === status).length
+const ALL_TYPES = 'All types'
+const TABS: { id: 'all' | SuperAdminOrderStatus; label: string }[] = [
+  { id: 'all', label: 'All orders' },
+  { id: 'Paid', label: 'Paid' },
+  { id: 'Pending', label: 'Pending' },
+  { id: 'Failed', label: 'Failed' },
+  { id: 'Refunded', label: 'Refunded' },
+]
+
+const baseCount = (status: SuperAdminOrderStatus) => superAdminOrders.filter((row) => row.status === status).length
 
 export function AdminOrdersPage() {
-  const [orders, setOrders] = useState<SuperAdminSalesOrder[]>(superAdminSalesOrders)
-  const [tab, setTab] = useState<'all' | SuperAdminSalesOrderStatus>('all')
+  const [orders, setOrders] = useState<SuperAdminOrder[]>(superAdminOrders)
+  const [tab, setTab] = useState<'all' | SuperAdminOrderStatus>('all')
   const [query, setQuery] = useState('')
-  const [type, setType] = useState(ALL_TYPES)
   const [method, setMethod] = useState(ALL_METHODS)
+  const [type, setType] = useState(ALL_TYPES)
   const [page, setPage] = useState(1)
   const [notice, setNotice] = useState<string | null>(null)
 
-  const kpis = useMemo(() => {
-    const count = (status: SuperAdminSalesOrderStatus) => orders.filter((order) => order.status === status).length
-    return superAdminOrdersKpis.map((kpi) => {
-      if (kpi.id === 'paid') return { ...kpi, value: (1284 + count('Paid') - baseCount('Paid')).toLocaleString('en-US') }
-      if (kpi.id === 'pending') return { ...kpi, value: String(41 + count('Pending') - baseCount('Pending')) }
-      if (kpi.id === 'failed') return { ...kpi, value: String(18 + count('Failed') - baseCount('Failed')) }
-      return kpi
-    })
+  const kpis = useMemo<SuperAdminSalesKpi[]>(() => {
+    const count = (status: SuperAdminOrderStatus) => orders.filter((row) => row.status === status).length
+    const paid = orders.filter((row) => row.status === 'Paid')
+    const aov = paid.length ? paid.reduce((sum, row) => sum + row.total, 0) / paid.length : 0
+    return [
+      { id: 'paid', label: 'Paid orders (30d)', value: (1284 + count('Paid') - baseCount('Paid')).toLocaleString('en-US'), detail: '+8.1% vs previous 30 days' },
+      { id: 'pending', label: 'Pending', value: String(41 + count('Pending') - baseCount('Pending')), detail: 'Awaiting payment confirmation' },
+      { id: 'failed', label: 'Failed', value: String(count('Failed')), detail: 'In this list' },
+      { id: 'aov', label: 'Avg. order value', value: formatSalesKwd(aov, 1), detail: 'Paid orders in this list' },
+    ]
   }, [orders])
 
   const byMethod = useMemo(
     () =>
-      superAdminSalesMethods.map((label) => ({
+      superAdminOrderMethods.map((label) => ({
         label,
-        value: orders
-          .filter((order) => order.method === label && order.status === 'Paid')
-          .reduce((total, order) => total + salesOrderTotal(order), 0),
+        value: orders.filter((row) => row.method === label && row.status === 'Paid').reduce((sum, row) => sum + row.total, 0),
       })),
     [orders],
   )
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase()
-    return orders.filter((order) => {
-      if (tab !== 'all' && order.status !== tab) return false
-      if (type !== ALL_TYPES && order.type !== type) return false
-      if (method !== ALL_METHODS && order.method !== method) return false
-      if (!needle) return true
-      return `${order.id} ${order.customer}`.toLowerCase().includes(needle)
+    return orders.filter((row) => {
+      if (tab !== 'all' && row.status !== tab) return false
+      if (method !== ALL_METHODS && row.method !== method) return false
+      if (type !== ALL_TYPES && row.type !== type) return false
+      return !needle || `${row.id} ${row.customer}`.toLowerCase().includes(needle)
     })
   }, [method, orders, query, tab, type])
 
   const { pageCount, safePage, pageRows, from, to } = paginate(filtered, page, superAdminSalesPageSize)
 
-  const update = (order: SuperAdminSalesOrder, patch: Partial<SuperAdminSalesOrder>, message: string) => {
-    setOrders((current) => current.map((item) => (item.id === order.id ? { ...item, ...patch } : item)))
+  const setStatus = (row: SuperAdminOrder, status: SuperAdminOrderStatus, message: string) => {
+    setOrders((current) => updateById(current, row.id, { status }))
     setNotice(message)
+  }
+
+  const createManual = () => {
+    const next = `ORD-${52350 + orders.length}`
+    setOrders((current) => [
+      { id: next, customer: 'Manual order — walk-in', type: 'B2C', total: 85, method: 'Bank transfer', date: '2026-11-10', status: 'Pending' },
+      ...current,
+    ])
+    setTab('all')
+    setPage(1)
+    setNotice(`Manual order ${next} created as Pending (sample).`)
   }
 
   return (
     <div className="space-y-5">
       <SalesPageHeader
         page="Orders and Transactions"
-        subtitle={superAdminOrdersSubtitle}
+        subtitle="All paid, pending and failed orders across individuals and organizations."
         actions={
-          <button type="button" onClick={() => setNotice('Orders exported as CSV (sample).')} className={btnOutline}>
-            Export
-          </button>
+          <>
+            <button type="button" onClick={() => setNotice('Orders exported as CSV (sample).')} className={btnOutline}>
+              Export
+            </button>
+            <button type="button" onClick={createManual} className={btnPrimary}>
+              Create manual order
+            </button>
+          </>
         }
       />
 
       {notice ? <ContentNotice onDismiss={() => setNotice(null)}>{notice}</ContentNotice> : null}
 
-      <SalesKpiGrid kpis={kpis} />
+      <SalesKpiGrid kpis={kpis} className="sm:grid-cols-2 xl:grid-cols-4" />
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
         <section className={`${cardClass} overflow-hidden`}>
           <SalesTabs
-            tabs={superAdminOrderTabs}
+            tabs={TABS}
             active={tab}
             onChange={(id) => {
               setTab(id)
               setPage(1)
             }}
           />
-
           <div className={toolbarClass}>
             <SalesSearch
               value={query}
@@ -135,9 +154,9 @@ export function AdminOrdersPage() {
               }}
               className="!h-10 lg:max-w-[9rem]"
             >
-              {[ALL_TYPES, 'B2C', 'B2B'].map((item) => (
-                <option key={item}>{item}</option>
-              ))}
+              <option>{ALL_TYPES}</option>
+              <option>B2C</option>
+              <option>B2B</option>
             </ContentSelect>
             <ContentSelect
               aria-label="Method"
@@ -146,17 +165,17 @@ export function AdminOrdersPage() {
                 setMethod(event.target.value)
                 setPage(1)
               }}
-              className="!h-10 lg:max-w-[11rem]"
+              className="!h-10 lg:max-w-[10rem]"
             >
               <option>{ALL_METHODS}</option>
-              {superAdminSalesMethods.map((item) => (
+              {superAdminOrderMethods.map((item) => (
                 <option key={item}>{item}</option>
               ))}
             </ContentSelect>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-[1020px] w-full border-collapse text-left">
+            <table className="w-full min-w-[1000px] border-collapse text-left">
               <thead>
                 <tr className={theadRowClass}>
                   <th className="px-4 py-2.5 font-semibold">Order</th>
@@ -170,81 +189,61 @@ export function AdminOrdersPage() {
                 </tr>
               </thead>
               <tbody>
-                {pageRows.map((order) => (
-                  <tr key={order.id} className={trClass}>
-                    <td className="px-4 py-3.5 text-sm font-semibold text-brand">{order.id}</td>
-                    <td className="px-3 py-3.5">
-                      <p className="text-sm font-semibold text-navy">{order.customer}</p>
-                      <p className="mt-0.5 text-xs text-slate-400">{order.country}</p>
+                {pageRows.map((row) => (
+                  <tr key={row.id} className={trClass}>
+                    <td className="px-4 py-3.5 text-sm font-semibold text-brand">{row.id}</td>
+                    <td className="px-3 py-3.5 text-sm font-semibold text-navy">{row.customer}</td>
+                    <td className="px-3 py-3.5 text-sm text-slate-600">{row.type}</td>
+                    <td className="px-3 py-3.5 text-right">
+                      <MoneyCell value={row.total} />
                     </td>
-                    <td className="px-3 py-3.5 text-sm text-slate-600">{order.type}</td>
-                    <td className="px-3 py-3.5 text-right text-sm font-semibold tabular-nums text-navy">
-                      {formatSalesKwd(salesOrderTotal(order), 3)}
-                    </td>
-                    <td className="px-3 py-3.5 text-sm text-slate-600">{order.method}</td>
-                    <td className="px-3 py-3.5 text-sm text-slate-600">{formatSalesDate(order.date)}</td>
+                    <td className="px-3 py-3.5 text-sm text-slate-600">{row.method}</td>
+                    <td className="px-3 py-3.5 text-sm text-slate-600">{formatSalesDate(row.date)}</td>
                     <td className="px-3 py-3.5">
-                      <StatusBadge value={order.status} />
+                      <StatusBadge value={row.status} />
                     </td>
                     <td className="px-3 py-3.5 text-right">
-                      <span className="inline-flex items-center justify-end gap-3">
-                        <Link to={`${paths.admin.orderDetail}?order=${order.id}`} className={linkAction}>
+                      <div className="flex items-center justify-end gap-3">
+                        <Link to={`${paths.admin.orderDetail}?order=${row.id}`} className={linkAction}>
                           View
                         </Link>
-                        {order.status === 'Pending' || order.status === 'Failed' ? (
+                        {row.status === 'Pending' || row.status === 'Failed' ? (
                           <button
                             type="button"
-                            onClick={() =>
-                              update(order, { status: 'Paid', paidOn: order.date }, `${order.id} marked as paid (sample).`)
-                            }
+                            onClick={() => setStatus(row, 'Paid', `${row.id} marked as paid (sample).`)}
                             className={linkAction}
                           >
                             Mark as paid
                           </button>
                         ) : null}
-                        {order.status === 'Paid' ? (
+                        {row.status === 'Paid' ? (
                           <button
                             type="button"
-                            onClick={() =>
-                              update(
-                                order,
-                                { status: 'Refunded', refunded: salesOrderTotal(order) },
-                                `${order.id} refunded ${formatSalesKwd(salesOrderTotal(order), 3)} to ${order.customer} (sample).`,
-                              )
-                            }
+                            onClick={() => setStatus(row, 'Refunded', `${row.id} refunded ${formatSalesKwd(row.total)} (sample).`)}
                             className={dangerAction}
                           >
                             Refund order
                           </button>
                         ) : null}
-                      </span>
+                      </div>
                     </td>
                   </tr>
                 ))}
-                {pageRows.length === 0 ? (
-                  <SalesEmptyRow colSpan={8}>No orders match these filters.</SalesEmptyRow>
-                ) : null}
+                {pageRows.length === 0 ? <SalesEmptyRow colSpan={8}>No orders match these filters.</SalesEmptyRow> : null}
               </tbody>
             </table>
           </div>
-          <SalesPager
-            page={safePage}
-            pageCount={pageCount}
-            from={from}
-            to={to}
-            total={filtered.length}
-            noun="orders"
-            onPage={setPage}
-          />
+          <SalesPager page={safePage} pageCount={pageCount} from={from} to={to} total={filtered.length} noun="orders" onPage={setPage} />
         </section>
 
         <div className="space-y-4">
           <SalesSideCard icon={null} title="Collected by method" subtitle="Paid orders in this list">
-            <SalesHBars items={byMethod} format={(value) => formatSalesKwd(value)} />
+            <SalesHBars items={byMethod} format={(value) => formatSalesKwd(value, 0)} />
           </SalesSideCard>
-
           <SalesSideCard icon={<LightbulbIcon className="h-4 w-4 text-amber-500" />} title="Tip">
-            <p className="-mt-3 text-sm text-slate-500">{superAdminOrdersTip}</p>
+            <p className="-mt-3 text-sm text-slate-500">
+              Open an order to see line items, tax and any partial refunds already issued.
+            </p>
           </SalesSideCard>
         </div>
       </div>

@@ -1,4 +1,4 @@
-﻿import { paths } from '@/routes/paths'
+import { paths } from '@/routes/paths'
 import { superAdminCoursePages } from './superAdminCatalogCourses'
 import { superAdminLearningPages } from './superAdminCatalogLearning'
 import { superAdminOperationsPages } from './superAdminCatalogOperations'
@@ -98,6 +98,36 @@ const sharedContentAdminPaths: ReadonlySet<string> = new Set([
   paths.admin.courseQa,
   paths.admin.courseAnalytics,
   paths.admin.publishingHistory,
+  paths.admin.finance,
+  paths.admin.orders,
+  paths.admin.orderDetail,
+  paths.admin.b2cSales,
+  paths.admin.b2bSales,
+  paths.admin.revenueReports,
+  paths.admin.salesInvoices,
+  paths.admin.refunds,
+  paths.admin.coupons,
+  paths.admin.salesGateways,
+  paths.admin.taxFees,
+  paths.admin.costs,
+  paths.admin.financialExports,
+  paths.admin.reports,
+  paths.admin.revenueAnalytics,
+  paths.admin.trendingCourseReport,
+  paths.admin.geographicAnalytics,
+  paths.admin.studentGrowth,
+  paths.admin.organizationReports,
+  paths.admin.learningAnalytics,
+  paths.admin.assessmentReports,
+  paths.admin.certificationReports,
+  paths.admin.reportExports,
+  paths.admin.admins,
+  paths.admin.contentAdmins,
+  paths.admin.roles,
+  paths.admin.accountAccess,
+  paths.admin.accountStatus,
+  paths.admin.adminLogs,
+  paths.admin.securityLogs,
 ])
 
 export const superAdminCatalogPages: SuperAdminCatalogPage[] = [

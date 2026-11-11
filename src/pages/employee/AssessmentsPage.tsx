@@ -1,11 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import {
-  employeeAssessmentCourseLink,
   employeeAssessmentCourseScores,
-  employeeAssessmentQuizPath,
-  employeeAssessmentResultPath,
-  employeeAssessmentSubmitPath,
   employeeAssessments,
   employeeAssessmentsPage,
   employeeAssessmentStats,
@@ -14,6 +10,7 @@ import {
   type EmployeeAssessmentKind,
   type EmployeeAssessmentStatus,
 } from '@/constants'
+import { useLearnerAssessmentLinks } from './learnerLinks'
 import {
   CheckCircleIcon,
   ClipboardIcon,
@@ -190,6 +187,7 @@ function BarChart({
 }
 
 export function EmployeeAssessmentsPage() {
+  const links = useLearnerAssessmentLinks()
   const [query, setQuery] = useState('')
   const [kind, setKind] = useState<KindFilter>('all')
   const [status, setStatus] = useState<StatusFilter>('all')
@@ -226,14 +224,14 @@ export function EmployeeAssessmentsPage() {
         item.status === 'failed' ||
         item.status === 'submitted'
       ) {
-        return employeeAssessmentResultPath(item.id)
+        return links.result(item.id)
       }
-      return employeeAssessmentQuizPath(item.id)
+      return links.quiz(item.id)
     }
     if (item.status === 'passed' || item.status === 'submitted') {
-      return employeeAssessmentResultPath(item.id)
+      return links.result(item.id)
     }
-    return employeeAssessmentSubmitPath(item.id)
+    return links.submit(item.id)
   }
 
   function primaryLabel(item: EmployeeAssessment) {
@@ -478,7 +476,7 @@ export function EmployeeAssessmentsPage() {
                 <p className="mt-1.5 text-sm font-bold text-navy">{selected.courseTitle}</p>
                 <p className="mt-1 text-xs text-slate-500">{selected.moduleLabel}</p>
                 <Link
-                  to={employeeAssessmentCourseLink(selected.courseId)}
+                  to={links.course(selected.courseId)}
                   className="mt-3 inline-flex text-sm font-semibold text-brand hover:text-blue-700"
                 >
                   {copy.openCourse} →
@@ -528,7 +526,7 @@ export function EmployeeAssessmentsPage() {
 
             <div className="flex items-center gap-2 border-t border-slate-100 px-5 py-4">
               <Link
-                to={employeeAssessmentCourseLink(selected.courseId)}
+                to={links.course(selected.courseId)}
                 className="inline-flex h-10 flex-1 items-center justify-center rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
                 {copy.openCourse}

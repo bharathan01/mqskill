@@ -1,4 +1,5 @@
 export { StudentCertificatesPage } from './CertificatesPage'
+export { StudentCourseLessonPage } from './CourseLessonPage'
 export { StudentCoursesPage } from './CoursesPage'
 export { StudentDashboardPage } from './DashboardPage'
 export { StudentHelpPage } from './HelpPage'

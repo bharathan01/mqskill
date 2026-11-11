@@ -1,26 +1,22 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router'
 import { ContentNotice, ContentSelect } from '@/components/common'
-import { LightbulbIcon } from '@/components/ui'
 import {
   formatSalesDate,
   formatSalesKwd,
-  superAdminB2cKpis,
   superAdminB2cSales,
-  superAdminB2cSubtitle,
-  superAdminB2cTabs,
-  superAdminB2cTip,
+  superAdminB2cWeekly,
   superAdminSalesPageSize,
   type SuperAdminB2cSale,
   type SuperAdminB2cStatus,
+  type SuperAdminSalesKpi,
 } from '@/constants'
-import { paths } from '@/routes/paths'
 import { StatusBadge } from './catalogShared'
-import { btnOutline, btnPrimary, cardClass } from './catalogUtils'
+import { btnOutline, cardClass } from './catalogUtils'
 import {
   dangerAction,
-  linkAction,
+  MoneyCell,
   paginate,
+  SalesBarChart,
   SalesEmptyRow,
   SalesHBars,
   SalesKpiGrid,
@@ -33,93 +29,94 @@ import {
   thClass,
   toolbarClass,
   trClass,
+  updateById,
 } from './salesShared'
 
 const ALL_COUNTRIES = 'All countries'
+const ALL_COURSES = 'All courses'
+const TABS: { id: 'all' | SuperAdminB2cStatus; label: string }[] = [
+  { id: 'all', label: 'All sales' },
+  { id: 'Paid', label: 'Paid' },
+  { id: 'Pending', label: 'Pending' },
+  { id: 'Refunded', label: 'Refunded' },
+]
+
+const paidTotal = (rows: SuperAdminB2cSale[]) =>
+  rows.filter((row) => row.status === 'Paid').reduce((sum, row) => sum + row.amount, 0)
+const basePaid = paidTotal(superAdminB2cSales)
 
 export function AdminB2cSalesPage() {
-  const [sales, setSales] = useState<SuperAdminB2cSale[]>(superAdminB2cSales)
+  const [rows, setRows] = useState<SuperAdminB2cSale[]>(superAdminB2cSales)
   const [tab, setTab] = useState<'all' | SuperAdminB2cStatus>('all')
   const [query, setQuery] = useState('')
   const [country, setCountry] = useState(ALL_COUNTRIES)
+  const [course, setCourse] = useState(ALL_COURSES)
   const [page, setPage] = useState(1)
   const [notice, setNotice] = useState<string | null>(null)
 
-  const countries = useMemo(() => [ALL_COUNTRIES, ...Array.from(new Set(sales.map((row) => row.country)))], [sales])
+  const countries = useMemo(() => Array.from(new Set(superAdminB2cSales.map((row) => row.country))), [])
+  const courses = useMemo(() => Array.from(new Set(superAdminB2cSales.map((row) => row.course))), [])
+
+  const kpis = useMemo<SuperAdminSalesKpi[]>(
+    () => [
+      { id: 'rev', label: 'B2C revenue', value: formatSalesKwd(27310 + paidTotal(rows) - basePaid, 0), detail: '+5.1% vs previous period' },
+      { id: 'orders', label: 'Orders', value: '812', detail: '+6.3% vs previous period' },
+      { id: 'country', label: 'Top country', value: 'Kuwait', detail: '58% of B2C revenue' },
+    ],
+    [rows],
+  )
 
   const byCountry = useMemo(() => {
     const totals = new Map<string, number>()
-    sales
+    rows
       .filter((row) => row.status === 'Paid')
       .forEach((row) => totals.set(row.country, (totals.get(row.country) ?? 0) + row.amount))
     return Array.from(totals, ([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value)
-  }, [sales])
+  }, [rows])
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase()
-    return sales.filter((row) => {
+    return rows.filter((row) => {
       if (tab !== 'all' && row.status !== tab) return false
       if (country !== ALL_COUNTRIES && row.country !== country) return false
-      if (!needle) return true
-      return `${row.id} ${row.student} ${row.course}`.toLowerCase().includes(needle)
+      if (course !== ALL_COURSES && row.course !== course) return false
+      return !needle || `${row.student} ${row.id}`.toLowerCase().includes(needle)
     })
-  }, [country, query, sales, tab])
+  }, [country, course, query, rows, tab])
 
   const { pageCount, safePage, pageRows, from, to } = paginate(filtered, page, superAdminSalesPageSize)
 
-  const setStatus = (row: SuperAdminB2cSale, status: SuperAdminB2cStatus, message: string) => {
-    setSales((current) => current.map((item) => (item.id === row.id ? { ...item, status } : item)))
-    setNotice(message)
-  }
-
-  const recordSale = () => {
-    const next: SuperAdminB2cSale = {
-      id: `ORD-${52600 + sales.length}`,
-      student: 'Reem Al-Hajri',
-      course: 'Fire Warden Training',
-      amount: 28.5,
-      country: 'Kuwait',
-      date: '2026-11-10',
-      status: 'Paid',
-    }
-    setSales((current) => [next, ...current])
-    setTab('all')
-    setPage(1)
-    setNotice(`Sale ${next.id} recorded for ${next.student} (sample).`)
+  const refund = (row: SuperAdminB2cSale) => {
+    setRows((current) => updateById(current, row.id, { status: 'Refunded' }))
+    setNotice(`${formatSalesKwd(row.amount)} refunded to ${row.student} for ${row.course} (sample).`)
   }
 
   return (
     <div className="space-y-5">
       <SalesPageHeader
         page="B2C Sales"
-        subtitle={superAdminB2cSubtitle}
+        subtitle="Direct purchases by individual learners."
         actions={
-          <>
-            <button type="button" onClick={() => setNotice('B2C sales exported as CSV (sample).')} className={btnOutline}>
-              Export
-            </button>
-            <button type="button" onClick={recordSale} className={btnPrimary}>
-              Record sale
-            </button>
-          </>
+          <button type="button" onClick={() => setNotice('B2C sales exported as CSV (sample).')} className={btnOutline}>
+            Export
+          </button>
         }
       />
 
       {notice ? <ContentNotice onDismiss={() => setNotice(null)}>{notice}</ContentNotice> : null}
 
-      <SalesKpiGrid kpis={superAdminB2cKpis} className="sm:grid-cols-2 xl:grid-cols-3" />
+      <SalesKpiGrid kpis={kpis} />
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
         <section className={`${cardClass} overflow-hidden`}>
           <SalesTabs
-            tabs={superAdminB2cTabs}
+            tabs={TABS}
             active={tab}
             onChange={(id) => {
               setTab(id)
               setPage(1)
             }}
           />
-
           <div className={toolbarClass}>
             <SalesSearch
               value={query}
@@ -127,7 +124,7 @@ export function AdminB2cSalesPage() {
                 setQuery(value)
                 setPage(1)
               }}
-              placeholder="Search student, course or order"
+              placeholder="Search student or order ID"
             />
             <ContentSelect
               aria-label="Country"
@@ -136,16 +133,31 @@ export function AdminB2cSalesPage() {
                 setCountry(event.target.value)
                 setPage(1)
               }}
-              className="!h-10 lg:max-w-[13rem]"
+              className="!h-10 lg:max-w-[10rem]"
             >
+              <option>{ALL_COUNTRIES}</option>
               {countries.map((item) => (
+                <option key={item}>{item}</option>
+              ))}
+            </ContentSelect>
+            <ContentSelect
+              aria-label="Course"
+              value={course}
+              onChange={(event) => {
+                setCourse(event.target.value)
+                setPage(1)
+              }}
+              className="!h-10 lg:max-w-[14rem]"
+            >
+              <option>{ALL_COURSES}</option>
+              {courses.map((item) => (
                 <option key={item}>{item}</option>
               ))}
             </ContentSelect>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-[980px] w-full border-collapse text-left">
+            <table className="w-full min-w-[960px] border-collapse text-left">
               <thead>
                 <tr className={theadRowClass}>
                   <th className="px-4 py-2.5 font-semibold">Student</th>
@@ -162,13 +174,11 @@ export function AdminB2cSalesPage() {
                   <tr key={row.id} className={trClass}>
                     <td className="px-4 py-3.5">
                       <p className="text-sm font-semibold text-navy">{row.student}</p>
-                      <Link to={`${paths.admin.orderDetail}?order=${row.id}`} className="mt-0.5 block text-xs text-brand hover:underline">
-                        {row.id}
-                      </Link>
+                      <p className="mt-0.5 text-xs text-slate-400">{row.id}</p>
                     </td>
                     <td className="px-3 py-3.5 text-sm text-slate-600">{row.course}</td>
-                    <td className="px-3 py-3.5 text-right text-sm font-semibold tabular-nums text-navy">
-                      {formatSalesKwd(row.amount, 3)}
+                    <td className="px-3 py-3.5 text-right">
+                      <MoneyCell value={row.amount} />
                     </td>
                     <td className="px-3 py-3.5 text-sm text-slate-600">{row.country}</td>
                     <td className="px-3 py-3.5 text-sm text-slate-600">{formatSalesDate(row.date)}</td>
@@ -176,22 +186,8 @@ export function AdminB2cSalesPage() {
                       <StatusBadge value={row.status} />
                     </td>
                     <td className="px-3 py-3.5 text-right">
-                      {row.status === 'Pending' ? (
-                        <button
-                          type="button"
-                          onClick={() => setStatus(row, 'Paid', `${row.id} marked as paid (sample).`)}
-                          className={linkAction}
-                        >
-                          Mark as paid
-                        </button>
-                      ) : row.status === 'Paid' ? (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setStatus(row, 'Refunded', `${row.id} refunded ${formatSalesKwd(row.amount, 3)} to ${row.student} (sample).`)
-                          }
-                          className={dangerAction}
-                        >
+                      {row.status === 'Paid' ? (
+                        <button type="button" onClick={() => refund(row)} className={dangerAction}>
                           Refund
                         </button>
                       ) : (
@@ -204,24 +200,20 @@ export function AdminB2cSalesPage() {
               </tbody>
             </table>
           </div>
-          <SalesPager
-            page={safePage}
-            pageCount={pageCount}
-            from={from}
-            to={to}
-            total={filtered.length}
-            noun="sales"
-            onPage={setPage}
-          />
+          <SalesPager page={safePage} pageCount={pageCount} from={from} to={to} total={filtered.length} noun="sales" onPage={setPage} />
         </section>
 
         <div className="space-y-4">
-          <SalesSideCard icon={null} title="Revenue by country" subtitle="Paid sales in this list">
-            <SalesHBars items={byCountry} format={(value) => formatSalesKwd(value)} />
+          <SalesSideCard icon={null} title="Weekly B2C revenue" subtitle="KWD, last 6 weeks">
+            <SalesBarChart
+              items={superAdminB2cWeekly}
+              showValues
+              format={(value) => `${(value / 1000).toFixed(1)}k`}
+              heightClass="h-40"
+            />
           </SalesSideCard>
-
-          <SalesSideCard icon={<LightbulbIcon className="h-4 w-4 text-amber-500" />} title="Tip">
-            <p className="-mt-3 text-sm text-slate-500">{superAdminB2cTip}</p>
+          <SalesSideCard icon={null} title="Revenue by country" subtitle="Paid sales in this list">
+            <SalesHBars items={byCountry} format={(value) => formatSalesKwd(value, 0)} />
           </SalesSideCard>
         </div>
       </div>

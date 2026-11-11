@@ -1,20 +1,20 @@
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router'
 import {
-  employeeAssessmentResultPath,
   employeeAssessmentsPage,
   employeeQuizTakePage,
   getEmployeeAssessment,
   getQuizBank,
 } from '@/constants'
-import { paths } from '@/routes/paths'
 import { CheckIcon, ChevronLeftIcon } from '@/components/ui'
+import { useLearnerAssessmentLinks } from './learnerLinks'
 
 const copy = employeeQuizTakePage
 
 export function EmployeeQuizTakePage() {
   const { assessmentId = '' } = useParams()
   const navigate = useNavigate()
+  const links = useLearnerAssessmentLinks()
   const assessment = getEmployeeAssessment(assessmentId)
   const questions = useMemo(() => getQuizBank(assessmentId), [assessmentId])
 
@@ -23,7 +23,7 @@ export function EmployeeQuizTakePage() {
   const [error, setError] = useState('')
 
   if (!assessment || assessment.kind !== 'quiz') {
-    return <Navigate to={paths.employee.assessments} replace />
+    return <Navigate to={links.list} replace />
   }
 
   const current = questions[index]
@@ -41,7 +41,7 @@ export function EmployeeQuizTakePage() {
       return
     }
     if (isLast) {
-      navigate(employeeAssessmentResultPath(assessmentId), {
+      navigate(links.result(assessmentId), {
         state: { answers },
       })
       return
@@ -52,7 +52,7 @@ export function EmployeeQuizTakePage() {
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <Link
-        to={paths.employee.assessments}
+        to={links.list}
         className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:text-blue-700"
       >
         <ChevronLeftIcon className="h-4 w-4" />

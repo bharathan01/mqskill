@@ -55,6 +55,36 @@ import {
   AdminStudentAssessmentResultsPage,
   AdminStudentCertificatesPage,
   AdminStudentPaymentHistoryPage,
+  AdminFinancialOverviewPage,
+  AdminOrdersPage,
+  AdminOrderDetailPage,
+  AdminB2cSalesPage,
+  AdminB2bSalesPage,
+  AdminRevenueReportsPage,
+  AdminSalesInvoicesPage,
+  AdminRefundsPage,
+  AdminCouponsPage,
+  AdminPaymentGatewaysPage,
+  AdminTaxFeesPage,
+  AdminCostsProfitabilityPage,
+  AdminFinancialExportsPage,
+  AdminExecutiveReportsPage,
+  AdminRevenueAnalyticsPage,
+  AdminTrendingCourseReportsPage,
+  AdminGeographicAnalyticsPage,
+  AdminStudentGrowthPage,
+  AdminOrganizationAnalyticsPage,
+  AdminLearningAnalyticsPage,
+  AdminAssessmentReportsPage,
+  AdminCertificationReportsPage,
+  AdminAdministratorAccountsPage,
+  AdminContentAdminAccountsPage,
+  AdminRolePermissionsPage,
+  AdminAccountAccessPage,
+  AdminAccountStatusPage,
+  AdminActivityLogsPage,
+  AdminSecurityAuditLogsPage,
+  AdminReportExportsPage,
   BusinessPage,
   ContentAdminDashboardPage,
   ContentAllCoursesPage,
@@ -124,6 +154,7 @@ import {
   OrganizationTrainingRequestsPage,
   SignupPage,
   StudentCertificatesPage,
+  StudentCourseLessonPage,
   StudentCoursesPage,
   StudentDashboardPage,
   StudentHelpPage,
@@ -156,6 +187,11 @@ export function AppRoutes() {
       <Route path={paths.student.root} element={<StudentLayout />}>
         <Route index element={<StudentDashboardPage />} />
         <Route path="courses" element={<StudentCoursesPage />} />
+        <Route path="courses/:courseId" element={<StudentCourseLessonPage />} />
+        <Route path="assessments" element={<EmployeeAssessmentsPage />} />
+        <Route path="assessments/:assessmentId/quiz" element={<EmployeeQuizTakePage />} />
+        <Route path="assessments/:assessmentId/submit" element={<EmployeeAssignmentSubmitPage />} />
+        <Route path="assessments/:assessmentId/result" element={<EmployeeAssessmentResultPage />} />
         <Route path="certificates" element={<StudentCertificatesPage />} />
         <Route path="payments" element={<StudentPaymentsPage />} />
         <Route path="profile" element={<StudentProfilePage />} />
@@ -288,6 +324,36 @@ export function AppRoutes() {
         <Route path="organizations/invoices" element={<AdminOrganizationInvoicesPage />} />
         <Route path="organizations/performance" element={<AdminOrganizationPerformancePage />} />
         <Route path="organizations" element={<AdminAllOrganizationsPage />} />
+        <Route path="finance" element={<AdminFinancialOverviewPage />} />
+        <Route path="orders/detail" element={<AdminOrderDetailPage />} />
+        <Route path="orders" element={<AdminOrdersPage />} />
+        <Route path="sales/b2c" element={<AdminB2cSalesPage />} />
+        <Route path="sales/b2b" element={<AdminB2bSalesPage />} />
+        <Route path="sales/revenue-reports" element={<AdminRevenueReportsPage />} />
+        <Route path="sales/invoices" element={<AdminSalesInvoicesPage />} />
+        <Route path="sales/coupons" element={<AdminCouponsPage />} />
+        <Route path="sales/gateways" element={<AdminPaymentGatewaysPage />} />
+        <Route path="sales/tax-fees" element={<AdminTaxFeesPage />} />
+        <Route path="sales/costs" element={<AdminCostsProfitabilityPage />} />
+        <Route path="sales/exports" element={<AdminFinancialExportsPage />} />
+        <Route path="refunds" element={<AdminRefundsPage />} />
+        <Route path="reports/revenue" element={<AdminRevenueAnalyticsPage />} />
+        <Route path="reports/trending-courses" element={<AdminTrendingCourseReportsPage />} />
+        <Route path="reports/geography" element={<AdminGeographicAnalyticsPage />} />
+        <Route path="reports/student-growth" element={<AdminStudentGrowthPage />} />
+        <Route path="reports/organizations" element={<AdminOrganizationAnalyticsPage />} />
+        <Route path="reports/learning" element={<AdminLearningAnalyticsPage />} />
+        <Route path="reports/assessments" element={<AdminAssessmentReportsPage />} />
+        <Route path="reports/certifications" element={<AdminCertificationReportsPage />} />
+        <Route path="reports/exports" element={<AdminReportExportsPage />} />
+        <Route path="reports" element={<AdminExecutiveReportsPage />} />
+        <Route path="users/admins" element={<AdminAdministratorAccountsPage />} />
+        <Route path="users/content-admins" element={<AdminContentAdminAccountsPage />} />
+        <Route path="users/roles" element={<AdminRolePermissionsPage />} />
+        <Route path="users/access" element={<AdminAccountAccessPage />} />
+        <Route path="users/status" element={<AdminAccountStatusPage />} />
+        <Route path="users/logs" element={<AdminActivityLogsPage />} />
+        <Route path="users/security-logs" element={<AdminSecurityAuditLogsPage />} />
         <Route path="media" element={<ContentMediaLibraryPage />} />
         <Route path="support/course-qa" element={<ContentCourseQaPage />} />
         {/* Legacy aliases */}

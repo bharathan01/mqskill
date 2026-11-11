@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 import { studentDashboard } from '@/constants'
-import { paths } from '@/routes/paths'
+import { paths, studentCoursePath } from '@/routes/paths'
 import {
   AwardIcon,
   CalendarIcon,
@@ -162,7 +162,7 @@ export function StudentDashboardPage() {
                       {course.complete}
                     </p>
                     <Link
-                      to={paths.student.courses}
+                      to={studentCoursePath(course.id)}
                       className="inline-flex items-center gap-1 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white"
                     >
                       {data.continue.resume}

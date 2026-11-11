@@ -1,263 +1,190 @@
 /* Super Admin · Sales & Finance (Figma section 08) — sample data (Kuwait / GCC, KWD) */
 
-import { formatStudentDate, studentDaysAgo } from './superAdminStudents'
-
-/* --------------------------------- Shared -------------------------------- */
-
-export type SuperAdminSalesKpi = {
-  id: string
-  label: string
-  value: string
-  detail: string
-  /** Colours the detail line (green up / red down). Omit for neutral. */
-  tone?: 'up' | 'down'
-}
-
+export type SuperAdminSalesKpi = { id: string; label: string; value: string; detail: string }
 export type SuperAdminSalesPoint = { label: string; value: number }
 
-export type SuperAdminSalesTab<T extends string> = { id: 'all' | T; label: string }
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 export const superAdminSalesPageSize = 8
+export const superAdminSalesToday = '2026-11-10'
 
-export const formatSalesDate = formatStudentDate
+/** "2026-11-12" → "12 Nov 2026" */
+export function formatSalesDate(iso: string) {
+  const [y, m, d] = iso.split('-')
+  if (!y || !m || !d) return iso
+  return `${d} ${MONTHS[Number(m) - 1] ?? m} ${y}`
+}
 
-export function formatSalesKwd(value: number, decimals = 0) {
+/** KWD amount; money rows use 3 decimals, overview figures use 0. */
+export function formatSalesKwd(value: number, decimals = 3) {
   return `KWD ${value.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`
 }
 
-/** Missing values render as an em dash — never as zero. */
-export function formatSalesKwdOrDash(value: number | null, decimals = 0) {
-  return value === null ? '—' : formatSalesKwd(value, decimals)
-}
-
-const at = <T>(list: readonly T[], index: number): T => list[index % list.length] as T
-const round3 = (value: number) => Math.round(value * 1000) / 1000
-
-export const superAdminSalesCourses = [
-  { name: 'ISO 9001 Lead Auditor', price: 49 },
-  { name: 'ISO 14001 Internal Auditor', price: 45 },
-  { name: 'Fire Warden Training', price: 28.5 },
-  { name: 'First Aid at Work', price: 32 },
-  { name: 'NEBOSH IGC Preparation', price: 120 },
-  { name: 'Working at Height', price: 35 },
-  { name: 'Manual Handling', price: 24.5 },
-  { name: 'Cybersecurity Awareness for Employees', price: 30 },
-  { name: 'ISO 45001 Lead Implementer', price: 58 },
+export const salesCourses = [
+  'Fire Warden Training',
+  'ISO 9001 Lead Auditor',
+  'ISO 14001 Internal Auditor',
+  'ISO 45001 Lead Auditor',
+  'First Aid at Work',
+  'NEBOSH IGC Preparation',
+  'Working at Height',
+  'Manual Handling',
+  'Cybersecurity Awareness for Employees',
+  'PMP Exam Preparation',
 ] as const
 
-const courseAt = (index: number) => at(superAdminSalesCourses, index)
+/* ----------------------------- Financial overview ---------------------------- */
 
-export const superAdminSalesMethods = ['KNET', 'MyFatoorah', 'Apple Pay', 'Tap', 'Bank transfer'] as const
-
-export const superAdminSalesMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'] as const
-
-/* ----------------------------- 08.01 Financial Overview ------------------ */
-
-export const superAdminFinanceSubtitle =
-  'Gross to net, collections and revenue mix. Amounts in KWD.'
-
-export const superAdminFinanceKpis: SuperAdminSalesKpi[] = [
-  { id: 'gross', label: 'Gross revenue', value: 'KWD 48,620', detail: '+12.4% vs Sep', tone: 'up' },
-  { id: 'net', label: 'Net revenue', value: 'KWD 47,436', detail: '+12.8% vs Sep', tone: 'up' },
-  { id: 'refunds', label: 'Refunds', value: 'KWD 1,184', detail: '−2.1% vs Sep', tone: 'up' },
-  { id: 'aov', label: 'Avg. order value', value: 'KWD 37.9', detail: '+4.1% vs Sep', tone: 'up' },
-]
-
-/** Uneven on purpose — gross, refunds, and the B2C / B2B split per month. */
-export const superAdminFinanceMonthly = [
-  { month: 'Jan', b2c: 19200, b2b: 12220, refunds: 800 },
-  { month: 'Feb', b2c: 21900, b2b: 7980, refunds: 1050 },
-  { month: 'Mar', b2c: 20400, b2b: 16550, refunds: 940 },
-  { month: 'Apr', b2c: 24600, b2b: 9610, refunds: 1320 },
-  { month: 'May', b2c: 22400, b2b: 10900, refunds: 760 },
-  { month: 'Jun', b2c: 23800, b2b: 16070, refunds: 1210 },
-  { month: 'Jul', b2c: 20100, b2b: 16940, refunds: 1480 },
-  { month: 'Aug', b2c: 26200, b2b: 16410, refunds: 990 },
-  { month: 'Sep', b2c: 25980, b2b: 17270, refunds: 1210 },
-  { month: 'Oct', b2c: 27310, b2b: 21310, refunds: 1184 },
-] as const
-
-export type SuperAdminFinanceChannel = 'B2C' | 'B2B'
+export type SuperAdminRevenueTrend = 'Growing' | 'Stable' | 'Declining'
 
 export type SuperAdminRevenueStream = {
   id: string
   stream: string
-  channel: SuperAdminFinanceChannel
   gross: number
   refunds: number
-  trend: { dir: 'up' | 'down' | 'flat'; pct: number }
+  trend: SuperAdminRevenueTrend
 }
 
+/** Intentionally unsorted so the chart rises and falls. Gross 48,620 · refunds 1,184 · net 47,436. */
 export const superAdminRevenueStreams: SuperAdminRevenueStream[] = [
-  { id: 'rs-b2c', stream: 'B2C course sales', channel: 'B2C', gross: 24110, refunds: 760, trend: { dir: 'up', pct: 6.2 } },
-  { id: 'rs-live', stream: 'Live class fees', channel: 'B2C', gross: 1900, refunds: 52, trend: { dir: 'up', pct: 11.8 } },
-  { id: 'rs-retake', stream: 'Exam retake fees', channel: 'B2C', gross: 800, refunds: 28, trend: { dir: 'down', pct: 3.4 } },
-  { id: 'rs-cert', stream: 'Certificate re-issue fees', channel: 'B2C', gross: 500, refunds: 12, trend: { dir: 'flat', pct: 0 } },
-  { id: 'rs-b2b', stream: 'B2B seat sales', channel: 'B2B', gross: 15960, refunds: 218, trend: { dir: 'up', pct: 26.4 } },
-  { id: 'rs-renew', stream: 'Enterprise renewals', channel: 'B2B', gross: 3850, refunds: 64, trend: { dir: 'up', pct: 9.1 } },
-  { id: 'rs-bundle', stream: 'Corporate bundles', channel: 'B2B', gross: 1500, refunds: 50, trend: { dir: 'down', pct: 7.6 } },
+  { id: 's1', stream: 'B2B seat sales', gross: 14860, refunds: 330, trend: 'Growing' },
+  { id: 's2', stream: 'B2C course sales', gross: 18420, refunds: 410, trend: 'Growing' },
+  { id: 's3', stream: 'Live class fees', gross: 3150, refunds: 96, trend: 'Stable' },
+  { id: 's4', stream: 'Enterprise renewals', gross: 6240, refunds: 120, trend: 'Growing' },
+  { id: 's5', stream: 'Certificate re-issue fees', gross: 1420, refunds: 40, trend: 'Declining' },
+  { id: 's6', stream: 'Corporate bundles', gross: 2780, refunds: 88, trend: 'Stable' },
+  { id: 's7', stream: 'Exam retake fees', gross: 1050, refunds: 60, trend: 'Declining' },
+  { id: 's8', stream: 'Partner referrals', gross: 700, refunds: 40, trend: 'Growing' },
 ]
 
-export const superAdminFinanceStreamTabs: SuperAdminSalesTab<SuperAdminFinanceChannel>[] = [
-  { id: 'all', label: 'All streams' },
-  { id: 'B2C', label: 'B2C' },
-  { id: 'B2B', label: 'B2B' },
+export const superAdminFinanceSubtitle = 'Gross to net, collections and revenue mix for the current period. Amounts in KWD.'
+export const superAdminFinanceAov = 'KWD 37.9'
+export const superAdminFinanceTip =
+  'Net revenue is gross minus refunds. Gateway fees and tax are shown separately under Payment Gateways and Tax and Fees.'
+
+/* ---------------------------------- Orders ---------------------------------- */
+
+export type SuperAdminOrderStatus = 'Paid' | 'Pending' | 'Failed' | 'Refunded'
+export type SuperAdminOrderType = 'B2C' | 'B2B'
+export const superAdminOrderMethods = ['KNET', 'Visa', 'Mastercard', 'Apple Pay', 'Bank transfer'] as const
+
+export type SuperAdminOrder = {
+  id: string
+  customer: string
+  type: SuperAdminOrderType
+  total: number
+  method: string
+  date: string
+  status: SuperAdminOrderStatus
+}
+
+const ord = (
+  id: string,
+  customer: string,
+  type: SuperAdminOrderType,
+  total: number,
+  method: string,
+  date: string,
+  status: SuperAdminOrderStatus,
+): SuperAdminOrder => ({ id, customer, type, total, method, date, status })
+
+/** The default Order Detail sample (two line items, one partially refunded). */
+export const superAdminPartialRefundOrderId = 'ORD-52340'
+
+export const superAdminOrders: SuperAdminOrder[] = [
+  ord('ORD-52340', 'ABC Corp', 'B2B', 1145, 'Bank transfer', '2026-11-09', 'Paid'),
+  ord('ORD-52329', 'Fatima Al-Mutairi', 'B2C', 85, 'KNET', '2026-11-09', 'Paid'),
+  ord('ORD-52318', 'Gulf Safety Training Co.', 'B2B', 2480, 'Visa', '2026-11-08', 'Pending'),
+  ord('ORD-52307', 'Omar Al-Rashidi', 'B2C', 190, 'Apple Pay', '2026-11-08', 'Paid'),
+  ord('ORD-52296', 'Noura Al-Sabah', 'B2C', 240, 'Mastercard', '2026-11-07', 'Failed'),
+  ord('ORD-52285', 'Kuwait Oil Services', 'B2B', 4900, 'Bank transfer', '2026-11-06', 'Paid'),
+  ord('ORD-52274', 'Yousef Al-Enezi', 'B2C', 120, 'KNET', '2026-11-05', 'Refunded'),
+  ord('ORD-52263', 'Hessa Al-Kandari', 'B2C', 165, 'Visa', '2026-11-05', 'Paid'),
+  ord('ORD-52252', 'Al-Ahli Logistics', 'B2B', 1850, 'KNET', '2026-11-04', 'Paid'),
+  ord('ORD-52241', 'Mubarak Al-Dosari', 'B2C', 95, 'KNET', '2026-11-03', 'Pending'),
+  ord('ORD-52230', 'Layla Hassan', 'B2C', 210, 'Apple Pay', '2026-11-02', 'Paid'),
+  ord('ORD-52219', 'Pearl Hospitality Group', 'B2B', 3200, 'Visa', '2026-11-01', 'Paid'),
+  ord('ORD-52208', 'Salem Al-Harbi', 'B2C', 85, 'Mastercard', '2026-10-30', 'Failed'),
+  ord('ORD-52197', 'Dana Al-Sayegh', 'B2C', 190, 'KNET', '2026-10-29', 'Paid'),
+  ord('ORD-52186', 'Bayan Construction', 'B2B', 5600, 'Bank transfer', '2026-10-27', 'Paid'),
+  ord('ORD-52175', 'Rashed Al-Otaibi', 'B2C', 140, 'Visa', '2026-10-25', 'Paid'),
 ]
 
-export const superAdminFinanceNote =
-  'Profitability isn’t shown: course cost records haven’t been entered yet, so costs aren’t counted as zero.'
-
-/* ------------------------- 08.02 Orders and Transactions ----------------- */
-
-export type SuperAdminSalesOrderStatus = 'Paid' | 'Pending' | 'Failed' | 'Refunded'
-export type SuperAdminSalesOrderType = 'B2C' | 'B2B'
-export type SuperAdminSalesFulfilment = 'Delivered' | 'Pending' | 'Cancelled'
-
-export type SuperAdminSalesOrderLine = {
-  item: string
+export type SuperAdminOrderLine = {
+  id: string
+  course: string
   qty: number
   unit: number
-  /** Percent off the line (0–100). */
-  discount: number
-  fulfilment: SuperAdminSalesFulfilment
+  discountPct: number
+  fulfilment: 'Delivered' | 'Pending' | 'Refunded'
 }
 
-export type SuperAdminSalesOrder = {
+export type SuperAdminOrderDetail = {
   id: string
   customer: string
   email: string
-  type: SuperAdminSalesOrderType
-  country: string
-  method: (typeof superAdminSalesMethods)[number]
+  type: SuperAdminOrderType
+  method: string
   date: string
-  paidOn: string | null
-  reference: string
-  status: SuperAdminSalesOrderStatus
-  lines: SuperAdminSalesOrderLine[]
+  status: SuperAdminOrderStatus | 'Partially refunded'
+  region: string
+  taxRate: number
   refunded: number
+  lines: SuperAdminOrderLine[]
 }
 
-export function salesLineTotal(line: SuperAdminSalesOrderLine) {
-  return round3(line.unit * line.qty * (1 - line.discount / 100))
+const partialRefundDetail: SuperAdminOrderDetail = {
+  id: superAdminPartialRefundOrderId,
+  customer: 'ABC Corp',
+  email: 'training@abccorp.com.kw',
+  type: 'B2B',
+  method: 'Bank transfer',
+  date: '2026-11-09',
+  status: 'Partially refunded',
+  region: 'Kuwait',
+  taxRate: 0,
+  refunded: 380,
+  lines: [
+    { id: 'l1', course: 'Fire Warden Training', qty: 10, unit: 85, discountPct: 10, fulfilment: 'Delivered' },
+    { id: 'l2', course: 'ISO 14001 Internal Auditor', qty: 2, unit: 190, discountPct: 0, fulfilment: 'Refunded' },
+  ],
 }
 
-export function salesOrderTotal(order: Pick<SuperAdminSalesOrder, 'lines'>) {
-  return round3(order.lines.reduce((total, line) => total + salesLineTotal(line), 0))
-}
-
-type LineSeed = readonly [course: number, qty: number, discount: number, fulfilment?: SuperAdminSalesFulfilment]
-type OrderSeed = readonly [
-  customer: string,
-  type: SuperAdminSalesOrderType,
-  country: string,
-  method: (typeof superAdminSalesMethods)[number],
-  daysAgo: number,
-  status: SuperAdminSalesOrderStatus,
-  lines: readonly LineSeed[],
-  /** Partial refund amount (KWD) when the order is still Paid. */
-  partialRefund?: number,
-]
-
-const orderSeeds: readonly OrderSeed[] = [
-  ['Fatima Al-Sabah', 'B2C', 'Kuwait', 'KNET', 1, 'Paid', [[0, 1, 0]]],
-  ['ABC Corp', 'B2B', 'Kuwait', 'Bank transfer', 2, 'Paid', [[2, 25, 15]]],
-  ['Abdullah Al-Mutairi', 'B2C', 'Kuwait', 'MyFatoorah', 2, 'Pending', [[4, 1, 0]]],
-  ['Noura Al-Enezi', 'B2C', 'Kuwait', 'KNET', 3, 'Paid', [[0, 1, 10], [3, 1, 0]], 32],
-  ['Gulf Industrial Services', 'B2B', 'Saudi Arabia', 'Bank transfer', 4, 'Pending', [[1, 50, 10]]],
-  ['Yousef Al-Rashidi', 'B2C', 'Kuwait', 'Apple Pay', 4, 'Failed', [[5, 1, 0]]],
-  ['Maryam Al-Kandari', 'B2C', 'Kuwait', 'KNET', 5, 'Paid', [[8, 1, 0]]],
-  ['Kuwait Safety Group', 'B2B', 'Kuwait', 'MyFatoorah', 6, 'Paid', [[3, 20, 0], [2, 20, 0, 'Pending']]],
-  ['Khalid Al-Ajmi', 'B2C', 'UAE', 'Tap', 6, 'Refunded', [[6, 1, 0]]],
-  ['Sara Al-Otaibi', 'B2C', 'Saudi Arabia', 'KNET', 7, 'Paid', [[7, 1, 0]]],
-  ['Al-Mulla Logistics', 'B2B', 'Kuwait', 'Bank transfer', 8, 'Paid', [[5, 100, 18]]],
-  ['Hamad Al-Dosari', 'B2C', 'Kuwait', 'MyFatoorah', 9, 'Failed', [[0, 1, 0]]],
-  ['Dana Al-Failakawi', 'B2C', 'Kuwait', 'KNET', 10, 'Paid', [[4, 1, 10]]],
-  ['Burgan Facilities', 'B2B', 'Kuwait', 'Bank transfer', 11, 'Pending', [[8, 30, 12]]],
-  ['Omar Al-Harbi', 'B2C', 'Qatar', 'Apple Pay', 12, 'Paid', [[1, 1, 0]]],
-  ['Layla Al-Khalifa', 'B2C', 'Bahrain', 'KNET', 13, 'Paid', [[2, 1, 0], [6, 1, 0]]],
-  ['Zain Kuwait', 'B2B', 'Kuwait', 'MyFatoorah', 14, 'Paid', [[7, 200, 20]]],
-  ['Salem Al-Mazrouei', 'B2C', 'UAE', 'Tap', 15, 'Pending', [[3, 1, 0]]],
-  ['Aisha Al-Thani', 'B2C', 'Qatar', 'MyFatoorah', 17, 'Refunded', [[8, 1, 0]]],
-  ['ABC Corp', 'B2B', 'Kuwait', 'Bank transfer', 19, 'Paid', [[0, 25, 12]]],
-  ['Mohammed Al-Balushi', 'B2C', 'Oman', 'KNET', 21, 'Paid', [[5, 1, 0]]],
-  ['Hessa Al-Qahtani', 'B2C', 'Saudi Arabia', 'Apple Pay', 22, 'Failed', [[4, 1, 0]]],
-  ['KNPC', 'B2B', 'Kuwait', 'Bank transfer', 24, 'Paid', [[3, 60, 15]]],
-  ['Rashed Al-Nuaimi', 'B2C', 'Kuwait', 'KNET', 26, 'Paid', [[0, 1, 0], [7, 1, 0]]],
-]
-
-const emailSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, '')
-
-export const superAdminSalesOrders: SuperAdminSalesOrder[] = orderSeeds.map((seed, index) => {
-  const [customer, type, country, method, daysAgo, status, lineSeeds, partialRefund] = seed
-  const lines: SuperAdminSalesOrderLine[] = lineSeeds.map(([courseIndex, qty, discount, fulfilment]) => ({
-    item: courseAt(courseIndex).name,
-    qty,
-    unit: courseAt(courseIndex).price,
-    discount,
-    fulfilment:
-      fulfilment ?? (status === 'Paid' ? 'Delivered' : status === 'Pending' ? 'Pending' : 'Cancelled'),
-  }))
-  const total = salesOrderTotal({ lines })
-  const date = studentDaysAgo(daysAgo)
+/** Full detail for the featured order, or a one-line detail derived from the list row. */
+export function getSuperAdminOrderDetail(id: string | null): SuperAdminOrderDetail {
+  if (!id || id === superAdminPartialRefundOrderId) return partialRefundDetail
+  const row = superAdminOrders.find((order) => order.id === id)
+  if (!row) return partialRefundDetail
+  const index = superAdminOrders.indexOf(row)
+  const course = salesCourses[index % salesCourses.length]
+  const slug = row.customer.toLowerCase().replace(/[^a-z]+/g, '.').replace(/^\.|\.$/g, '')
   return {
-    id: `ORD-${52300 + index * 11}`,
-    customer,
-    email: type === 'B2B' ? `accounts@${emailSlug(customer)}.com.kw` : `${emailSlug(customer)}@example.com`,
-    type,
-    country,
-    method,
-    date,
-    paidOn: status === 'Paid' || status === 'Refunded' ? date : null,
-    reference: `${method === 'Bank transfer' ? 'BT' : method.replace(/\s/g, '').slice(0, 4).toUpperCase()}-${7280000 + index * 931}`,
-    status,
-    lines,
-    refunded: status === 'Refunded' ? total : (partialRefund ?? 0),
+    id: row.id,
+    customer: row.customer,
+    email: row.type === 'B2B' ? `finance@${slug.replace(/\./g, '')}.com.kw` : `${slug}@example.com`,
+    type: row.type,
+    method: row.method,
+    date: row.date,
+    status: row.status,
+    region: 'Kuwait',
+    taxRate: 0,
+    refunded: row.status === 'Refunded' ? row.total : 0,
+    lines: [
+      {
+        id: 'l1',
+        course,
+        qty: 1,
+        unit: row.total,
+        discountPct: 0,
+        fulfilment: row.status === 'Refunded' ? 'Refunded' : row.status === 'Paid' ? 'Delivered' : 'Pending',
+      },
+    ],
   }
-})
-
-export const superAdminOrdersSubtitle =
-  'All paid, pending and failed orders across individuals and organizations.'
-
-export const superAdminOrdersKpis: SuperAdminSalesKpi[] = [
-  { id: 'paid', label: 'Paid orders (30d)', value: '1,284', detail: '+8.1% vs Sep', tone: 'up' },
-  { id: 'pending', label: 'Pending', value: '41', detail: 'Awaiting payment' },
-  { id: 'failed', label: 'Failed', value: '18', detail: 'Gateway declines' },
-  { id: 'aov', label: 'Avg. order value', value: 'KWD 37.9', detail: '+4.1% vs Sep', tone: 'up' },
-]
-
-export const superAdminOrderTabs: SuperAdminSalesTab<SuperAdminSalesOrderStatus>[] = [
-  { id: 'all', label: 'All' },
-  { id: 'Paid', label: 'Paid' },
-  { id: 'Pending', label: 'Pending' },
-  { id: 'Failed', label: 'Failed' },
-  { id: 'Refunded', label: 'Refunded' },
-]
-
-export const superAdminOrdersTip =
-  'Refund an order to return the money to the original payment method. KNET refunds usually land within 1–2 business days.'
-
-export function findSalesOrder(id: string | null) {
-  return superAdminSalesOrders.find((order) => order.id === id) ?? superAdminSalesOrders[0]
 }
 
-/* ---------------------------------- 08.03 B2C ---------------------------- */
-
-export const superAdminB2cSubtitle = 'Direct purchases by individual learners.'
-
-export const superAdminB2cKpis: SuperAdminSalesKpi[] = [
-  { id: 'revenue', label: 'B2C revenue', value: 'KWD 27,310', detail: '+5.1% vs Sep', tone: 'up' },
-  { id: 'orders', label: 'Orders', value: '812', detail: '+6.3% vs Sep', tone: 'up' },
-  { id: 'country', label: 'Top country', value: 'Kuwait', detail: '58% of B2C revenue' },
-]
+/* ------------------------------------ B2C ----------------------------------- */
 
 export type SuperAdminB2cStatus = 'Paid' | 'Pending' | 'Refunded'
-
-export const superAdminB2cTabs: SuperAdminSalesTab<SuperAdminB2cStatus>[] = [
-  { id: 'all', label: 'All' },
-  { id: 'Paid', label: 'Paid' },
-  { id: 'Pending', label: 'Pending' },
-  { id: 'Refunded', label: 'Refunded' },
-]
 
 export type SuperAdminB2cSale = {
   id: string
@@ -269,45 +196,48 @@ export type SuperAdminB2cSale = {
   status: SuperAdminB2cStatus
 }
 
-/** Individual orders — failed attempts are not sales. */
-export const superAdminB2cSales: SuperAdminB2cSale[] = superAdminSalesOrders
-  .filter((order) => order.type === 'B2C' && order.status !== 'Failed')
-  .map((order) => {
-    const first = order.lines[0]?.item ?? 'Course'
-    return {
-      id: order.id,
-      student: order.customer,
-      course: order.lines.length > 1 ? `${first} + ${order.lines.length - 1} more` : first,
-      amount: salesOrderTotal(order),
-      country: order.country,
-      date: order.date,
-      status: order.status as SuperAdminB2cStatus,
-    }
-  })
+const b2c = (
+  id: string,
+  student: string,
+  course: string,
+  amount: number,
+  country: string,
+  date: string,
+  status: SuperAdminB2cStatus,
+): SuperAdminB2cSale => ({ id, student, course, amount, country, date, status })
 
-export const superAdminB2cTip =
-  'Individuals pay in KWD through KNET, cards or Apple Pay. Refunds return to the original payment method.'
-
-/* ---------------------------------- 08.04 B2B ---------------------------- */
-
-export const superAdminB2bSubtitle = 'Seat purchases and enterprise contracts.'
-
-export const superAdminB2bKpis: SuperAdminSalesKpi[] = [
-  { id: 'revenue', label: 'B2B revenue', value: 'KWD 21,310', detail: '+23.4% vs Sep', tone: 'up' },
-  { id: 'seats', label: 'Seats sold', value: '2,540', detail: '+21.0% vs Sep', tone: 'up' },
-  { id: 'deal', label: 'Avg. deal size', value: 'KWD 3,820', detail: 'Per paid contract' },
+export const superAdminB2cSales: SuperAdminB2cSale[] = [
+  b2c('ORD-52329', 'Fatima Al-Mutairi', 'Fire Warden Training', 85, 'Kuwait', '2026-11-09', 'Paid'),
+  b2c('ORD-52307', 'Omar Al-Rashidi', 'ISO 14001 Internal Auditor', 190, 'Kuwait', '2026-11-08', 'Paid'),
+  b2c('ORD-52263', 'Hessa Al-Kandari', 'First Aid at Work', 165, 'Saudi Arabia', '2026-11-05', 'Paid'),
+  b2c('ORD-52241', 'Mubarak Al-Dosari', 'Manual Handling', 95, 'Kuwait', '2026-11-03', 'Pending'),
+  b2c('ORD-52230', 'Layla Hassan', 'ISO 9001 Lead Auditor', 210, 'UAE', '2026-11-02', 'Paid'),
+  b2c('ORD-52197', 'Dana Al-Sayegh', 'ISO 14001 Internal Auditor', 190, 'Kuwait', '2026-10-29', 'Paid'),
+  b2c('ORD-52175', 'Rashed Al-Otaibi', 'Working at Height', 140, 'Bahrain', '2026-10-25', 'Paid'),
+  b2c('ORD-52164', 'Maryam Al-Failakawi', 'NEBOSH IGC Preparation', 320, 'Kuwait', '2026-10-24', 'Paid'),
+  b2c('ORD-52153', 'Khalid Al-Mansour', 'Cybersecurity Awareness for Employees', 75, 'Oman', '2026-10-22', 'Refunded'),
+  b2c('ORD-52142', 'Sara Al-Qattan', 'Fire Warden Training', 85, 'Kuwait', '2026-10-21', 'Paid'),
+  b2c('ORD-52131', 'Abdullah Al-Zayed', 'PMP Exam Preparation', 260, 'UAE', '2026-10-19', 'Pending'),
+  b2c('ORD-52120', 'Reem Al-Ajmi', 'ISO 45001 Lead Auditor', 240, 'Kuwait', '2026-10-17', 'Paid'),
+  b2c('ORD-52109', 'Talal Al-Hajri', 'First Aid at Work', 165, 'Saudi Arabia', '2026-10-15', 'Paid'),
+  b2c('ORD-52098', 'Aisha Al-Kharafi', 'Manual Handling', 95, 'Kuwait', '2026-10-13', 'Paid'),
 ]
+
+/** Weekly B2C revenue (KWD) — rises and falls. */
+export const superAdminB2cWeekly: SuperAdminSalesPoint[] = [
+  { label: 'W1', value: 5100 },
+  { label: 'W2', value: 6850 },
+  { label: 'W3', value: 5900 },
+  { label: 'W4', value: 7420 },
+  { label: 'W5', value: 6240 },
+  { label: 'W6', value: 8120 },
+]
+
+/* ------------------------------------ B2B ----------------------------------- */
 
 export type SuperAdminB2bStatus = 'Paid' | 'Invoiced' | 'Quote sent'
 
-export const superAdminB2bTabs: SuperAdminSalesTab<SuperAdminB2bStatus>[] = [
-  { id: 'all', label: 'All' },
-  { id: 'Paid', label: 'Paid' },
-  { id: 'Invoiced', label: 'Invoiced' },
-  { id: 'Quote sent', label: 'Quote sent' },
-]
-
-export type SuperAdminB2bDeal = {
+export type SuperAdminB2bSale = {
   id: string
   org: string
   course: string
@@ -317,54 +247,30 @@ export type SuperAdminB2bDeal = {
   status: SuperAdminB2bStatus
 }
 
-type DealSeed = readonly [
+const b2b = (
+  id: string,
   org: string,
-  course: number,
+  course: string,
   seats: number,
-  discount: number,
-  daysAgo: number,
+  amount: number,
+  date: string,
   status: SuperAdminB2bStatus,
+): SuperAdminB2bSale => ({ id, org, course, seats, amount, date, status })
+
+export const superAdminB2bSales: SuperAdminB2bSale[] = [
+  b2b('B2B-9142', 'ABC Corp', 'Fire Warden Training', 50, 3825, '2026-11-09', 'Paid'),
+  b2b('B2B-9136', 'Kuwait Oil Services', 'ISO 45001 Lead Auditor', 100, 19680, '2026-11-06', 'Invoiced'),
+  b2b('B2B-9130', 'Gulf Safety Training Co.', 'First Aid at Work', 25, 3380, '2026-11-05', 'Quote sent'),
+  b2b('B2B-9124', 'Al-Ahli Logistics', 'Manual Handling', 200, 15580, '2026-11-04', 'Paid'),
+  b2b('B2B-9118', 'Pearl Hospitality Group', 'Fire Warden Training', 100, 6970, '2026-11-01', 'Paid'),
+  b2b('B2B-9112', 'Bayan Construction', 'Working at Height', 50, 5740, '2026-10-27', 'Invoiced'),
+  b2b('B2B-9106', 'Zain Facilities', 'Cybersecurity Awareness for Employees', 20, 1230, '2026-10-24', 'Quote sent'),
+  b2b('B2B-9100', 'ABC Corp', 'ISO 14001 Internal Auditor', 25, 3895, '2026-10-20', 'Paid'),
+  b2b('B2B-9094', 'National Industries Group', 'NEBOSH IGC Preparation', 50, 13120, '2026-10-16', 'Paid'),
+  b2b('B2B-9088', 'Gulf Safety Training Co.', 'ISO 9001 Lead Auditor', 25, 4305, '2026-10-12', 'Invoiced'),
 ]
 
-const dealSeeds: readonly DealSeed[] = [
-  ['ABC Corp', 2, 25, 15, 2, 'Paid'],
-  ['Gulf Industrial Services', 1, 50, 10, 4, 'Invoiced'],
-  ['Kuwait Safety Group', 3, 20, 0, 6, 'Paid'],
-  ['Al-Mulla Logistics', 5, 100, 18, 8, 'Paid'],
-  ['Burgan Facilities', 8, 30, 12, 11, 'Quote sent'],
-  ['Zain Kuwait', 7, 200, 20, 14, 'Paid'],
-  ['ABC Corp', 0, 25, 12, 19, 'Paid'],
-  ['KNPC', 3, 60, 15, 24, 'Invoiced'],
-  ['Agility Logistics', 6, 40, 10, 28, 'Quote sent'],
-  ['Kuwait Airways', 2, 120, 18, 33, 'Paid'],
-  ['Gulf Bank', 7, 150, 22, 41, 'Paid'],
-  ['Boubyan Petrochemicals', 0, 35, 8, 47, 'Quote sent'],
-]
-
-export const superAdminB2bDeals: SuperAdminB2bDeal[] = dealSeeds.map(
-  ([org, courseIndex, seats, discount, daysAgo, status], index) => ({
-    id: `B2B-${9100 + index * 6}`,
-    org,
-    course: courseAt(courseIndex).name,
-    seats,
-    amount: Math.round(courseAt(courseIndex).price * seats * (1 - discount / 100)),
-    date: studentDaysAgo(daysAgo),
-    status,
-  }),
-)
-
-export const superAdminB2bTip =
-  'Convert a quote to an invoice once the organization confirms seats. Seats are provisioned after payment.'
-
-/* ----------------------------- 08.05 Revenue Reports --------------------- */
-
-export const superAdminRevenueReportsSubtitle = 'Monthly and quarterly revenue statements.'
-
-export const superAdminRevenueReportsKpis: SuperAdminSalesKpi[] = [
-  { id: 'gross', label: 'YTD gross', value: 'KWD 412,880', detail: '+38% vs last year', tone: 'up' },
-  { id: 'net', label: 'YTD net', value: 'KWD 404,150', detail: 'After refunds' },
-  { id: 'reports', label: 'Reports generated', value: '37', detail: 'Last 12 months' },
-]
+/* -------------------------------- Revenue reports --------------------------- */
 
 export type SuperAdminRevenueReportStatus = 'Ready' | 'Generating'
 
@@ -378,142 +284,101 @@ export type SuperAdminRevenueReport = {
   status: SuperAdminRevenueReportStatus
 }
 
-export const superAdminRevenueReportTypes = [
+export const superAdminReportTypes = [
   'Monthly revenue statement',
   'Quarterly revenue by channel',
   'Revenue by country',
   'Revenue by course category',
   'B2B renewals forecast',
-  'Refund impact report',
-  'Gateway settlement report',
-  'Revenue vs target',
 ] as const
+export const superAdminReportPeriods = ['Oct 2026', 'Q3 2026', 'YTD 2026', 'Last 30 days'] as const
 
-export const superAdminRevenueReportPeriods = ['Oct 2026', 'Q3 2026', 'YTD 2026'] as const
-
-type ReportSeed = readonly [
-  type: number,
+const rep = (
+  id: string,
+  report: string,
   period: string,
   gross: number,
   net: number,
-  daysAgo: number,
+  generated: string,
   status: SuperAdminRevenueReportStatus,
+): SuperAdminRevenueReport => ({ id, report, period, gross, net, generated, status })
+
+export const superAdminRevenueReports: SuperAdminRevenueReport[] = [
+  rep('rr1', 'Monthly revenue statement', 'Oct 2026', 48620, 47436, '2026-11-08', 'Ready'),
+  rep('rr2', 'Quarterly revenue by channel', 'Q3 2026', 127260, 125124, '2026-11-02', 'Ready'),
+  rep('rr3', 'Revenue by country', 'Oct 2026', 48620, 47436, '2026-11-06', 'Generating'),
+  rep('rr4', 'Revenue by course category', 'YTD 2026', 412880, 404150, '2026-10-30', 'Ready'),
+  rep('rr5', 'Refund impact report', 'Oct 2026', 1184, 0, '2026-10-28', 'Ready'),
+  rep('rr6', 'Gateway settlement report', 'Sep 2026', 44900, 44304, '2026-10-05', 'Ready'),
+  rep('rr7', 'B2B renewals forecast', 'Q4 2026', 38200, 38200, '2026-10-01', 'Ready'),
+  rep('rr8', 'Revenue vs target', 'YTD 2026', 412880, 404150, '2026-09-28', 'Ready'),
 ]
 
-const reportSeeds: readonly ReportSeed[] = [
-  [0, 'Oct 2026', 48620, 47436, 1, 'Ready'],
-  [1, 'Q3 2026', 123100, 120780, 6, 'Ready'],
-  [2, 'Oct 2026', 48620, 47436, 9, 'Generating'],
-  [3, 'Sep 2026', 43250, 42040, 14, 'Ready'],
-  [4, 'YTD 2026', 412880, 404150, 21, 'Ready'],
-  [5, 'Q3 2026', 123100, 120780, 27, 'Ready'],
-  [6, 'Sep 2026', 43250, 42040, 33, 'Ready'],
-  [7, 'YTD 2026', 412880, 404150, 40, 'Ready'],
+export type SuperAdminMonthlyRevenue = { month: string; gross: number; net: number }
+
+const monthly = (month: string, gross: number, refunds: number): SuperAdminMonthlyRevenue => ({
+  month,
+  gross,
+  net: gross - refunds,
+})
+
+/** Jan–Oct 2026: gross KWD 412,880 · net KWD 404,150. Rises and falls month to month. */
+export const superAdminMonthlyRevenue: SuperAdminMonthlyRevenue[] = [
+  monthly('Jan', 36400, 1020),
+  monthly('Feb', 33800, 760),
+  monthly('Mar', 41200, 1100),
+  monthly('Apr', 38100, 640),
+  monthly('May', 44600, 1180),
+  monthly('Jun', 39500, 720),
+  monthly('Jul', 46300, 990),
+  monthly('Aug', 40900, 540),
+  monthly('Sep', 43460, 596),
+  monthly('Oct', 48620, 1184),
 ]
 
-export const superAdminRevenueReports: SuperAdminRevenueReport[] = reportSeeds.map(
-  ([type, period, gross, net, daysAgo, status], index) => ({
-    id: `rep-${index + 1}`,
-    report: at(superAdminRevenueReportTypes, type),
-    period,
-    gross,
-    net,
-    generated: studentDaysAgo(daysAgo),
-    status,
-  }),
-)
+/* ----------------------------------- Invoices -------------------------------- */
 
-export const superAdminRevenueReportsTip =
-  'Reports are generated from settled orders only. Pending and failed payments are excluded.'
-
-/* ----------------------------------- 08.06 Invoices ---------------------- */
-
-export const superAdminInvoicesSubtitle = 'Customer invoices for individuals and organizations.'
-
-export const superAdminInvoicesKpis: SuperAdminSalesKpi[] = [
-  { id: 'issued', label: 'Issued (30d)', value: '1,402', detail: '+6.8% vs Sep', tone: 'up' },
-  { id: 'outstanding', label: 'Outstanding', value: 'KWD 14,820', detail: 'Pending + overdue' },
-  { id: 'overdue', label: 'Overdue', value: '3', detail: 'Past due date', tone: 'down' },
-]
-
-export type SuperAdminSalesInvoiceStatus = 'Paid' | 'Pending' | 'Overdue' | 'Draft'
-
-export const superAdminInvoiceTabs: SuperAdminSalesTab<SuperAdminSalesInvoiceStatus>[] = [
-  { id: 'all', label: 'All' },
-  { id: 'Paid', label: 'Paid' },
-  { id: 'Pending', label: 'Pending' },
-  { id: 'Overdue', label: 'Overdue' },
-  { id: 'Draft', label: 'Draft' },
-]
+export type SuperAdminInvoiceStatus = 'Paid' | 'Pending' | 'Overdue' | 'Draft'
+export type SuperAdminInvoiceType = 'Individual' | 'Organization'
 
 export type SuperAdminSalesInvoice = {
   id: string
   customer: string
-  type: 'Individual' | 'Organization'
+  type: SuperAdminInvoiceType
   amount: number
   issued: string
   due: string
-  status: SuperAdminSalesInvoiceStatus
+  status: SuperAdminInvoiceStatus
 }
 
-type InvoiceSeed = readonly [
+const inv = (
+  id: string,
   customer: string,
-  type: 'Individual' | 'Organization',
+  type: SuperAdminInvoiceType,
   amount: number,
-  issuedDaysAgo: number,
-  status: SuperAdminSalesInvoiceStatus,
+  issued: string,
+  due: string,
+  status: SuperAdminInvoiceStatus,
+): SuperAdminSalesInvoice => ({ id, customer, type, amount, issued, due, status })
+
+export const superAdminSalesInvoices: SuperAdminSalesInvoice[] = [
+  inv('INV-71260', 'ABC Corp', 'Organization', 1145, '2026-11-09', '2026-11-23', 'Pending'),
+  inv('INV-71255', 'Fatima Al-Mutairi', 'Individual', 85, '2026-11-09', '2026-11-09', 'Paid'),
+  inv('INV-71250', 'Kuwait Oil Services', 'Organization', 19680, '2026-11-06', '2026-11-20', 'Pending'),
+  inv('INV-71245', 'Gulf Safety Training Co.', 'Organization', 3380, '2026-10-20', '2026-11-03', 'Overdue'),
+  inv('INV-71240', 'Omar Al-Rashidi', 'Individual', 190, '2026-11-08', '2026-11-08', 'Paid'),
+  inv('INV-71235', 'Al-Ahli Logistics', 'Organization', 15580, '2026-11-04', '2026-11-18', 'Paid'),
+  inv('INV-71230', 'Bayan Construction', 'Organization', 5740, '2026-10-27', '2026-11-10', 'Overdue'),
+  inv('INV-71225', 'Hessa Al-Kandari', 'Individual', 165, '2026-11-05', '2026-11-05', 'Paid'),
+  inv('INV-71220', 'Pearl Hospitality Group', 'Organization', 6970, '2026-11-01', '2026-11-15', 'Paid'),
+  inv('INV-71215', 'Zain Facilities', 'Organization', 1230, '2026-11-10', '2026-11-24', 'Draft'),
+  inv('INV-71210', 'Layla Hassan', 'Individual', 210, '2026-11-02', '2026-11-02', 'Paid'),
+  inv('INV-71205', 'National Industries Group', 'Organization', 13120, '2026-10-16', '2026-10-30', 'Paid'),
 ]
 
-const invoiceSeeds: readonly InvoiceSeed[] = [
-  ['ABC Corp', 'Organization', 605.625, 2, 'Paid'],
-  ['Gulf Industrial Services', 'Organization', 1012.5, 4, 'Pending'],
-  ['Fatima Al-Sabah', 'Individual', 49, 5, 'Paid'],
-  ['Kuwait Safety Group', 'Organization', 1830, 6, 'Paid'],
-  ['Burgan Facilities', 'Organization', 1531.2, 11, 'Draft'],
-  ['Al-Mulla Logistics', 'Organization', 2870, 22, 'Overdue'],
-  ['Noura Al-Enezi', 'Individual', 76.1, 9, 'Paid'],
-  ['Zain Kuwait', 'Organization', 4800, 14, 'Paid'],
-  ['KNPC', 'Organization', 3060, 38, 'Overdue'],
-  ['Layla Al-Khalifa', 'Individual', 53, 13, 'Paid'],
-  ['Agility Logistics', 'Organization', 882, 18, 'Pending'],
-  ['Salem Al-Mazrouei', 'Individual', 32, 15, 'Pending'],
-  ['Kuwait Airways', 'Organization', 2808, 33, 'Overdue'],
-  ['Hamad Al-Dosari', 'Individual', 49, 9, 'Draft'],
-  ['Gulf Bank', 'Organization', 3510, 41, 'Paid'],
-  ['Dana Al-Failakawi', 'Individual', 108, 10, 'Paid'],
-]
-
-export const superAdminSalesInvoices: SuperAdminSalesInvoice[] = invoiceSeeds.map(
-  ([customer, type, amount, daysAgo, status], index) => {
-    const issued = studentDaysAgo(daysAgo)
-    const due = studentDaysAgo(daysAgo - (type === 'Organization' ? 30 : 7))
-    return { id: `INV-${71200 + index * 5}`, customer, type, amount, issued, due, status }
-  },
-)
-
-export const superAdminInvoicesTip =
-  'Send a reminder for overdue invoices. Organizations on net-30 terms are marked overdue the day after the due date.'
-
-/* ----------------------------------- 08.07 Refunds ----------------------- */
-
-export const superAdminRefundsSubtitle = 'Refund requests awaiting review and processed refunds.'
-
-export const superAdminRefundsKpis: SuperAdminSalesKpi[] = [
-  { id: 'amount', label: 'Refunds (30d)', value: 'KWD 1,184', detail: '−2.1% vs Sep', tone: 'up' },
-  { id: 'rate', label: 'Refund rate', value: '2.4%', detail: 'Of paid orders' },
-  { id: 'awaiting', label: 'Awaiting review', value: '3', detail: 'Requested, not decided' },
-]
+/* ----------------------------------- Refunds --------------------------------- */
 
 export type SuperAdminRefundStatus = 'Requested' | 'Approved' | 'Processed' | 'Rejected'
-
-export const superAdminRefundTabs: SuperAdminSalesTab<SuperAdminRefundStatus>[] = [
-  { id: 'all', label: 'All' },
-  { id: 'Requested', label: 'Requested' },
-  { id: 'Approved', label: 'Approved' },
-  { id: 'Processed', label: 'Processed' },
-  { id: 'Rejected', label: 'Rejected' },
-]
-
 export const superAdminRefundReasons = [
   'Duplicate purchase',
   'Course not as described',
@@ -532,69 +397,38 @@ export type SuperAdminRefund = {
   status: SuperAdminRefundStatus
 }
 
-type RefundSeed = readonly [
-  order: number,
+const rf = (
+  id: string,
+  order: string,
+  customer: string,
   amount: number,
-  reason: number,
-  daysAgo: number,
+  reason: string,
+  requested: string,
   status: SuperAdminRefundStatus,
+): SuperAdminRefund => ({ id, order, customer, amount, reason, requested, status })
+
+export const superAdminRefunds: SuperAdminRefund[] = [
+  rf('RF-3112', 'ORD-52340', 'ABC Corp', 380, 'Employer cancelled', '2026-11-09', 'Processed'),
+  rf('RF-3109', 'ORD-52274', 'Yousef Al-Enezi', 120, 'Duplicate purchase', '2026-11-08', 'Requested'),
+  rf('RF-3106', 'ORD-52153', 'Khalid Al-Mansour', 75, 'Course not as described', '2026-11-07', 'Approved'),
+  rf('RF-3103', 'ORD-52263', 'Hessa Al-Kandari', 165, 'Schedule conflict', '2026-11-05', 'Requested'),
+  rf('RF-3100', 'ORD-52230', 'Layla Hassan', 210, 'Technical issue', '2026-11-03', 'Rejected'),
+  rf('RF-3097', 'ORD-52197', 'Dana Al-Sayegh', 190, 'Duplicate purchase', '2026-11-01', 'Processed'),
+  rf('RF-3094', 'ORD-52175', 'Rashed Al-Otaibi', 140, 'Schedule conflict', '2026-10-28', 'Processed'),
+  rf('RF-3091', 'ORD-52142', 'Sara Al-Qattan', 85, 'Technical issue', '2026-10-25', 'Requested'),
+  rf('RF-3088', 'ORD-52131', 'Abdullah Al-Zayed', 260, 'Course not as described', '2026-10-22', 'Approved'),
+  rf('RF-3085', 'ORD-52120', 'Reem Al-Ajmi', 240, 'Employer cancelled', '2026-10-18', 'Processed'),
 ]
 
-const refundSeeds: readonly RefundSeed[] = [
-  [3, 32, 0, 1, 'Requested'],
-  [8, 24.5, 1, 2, 'Processed'],
-  [18, 58, 3, 3, 'Requested'],
-  [0, 49, 0, 4, 'Requested'],
-  [6, 58, 2, 6, 'Approved'],
-  [12, 108, 1, 8, 'Rejected'],
-  [14, 45, 3, 12, 'Processed'],
-  [9, 30, 2, 15, 'Processed'],
-  [1, 150, 4, 18, 'Approved'],
-  [15, 28.5, 0, 21, 'Processed'],
-]
-
-export const superAdminRefunds: SuperAdminRefund[] = refundSeeds.map(
-  ([orderIndex, amount, reason, daysAgo, status], index) => {
-    const order = at(superAdminSalesOrders, orderIndex)
-    return {
-      id: `RF-${3100 + index * 3}`,
-      order: order.id,
-      customer: order.customer,
-      amount,
-      reason: at(superAdminRefundReasons, reason),
-      requested: studentDaysAgo(daysAgo),
-      status,
-    }
-  },
-)
-
-export const superAdminRefundsTip =
-  'Approved refunds are returned to the original payment method. Mark a refund processed once the gateway confirms it.'
-
-/* ----------------------------------- 08.08 Coupons ----------------------- */
-
-export const superAdminCouponsSubtitle = 'Promotional codes for individuals and organizations.'
-
-export const superAdminCouponsKpis: SuperAdminSalesKpi[] = [
-  { id: 'active', label: 'Active coupons', value: '5', detail: 'Redeemable today' },
-  { id: 'redemptions', label: 'Redemptions (30d)', value: '318', detail: '+14% vs Sep', tone: 'up' },
-  { id: 'given', label: 'Discount given', value: 'KWD 2,140', detail: '4.4% of gross revenue' },
-]
+/* ----------------------------------- Coupons --------------------------------- */
 
 export type SuperAdminCouponStatus = 'Active' | 'Scheduled' | 'Expired' | 'Disabled'
-
-export const superAdminCouponTabs: SuperAdminSalesTab<SuperAdminCouponStatus>[] = [
-  { id: 'all', label: 'All' },
-  { id: 'Active', label: 'Active' },
-  { id: 'Scheduled', label: 'Scheduled' },
-  { id: 'Expired', label: 'Expired' },
-  { id: 'Disabled', label: 'Disabled' },
-]
+export type SuperAdminCouponType = 'Percent' | 'Fixed (KWD)'
 
 export type SuperAdminCoupon = {
   id: string
   code: string
-  type: 'Percent' | 'Fixed (KWD)'
+  type: SuperAdminCouponType
   value: string
   used: number
   limit: number
@@ -602,68 +436,36 @@ export type SuperAdminCoupon = {
   status: SuperAdminCouponStatus
 }
 
-type CouponSeed = readonly [
+const cpn = (
   code: string,
-  type: 'Percent' | 'Fixed (KWD)',
+  type: SuperAdminCouponType,
   value: string,
   used: number,
   limit: number,
-  validDays: number,
+  validUntil: string,
   status: SuperAdminCouponStatus,
+): SuperAdminCoupon => ({ id: code, code, type, value, used, limit, validUntil, status })
+
+export const superAdminCoupons: SuperAdminCoupon[] = [
+  cpn('WELCOME10', 'Percent', '10%', 186, 500, '2026-12-31', 'Active'),
+  cpn('SAFETY20', 'Percent', '20%', 74, 250, '2026-12-15', 'Active'),
+  cpn('ISOKUWAIT', 'Fixed (KWD)', 'KWD 15', 41, 100, '2027-01-31', 'Scheduled'),
+  cpn('NATIONALDAY26', 'Percent', '25%', 250, 250, '2026-03-01', 'Expired'),
+  cpn('ABC-TEAM15', 'Percent', '15%', 22, 100, '2026-12-01', 'Active'),
+  cpn('RAMADAN25', 'Percent', '25%', 118, 250, '2026-04-30', 'Expired'),
+  cpn('EARLYBIRD', 'Fixed (KWD)', 'KWD 15', 63, 100, '2026-11-30', 'Active'),
+  cpn('HSE-BULK', 'Percent', '15%', 9, 100, '2026-12-20', 'Disabled'),
+  cpn('PMPSTART', 'Percent', '10%', 35, 250, '2026-11-25', 'Active'),
+  cpn('BACK2SKILL', 'Percent', '20%', 0, 500, '2027-02-15', 'Scheduled'),
 ]
 
-const couponSeeds: readonly CouponSeed[] = [
-  ['WELCOME10', 'Percent', '10%', 186, 500, -45, 'Active'],
-  ['SAFETY20', 'Percent', '20%', 74, 250, -21, 'Active'],
-  ['ISOKUWAIT', 'Percent', '15%', 41, 100, -30, 'Active'],
-  ['NATIONALDAY26', 'Percent', '25%', 0, 500, -60, 'Scheduled'],
-  ['ABC-TEAM15', 'Percent', '15%', 25, 25, -10, 'Active'],
-  ['RAMADAN25', 'Percent', '25%', 212, 250, 220, 'Expired'],
-  ['EARLYBIRD', 'Fixed (KWD)', 'KWD 15', 96, 100, 40, 'Expired'],
-  ['HSE-BULK', 'Percent', '20%', 18, 100, -90, 'Active'],
-  ['PMPSTART', 'Fixed (KWD)', 'KWD 10', 33, 250, -14, 'Disabled'],
-  ['BACK2SKILL', 'Percent', '10%', 7, 500, -75, 'Scheduled'],
-]
-
-export const superAdminCoupons: SuperAdminCoupon[] = couponSeeds.map(
-  ([code, type, value, used, limit, validDays, status], index) => ({
-    id: `cp-${index + 1}`,
-    code,
-    type,
-    value,
-    used,
-    limit,
-    validUntil: studentDaysAgo(validDays),
-    status,
-  }),
-)
-
-export const superAdminCouponsTip =
-  'Disabled codes stop working at checkout immediately. Existing orders that used the code are not affected.'
-
-/* ------------------------------ 08.09 Payment Gateways ------------------- */
-
-export const superAdminGatewaysSubtitle = 'Gateway performance, fees and settlement times.'
-
-export const superAdminGatewaysKpis: SuperAdminSalesKpi[] = [
-  { id: 'success', label: 'Success rate', value: '96.8%', detail: '+0.4% vs Sep', tone: 'up' },
-  { id: 'fees', label: 'Fees (30d)', value: 'KWD 1,046', detail: '2.2% of gross revenue' },
-  { id: 'settlement', label: 'Avg. settlement', value: 'T+2', detail: 'Business days' },
-]
+/* ----------------------------------- Gateways -------------------------------- */
 
 export type SuperAdminGatewayStatus = 'Live' | 'Test' | 'Disabled'
 
-export const superAdminGatewayTabs: SuperAdminSalesTab<SuperAdminGatewayStatus>[] = [
-  { id: 'all', label: 'All' },
-  { id: 'Live', label: 'Live' },
-  { id: 'Test', label: 'Test' },
-  { id: 'Disabled', label: 'Disabled' },
-]
-
-export type SuperAdminSalesGateway = {
+export type SuperAdminGateway = {
   id: string
   gateway: string
-  methods: string
   fee: string
   transactions: number
   success: number
@@ -671,170 +473,114 @@ export type SuperAdminSalesGateway = {
   status: SuperAdminGatewayStatus
 }
 
-export const superAdminSalesGateways: SuperAdminSalesGateway[] = [
-  { id: 'gw-knet', gateway: 'KNET', methods: 'Kuwaiti debit cards', fee: 'KWD 0.350', transactions: 612, success: 98.1, settlement: 'T+1', status: 'Live' },
-  { id: 'gw-mf', gateway: 'MyFatoorah', methods: 'Visa, Mastercard, Mada', fee: '2.4%', transactions: 438, success: 95.4, settlement: 'T+2', status: 'Live' },
-  { id: 'gw-apple', gateway: 'Apple Pay', methods: 'Wallet via MyFatoorah', fee: '2.4%', transactions: 164, success: 97.6, settlement: 'T+2', status: 'Live' },
-  { id: 'gw-tap', gateway: 'Tap Payments', methods: 'Cards, Benefit, Fawry', fee: '2.2%', transactions: 52, success: 92.3, settlement: 'T+3', status: 'Test' },
-  { id: 'gw-bank', gateway: 'Bank transfer', methods: 'Manual reconciliation', fee: 'Free', transactions: 86, success: 100, settlement: 'Manual', status: 'Live' },
+const gw = (
+  id: string,
+  gateway: string,
+  fee: string,
+  transactions: number,
+  success: number,
+  settlement: string,
+  status: SuperAdminGatewayStatus,
+): SuperAdminGateway => ({ id, gateway, fee, transactions, success, settlement, status })
+
+export const superAdminGateways: SuperAdminGateway[] = [
+  gw('g1', 'KNET', 'KWD 0.350', 612, 98.1, 'T+1', 'Live'),
+  gw('g2', 'Visa / Mastercard (MyFatoorah)', '2.4%', 521, 96.4, 'T+2', 'Live'),
+  gw('g3', 'Apple Pay', '2.4%', 342, 97.2, 'T+2', 'Live'),
+  gw('g4', 'Tap Payments', '2.2%', 120, 94.6, 'T+3', 'Test'),
+  gw('g5', 'Bank transfer', 'Free', 64, 100, 'Manual', 'Live'),
+  gw('g6', 'Cash voucher', 'KWD 1.000', 0, 0, 'Manual', 'Disabled'),
 ]
 
-export const superAdminGatewaysTip =
-  'Gateways in Test mode accept sandbox payments only. Go live once settlement details are verified.'
+/* ---------------------------------- Tax and fees ----------------------------- */
 
-/* ----------------------------------- 08.10 Tax and Fees ------------------ */
-
-export const superAdminTaxFeesSubtitle = 'Tax rates and platform fees applied at checkout by region.'
-
-export const superAdminTaxFeesKpis: SuperAdminSalesKpi[] = [
-  { id: 'tax', label: 'Tax collected (30d)', value: 'KWD 3,820', detail: 'GCC VAT, non-Kuwait orders' },
-  { id: 'regions', label: 'Regions configured', value: '6', detail: 'Kuwait + 5 GCC markets' },
-  { id: 'waived', label: 'Fees waived', value: '12', detail: 'Manual overrides' },
-]
-
-export type SuperAdminTaxKind = 'Tax' | 'Fee'
 export type SuperAdminTaxStatus = 'Active' | 'Scheduled' | 'Disabled'
-
-export const superAdminTaxTabs: SuperAdminSalesTab<SuperAdminTaxKind>[] = [
-  { id: 'all', label: 'All' },
-  { id: 'Tax', label: 'VAT rules' },
-  { id: 'Fee', label: 'Platform fees' },
-]
 
 export type SuperAdminTaxRule = {
   id: string
   item: string
-  kind: SuperAdminTaxKind
   region: string
   rate: string
+  /** Percent value for charting; null for flat fees. */
+  percent: number | null
   applies: string
   effective: string
   status: SuperAdminTaxStatus
 }
 
-type TaxSeed = readonly [
+const tax = (
+  id: string,
   item: string,
-  kind: SuperAdminTaxKind,
   region: string,
   rate: string,
+  percent: number | null,
   applies: string,
-  effectiveDays: number,
+  effective: string,
   status: SuperAdminTaxStatus,
+): SuperAdminTaxRule => ({ id, item, region, rate, percent, applies, effective, status })
+
+export const superAdminTaxRules: SuperAdminTaxRule[] = [
+  tax('t1', 'VAT — Saudi Arabia', 'Saudi Arabia', '15%', 15, 'B2C & B2B', '2026-01-01', 'Active'),
+  tax('t2', 'VAT — UAE', 'UAE', '5%', 5, 'B2C & B2B', '2026-01-01', 'Active'),
+  tax('t3', 'VAT — Bahrain', 'Bahrain', '10%', 10, 'B2C', '2026-01-01', 'Active'),
+  tax('t4', 'VAT — Oman', 'Oman', '5%', 5, 'B2C', '2026-12-01', 'Scheduled'),
+  tax('t5', 'Kuwait (no VAT)', 'Kuwait', '0%', 0, 'All orders', '2026-01-01', 'Active'),
+  tax('t6', 'Platform service fee', 'All', '3%', 3, 'B2C', '2026-03-01', 'Active'),
+  tax('t7', 'Gateway fee pass-through', 'All', '2.4%', 2.4, 'B2C', '2026-03-01', 'Disabled'),
+  tax('t8', 'Certificate re-issue fee', 'All', 'KWD 2.000', null, 'Re-issue', '2026-05-01', 'Active'),
 ]
 
-const taxSeeds: readonly TaxSeed[] = [
-  ['VAT — Saudi Arabia', 'Tax', 'Saudi Arabia', '15%', 'B2C & B2B', 620, 'Active'],
-  ['VAT — UAE', 'Tax', 'UAE', '5%', 'B2C & B2B', 410, 'Active'],
-  ['VAT — Bahrain', 'Tax', 'Bahrain', '10%', 'B2C', 330, 'Active'],
-  ['VAT — Oman', 'Tax', 'Oman', '5%', 'B2C', 210, 'Active'],
-  ['Kuwait (no VAT)', 'Tax', 'Kuwait', '0%', 'All orders', 900, 'Active'],
-  ['VAT — Qatar', 'Tax', 'Qatar', '0%', 'B2C', -30, 'Scheduled'],
-  ['Platform service fee', 'Fee', 'All', '3%', 'B2C', 180, 'Active'],
-  ['Gateway fee pass-through', 'Fee', 'All', '2.4%', 'B2C', 150, 'Disabled'],
-  ['Certificate re-issue fee', 'Fee', 'All', 'KWD 2', 'Re-issue', 120, 'Active'],
-]
-
-export const superAdminTaxRules: SuperAdminTaxRule[] = taxSeeds.map(
-  ([item, kind, region, rate, applies, effectiveDays, status], index) => ({
-    id: `tx-${index + 1}`,
-    item,
-    kind,
-    region,
-    rate,
-    applies,
-    effective: studentDaysAgo(effectiveDays),
-    status,
-  }),
-)
-
-export const superAdminTaxFeesTip =
-  'Kuwait does not charge VAT. GCC VAT is applied by the buyer’s billing country at checkout.'
-
-/* --------------------------- 08.11 Costs and Profitability --------------- */
-
-export const superAdminCostsSubtitle =
-  'Course-level cost records and margins. Missing costs are not treated as zero.'
-
-export const superAdminCostsKpis: SuperAdminSalesKpi[] = [
-  { id: 'covered', label: 'Courses with costs', value: '54 / 128', detail: '42% of catalogue' },
-  { id: 'margin', label: 'Avg. margin', value: '61%', detail: 'Only courses with costs' },
-  { id: 'missing', label: 'Missing costs', value: '3', detail: 'Shown as — until entered', tone: 'down' },
-]
-
-export const superAdminCostsNote =
-  'Profitability isn’t shown: course cost records haven’t been entered yet, so costs aren’t counted as zero.'
+/* -------------------------------------- Costs -------------------------------- */
 
 export type SuperAdminCostStatus = 'Costs entered' | 'Missing costs'
-
-export const superAdminCostTabs: SuperAdminSalesTab<SuperAdminCostStatus>[] = [
-  { id: 'all', label: 'All' },
-  { id: 'Costs entered', label: 'Costs entered' },
-  { id: 'Missing costs', label: 'Missing costs' },
-]
 
 export type SuperAdminCostRecord = {
   id: string
   course: string
   revenue: number
-  /** `null` = not entered. Never rendered as zero. */
+  /** `null` = not entered. Missing costs are never treated as zero. */
   content: number | null
   instructor: number | null
   status: SuperAdminCostStatus
 }
 
-type CostSeed = readonly [course: number, revenue: number, content: number | null, instructor: number | null]
+const cost = (
+  id: string,
+  course: string,
+  revenue: number,
+  content: number | null,
+  instructor: number | null,
+): SuperAdminCostRecord => ({
+  id,
+  course,
+  revenue,
+  content,
+  instructor,
+  status: content === null || instructor === null ? 'Missing costs' : 'Costs entered',
+})
 
-const costSeeds: readonly CostSeed[] = [
-  [0, 28400, 3200, 4100],
-  [1, 19650, 2400, 3300],
-  [2, 12080, null, null],
-  [3, 15230, 1800, 2500],
-  [4, 31000, 6000, 5000],
-  [5, 9420, null, null],
-  [6, 6180, 900, 1200],
-  [7, 11340, 1500, 1900],
-  [8, 22750, 3800, 4400],
-  [2, 8720, null, null],
+export const superAdminCostRecords: SuperAdminCostRecord[] = [
+  cost('c1', 'Fire Warden Training', 31000, 4200, 3100),
+  cost('c2', 'ISO 9001 Lead Auditor', 24800, 5200, 4800),
+  cost('c3', 'ISO 14001 Internal Auditor', 18600, 3900, 3700),
+  cost('c4', 'First Aid at Work', 15200, null, null),
+  cost('c5', 'NEBOSH IGC Preparation', 22400, 6000, 4900),
+  cost('c6', 'Working at Height', 12900, 2100, 2300),
+  cost('c7', 'Manual Handling', 9800, null, null),
+  cost('c8', 'Cybersecurity Awareness for Employees', 11300, 1600, 1900),
+  cost('c9', 'ISO 45001 Lead Auditor', 20700, 4500, 4100),
+  cost('c10', 'PMP Exam Preparation', 13600, null, null),
 ]
 
-export const superAdminCostRecords: SuperAdminCostRecord[] = costSeeds.map(
-  ([courseIndex, revenue, content, instructor], index) => ({
-    id: `cost-${index + 1}`,
-    course: courseAt(courseIndex).name + (index >= 9 ? ' (Arabic)' : ''),
-    revenue,
-    content,
-    instructor,
-    status: content === null || instructor === null ? 'Missing costs' : 'Costs entered',
-  }),
-)
+export const superAdminCostsNote =
+  'Profitability isn’t shown until course cost records are entered, so missing costs aren’t counted as zero.'
+export const superAdminCostsBaseEntered = 54
+export const superAdminCostsTotalCourses = 128
 
-/** Margin % — `null` while any cost is missing. */
-export function costMargin(record: Pick<SuperAdminCostRecord, 'revenue' | 'content' | 'instructor'>) {
-  if (record.content === null || record.instructor === null) return null
-  return Math.round(((record.revenue - record.content - record.instructor) / record.revenue) * 100)
-}
-
-/* ----------------------------- 08.12 Financial Exports ------------------- */
-
-export const superAdminExportsSubtitle = 'CSV, Excel and PDF exports for accounting.'
-
-export const superAdminExportsKpis: SuperAdminSalesKpi[] = [
-  { id: 'exports', label: 'Exports (30d)', value: '31', detail: 'Across all formats' },
-  { id: 'scheduled', label: 'Scheduled', value: '4', detail: 'Weekly and monthly' },
-  { id: 'ready', label: 'Ready', value: '5', detail: 'Available to download' },
-]
+/* ---------------------------------- Exports ---------------------------------- */
 
 export type SuperAdminExportStatus = 'Ready' | 'Processing' | 'Expired'
-export type SuperAdminExportFormat = 'CSV' | 'XLSX' | 'PDF'
-
-export const superAdminExportTabs: SuperAdminSalesTab<SuperAdminExportStatus>[] = [
-  { id: 'all', label: 'All' },
-  { id: 'Ready', label: 'Ready' },
-  { id: 'Processing', label: 'Processing' },
-  { id: 'Expired', label: 'Expired' },
-]
-
-export const superAdminExportNames = [
+export const superAdminExportDatasets = [
   'Orders ledger',
   'Invoices register',
   'Refunds register',
@@ -844,52 +590,41 @@ export const superAdminExportNames = [
   'Coupon redemptions',
   'Revenue by course',
 ] as const
-
-export const superAdminExportFormats: SuperAdminExportFormat[] = ['CSV', 'XLSX', 'PDF']
-
+export const superAdminExportFormats = ['CSV', 'XLSX', 'PDF'] as const
 export const superAdminExportRanges = ['Oct 2026', 'Q3 2026', 'YTD 2026', 'Last 30 days'] as const
 
 export type SuperAdminFinancialExport = {
   id: string
   name: string
-  format: SuperAdminExportFormat
+  format: string
   range: string
   by: string
   created: string
+  protectedFile: boolean
   status: SuperAdminExportStatus
 }
 
-type ExportSeed = readonly [
-  name: number,
-  format: SuperAdminExportFormat,
-  range: number,
+const exp = (
+  id: string,
+  name: string,
+  format: string,
+  range: string,
   by: string,
-  daysAgo: number,
+  created: string,
+  protectedFile: boolean,
   status: SuperAdminExportStatus,
+): SuperAdminFinancialExport => ({ id, name, format, range, by, created, protectedFile, status })
+
+export const superAdminFinancialExports: SuperAdminFinancialExport[] = [
+  exp('x1', 'Orders ledger', 'CSV', 'Oct 2026', 'Finance team', '2026-11-09', true, 'Ready'),
+  exp('x2', 'Invoices register', 'XLSX', 'Q3 2026', 'Accountant', '2026-11-07', true, 'Ready'),
+  exp('x3', 'Refunds register', 'PDF', 'Oct 2026', 'Super Admin', '2026-11-06', false, 'Processing'),
+  exp('x4', 'Gateway settlements', 'CSV', 'Last 30 days', 'Finance team', '2026-11-04', false, 'Ready'),
+  exp('x5', 'B2B contracts', 'XLSX', 'YTD 2026', 'Finance team', '2026-10-30', true, 'Ready'),
+  exp('x6', 'Tax summary', 'PDF', 'Q3 2026', 'Accountant', '2026-10-12', false, 'Expired'),
+  exp('x7', 'Coupon redemptions', 'CSV', 'Oct 2026', 'Super Admin', '2026-10-09', false, 'Ready'),
+  exp('x8', 'Revenue by course', 'XLSX', 'YTD 2026', 'Finance team', '2026-09-30', false, 'Expired'),
 ]
 
-const exportSeeds: readonly ExportSeed[] = [
-  [0, 'CSV', 0, 'Finance team', 1, 'Ready'],
-  [1, 'XLSX', 1, 'Super Admin', 2, 'Ready'],
-  [2, 'CSV', 3, 'Accountant', 3, 'Processing'],
-  [3, 'PDF', 0, 'Finance team', 6, 'Ready'],
-  [4, 'XLSX', 2, 'Super Admin', 9, 'Ready'],
-  [5, 'PDF', 1, 'Accountant', 14, 'Ready'],
-  [6, 'CSV', 3, 'Finance team', 38, 'Expired'],
-  [7, 'XLSX', 2, 'Super Admin', 45, 'Expired'],
-]
-
-export const superAdminFinancialExports: SuperAdminFinancialExport[] = exportSeeds.map(
-  ([name, format, range, by, daysAgo, status], index) => ({
-    id: `exp-${index + 1}`,
-    name: at(superAdminExportNames, name),
-    format,
-    range: at(superAdminExportRanges, range),
-    by,
-    created: studentDaysAgo(daysAgo),
-    status,
-  }),
-)
-
-export const superAdminExportsTip =
-  'Exports stay available for 30 days. Re-run an expired export to generate a fresh file.'
+export const superAdminExportsNote =
+  'Exports containing personal data (customer names, emails, billing details) should be password-protected before sharing. Protection is simulated in this sample build.'

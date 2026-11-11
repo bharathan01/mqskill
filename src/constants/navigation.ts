@@ -8,6 +8,7 @@ export const publicNavLinks = [
 export const studentNavLinks = [
   { id: 'dashboard', label: 'Dashboard', to: paths.student.dashboard, icon: 'dashboard', end: true },
   { id: 'courses', label: 'Courses', to: paths.student.courses, icon: 'courses', badge: 4 },
+  { id: 'assessments', label: 'My Assessments', to: paths.student.assessments, icon: 'assessments' },
   { id: 'certificates', label: 'Certificates', to: paths.student.certificates, icon: 'certificates' },
   { id: 'payments', label: 'Payments', to: paths.student.payments, icon: 'payments' },
   { id: 'profile', label: 'Profile Settings', to: paths.student.profile, icon: 'profile' },

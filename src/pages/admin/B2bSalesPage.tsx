@@ -1,22 +1,19 @@
 import { useMemo, useState } from 'react'
-import { ContentNotice } from '@/components/common'
-import { LightbulbIcon } from '@/components/ui'
+import { ContentNotice, ContentSelect } from '@/components/common'
 import {
   formatSalesDate,
   formatSalesKwd,
-  superAdminB2bDeals,
-  superAdminB2bKpis,
-  superAdminB2bSubtitle,
-  superAdminB2bTabs,
-  superAdminB2bTip,
+  superAdminB2bSales,
   superAdminSalesPageSize,
-  type SuperAdminB2bDeal,
+  type SuperAdminB2bSale,
   type SuperAdminB2bStatus,
+  type SuperAdminSalesKpi,
 } from '@/constants'
 import { StatusBadge } from './catalogShared'
 import { btnOutline, btnPrimary, cardClass } from './catalogUtils'
 import {
   linkAction,
+  MoneyCell,
   paginate,
   SalesEmptyRow,
   SalesHBars,
@@ -30,65 +27,83 @@ import {
   thClass,
   toolbarClass,
   trClass,
+  updateById,
 } from './salesShared'
 
+const ALL_ORGS = 'All organizations'
+const TABS: { id: 'all' | SuperAdminB2bStatus; label: string }[] = [
+  { id: 'all', label: 'All deals' },
+  { id: 'Paid', label: 'Paid' },
+  { id: 'Invoiced', label: 'Invoiced' },
+  { id: 'Quote sent', label: 'Quote sent' },
+]
+
+const paidTotal = (rows: SuperAdminB2bSale[]) =>
+  rows.filter((row) => row.status === 'Paid').reduce((sum, row) => sum + row.amount, 0)
+const basePaid = paidTotal(superAdminB2bSales)
+
 export function AdminB2bSalesPage() {
-  const [deals, setDeals] = useState<SuperAdminB2bDeal[]>(superAdminB2bDeals)
+  const [rows, setRows] = useState<SuperAdminB2bSale[]>(superAdminB2bSales)
   const [tab, setTab] = useState<'all' | SuperAdminB2bStatus>('all')
   const [query, setQuery] = useState('')
+  const [org, setOrg] = useState(ALL_ORGS)
   const [page, setPage] = useState(1)
   const [notice, setNotice] = useState<string | null>(null)
 
-  const topOrgs = useMemo(() => {
+  const orgs = useMemo(() => Array.from(new Set(superAdminB2bSales.map((row) => row.org))), [])
+
+  const kpis = useMemo<SuperAdminSalesKpi[]>(
+    () => [
+      { id: 'rev', label: 'B2B revenue', value: formatSalesKwd(21310 + paidTotal(rows) - basePaid, 0), detail: '+23.4% vs previous period' },
+      { id: 'seats', label: 'Seats sold', value: (2540 + rows.reduce((sum, row) => sum + row.seats, 0) - superAdminB2bSales.reduce((sum, row) => sum + row.seats, 0)).toLocaleString('en-US'), detail: '+21% vs previous period' },
+      { id: 'avg', label: 'Avg. deal size', value: 'KWD 3,820', detail: 'Across paid and invoiced deals' },
+    ],
+    [rows],
+  )
+
+  const seatsByOrg = useMemo(() => {
     const totals = new Map<string, number>()
-    deals
-      .filter((row) => row.status !== 'Quote sent')
-      .forEach((row) => totals.set(row.org, (totals.get(row.org) ?? 0) + row.amount))
+    rows.forEach((row) => totals.set(row.org, (totals.get(row.org) ?? 0) + row.seats))
     return Array.from(totals, ([label, value]) => ({ label, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 5)
-  }, [deals])
+  }, [rows])
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase()
-    return deals.filter((row) => {
+    return rows.filter((row) => {
       if (tab !== 'all' && row.status !== tab) return false
-      if (!needle) return true
-      return `${row.id} ${row.org} ${row.course}`.toLowerCase().includes(needle)
+      if (org !== ALL_ORGS && row.org !== org) return false
+      return !needle || `${row.org} ${row.course} ${row.id}`.toLowerCase().includes(needle)
     })
-  }, [deals, query, tab])
+  }, [org, query, rows, tab])
 
   const { pageCount, safePage, pageRows, from, to } = paginate(filtered, page, superAdminSalesPageSize)
 
-  const setStatus = (row: SuperAdminB2bDeal, status: SuperAdminB2bStatus, message: string) => {
-    setDeals((current) => current.map((item) => (item.id === row.id ? { ...item, status } : item)))
+  const setStatus = (row: SuperAdminB2bSale, status: SuperAdminB2bStatus, message: string) => {
+    setRows((current) => updateById(current, row.id, { status }))
     setNotice(message)
   }
 
   const createQuote = () => {
-    const next: SuperAdminB2bDeal = {
-      id: `B2B-${9100 + deals.length * 6}`,
-      org: 'Kuwait Oil Company',
-      course: 'ISO 45001 Lead Implementer',
-      seats: 75,
-      amount: Math.round(58 * 75 * 0.85),
-      date: '2026-11-10',
-      status: 'Quote sent',
-    }
-    setDeals((current) => [next, ...current])
+    const id = `B2B-${9150 + rows.length}`
+    setRows((current) => [
+      { id, org: 'ABC Corp', course: 'ISO 45001 Lead Auditor', seats: 40, amount: 7870, date: '2026-11-10', status: 'Quote sent' },
+      ...current,
+    ])
     setTab('all')
     setPage(1)
-    setNotice(`Quote ${next.id} for ${next.org} created and sent (sample).`)
+    setNotice(`Quote ${id} for ABC Corp (40 seats) created and sent (sample).`)
   }
 
   return (
     <div className="space-y-5">
       <SalesPageHeader
         page="B2B Sales"
-        subtitle={superAdminB2bSubtitle}
+        subtitle="Seat purchases and enterprise contracts."
         actions={
           <>
-            <button type="button" onClick={() => setNotice('B2B deals exported as CSV (sample).')} className={btnOutline}>
+            <button type="button" onClick={() => setNotice('B2B sales exported as CSV (sample).')} className={btnOutline}>
               Export
             </button>
             <button type="button" onClick={createQuote} className={btnPrimary}>
@@ -100,19 +115,18 @@ export function AdminB2bSalesPage() {
 
       {notice ? <ContentNotice onDismiss={() => setNotice(null)}>{notice}</ContentNotice> : null}
 
-      <SalesKpiGrid kpis={superAdminB2bKpis} className="sm:grid-cols-2 xl:grid-cols-3" />
+      <SalesKpiGrid kpis={kpis} />
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
         <section className={`${cardClass} overflow-hidden`}>
           <SalesTabs
-            tabs={superAdminB2bTabs}
+            tabs={TABS}
             active={tab}
             onChange={(id) => {
               setTab(id)
               setPage(1)
             }}
           />
-
           <div className={toolbarClass}>
             <SalesSearch
               value={query}
@@ -122,10 +136,24 @@ export function AdminB2bSalesPage() {
               }}
               placeholder="Search organization, course or deal ID"
             />
+            <ContentSelect
+              aria-label="Organization"
+              value={org}
+              onChange={(event) => {
+                setOrg(event.target.value)
+                setPage(1)
+              }}
+              className="!h-10 lg:max-w-[13rem]"
+            >
+              <option>{ALL_ORGS}</option>
+              {orgs.map((item) => (
+                <option key={item}>{item}</option>
+              ))}
+            </ContentSelect>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-[1000px] w-full border-collapse text-left">
+            <table className="w-full min-w-[1000px] border-collapse text-left">
               <thead>
                 <tr className={theadRowClass}>
                   <th className="px-4 py-2.5 font-semibold">Organization</th>
@@ -145,16 +173,16 @@ export function AdminB2bSalesPage() {
                       <p className="mt-0.5 text-xs text-slate-400">{row.id}</p>
                     </td>
                     <td className="px-3 py-3.5 text-sm text-slate-600">{row.course}</td>
-                    <td className="px-3 py-3.5 text-right text-sm font-semibold tabular-nums text-navy">{row.seats}</td>
-                    <td className="px-3 py-3.5 text-right text-sm font-semibold tabular-nums text-navy">
-                      {formatSalesKwd(row.amount)}
+                    <td className="px-3 py-3.5 text-right text-sm font-semibold text-navy tabular-nums">{row.seats}</td>
+                    <td className="px-3 py-3.5 text-right">
+                      <MoneyCell value={row.amount} />
                     </td>
                     <td className="px-3 py-3.5 text-sm text-slate-600">{formatSalesDate(row.date)}</td>
                     <td className="px-3 py-3.5">
                       <StatusBadge value={row.status} />
                     </td>
                     <td className="px-3 py-3.5 text-right">
-                      <span className="inline-flex items-center justify-end gap-3">
+                      <div className="flex items-center justify-end gap-3">
                         {row.status === 'Quote sent' ? (
                           <button
                             type="button"
@@ -167,7 +195,7 @@ export function AdminB2bSalesPage() {
                         {row.status !== 'Paid' ? (
                           <button
                             type="button"
-                            onClick={() => setStatus(row, 'Paid', `${row.id} marked as paid. Seats are being provisioned (sample).`)}
+                            onClick={() => setStatus(row, 'Paid', `${row.id} marked as paid (sample).`)}
                             className={linkAction}
                           >
                             Mark as paid
@@ -175,7 +203,7 @@ export function AdminB2bSalesPage() {
                         ) : (
                           <span className="text-sm text-slate-300">—</span>
                         )}
-                      </span>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -183,24 +211,17 @@ export function AdminB2bSalesPage() {
               </tbody>
             </table>
           </div>
-          <SalesPager
-            page={safePage}
-            pageCount={pageCount}
-            from={from}
-            to={to}
-            total={filtered.length}
-            noun="deals"
-            onPage={setPage}
-          />
+          <SalesPager page={safePage} pageCount={pageCount} from={from} to={to} total={filtered.length} noun="deals" onPage={setPage} />
         </section>
 
         <div className="space-y-4">
-          <SalesSideCard icon={null} title="Top organizations" subtitle="Invoiced and paid deals">
-            <SalesHBars items={topOrgs} format={(value) => formatSalesKwd(value)} />
+          <SalesSideCard icon={null} title="Seats by organization" subtitle="Top 5 in this list">
+            <SalesHBars items={seatsByOrg} />
           </SalesSideCard>
-
-          <SalesSideCard icon={<LightbulbIcon className="h-4 w-4 text-amber-500" />} title="Tip">
-            <p className="-mt-3 text-sm text-slate-500">{superAdminB2bTip}</p>
+          <SalesSideCard icon={null} title="Quote → invoice → paid">
+            <p className="-mt-3 text-sm text-slate-500">
+              Convert an accepted quote to an invoice, then mark it paid once the bank transfer or card payment clears.
+            </p>
           </SalesSideCard>
         </div>
       </div>

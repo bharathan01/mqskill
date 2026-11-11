@@ -67,13 +67,13 @@ export function LiveBarChart({
 }) {
   const max = Math.max(...items.map((item) => item.value), 1)
   return (
-    <div className="flex h-40 items-end gap-1.5">
+    <div className="flex h-44 items-end gap-2">
       {items.map((item) => (
-        <div key={item.label} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1.5">
+        <div key={item.label} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-1.5">
           <div
             title={`${item.label}: ${item.value.toLocaleString('en-US')}${suffix}`}
-            className="w-full rounded-t-md"
-            style={{ height: `${Math.max(4, (item.value / max) * 85)}%`, background: color }}
+            className="w-full max-w-10 rounded-t-md"
+            style={{ height: `${Math.max(8, Math.round((item.value / max) * 140))}px`, background: color }}
           />
           <span className="truncate text-[10px] text-slate-400">{item.label}</span>
         </div>

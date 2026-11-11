@@ -9,6 +9,8 @@ import {
   getDefaultCurriculumItemId,
   getEmployeeCourse,
   getEmployeeCourseCurriculum,
+  studentActiveCourses,
+  studentExpiredCourses,
   type CurriculumItem,
   type CurriculumItemStatus,
   type CurriculumItemType,
@@ -79,9 +81,24 @@ function ItemStatusIcon({ status }: { status: CurriculumItemStatus }) {
   return <span className={`h-2.5 w-2.5 rounded-full bg-current ${statusStyles(status)}`} />
 }
 
-export function EmployeeCourseLessonPage() {
+export function EmployeeCourseLessonPage({
+  backTo = paths.employee.courses,
+  learnerInitials = employeeUser.initials,
+}: {
+  backTo?: string
+  learnerInitials?: string
+} = {}) {
   const { courseId = '' } = useParams()
-  const course = getEmployeeCourse(courseId)
+  const employeeCourse = getEmployeeCourse(courseId)
+  const studentCourse = [...studentActiveCourses, ...studentExpiredCourses].find((item) => item.id === courseId)
+  const course = employeeCourse
+    ? { title: employeeCourse.title, instructor: employeeCourse.instructor }
+    : studentCourse
+      ? {
+          title: studentCourse.title,
+          instructor: 'track' in studentCourse ? studentCourse.track : studentCourse.category,
+        }
+      : null
   const curriculum = useMemo(() => getEmployeeCourseCurriculum(courseId), [courseId])
 
   const [activeItemId, setActiveItemId] = useState(() => getDefaultCurriculumItemId(curriculum))
@@ -151,7 +168,7 @@ export function EmployeeCourseLessonPage() {
   }, [activeItemId])
 
   if (!course) {
-    return <Navigate to={paths.employee.courses} replace />
+    return <Navigate to={backTo} replace />
   }
 
   function showToast(message: string) {
@@ -200,7 +217,7 @@ export function EmployeeCourseLessonPage() {
     const next: EmployeeQaQuestion = {
       id: `q-${Date.now()}`,
       author: copy.you,
-      initials: employeeUser.initials,
+      initials: learnerInitials,
       isYou: true,
       time: 'Just now',
       body,
@@ -319,7 +336,7 @@ export function EmployeeCourseLessonPage() {
       ) : null}
 
       <Link
-        to={paths.employee.courses}
+        to={backTo}
         className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:text-blue-700"
       >
         <ChevronLeftIcon className="h-4 w-4" />
@@ -567,7 +584,7 @@ export function EmployeeCourseLessonPage() {
                   <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,40,80,0.04)] sm:p-5">
                     <div className="flex items-start gap-3">
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-navy text-xs font-bold text-white">
-                        {employeeUser.initials}
+                        {learnerInitials}
                       </span>
                       <div className="min-w-0 flex-1">
                         <textarea

@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router'
+import { studentCoursePath } from '@/routes/paths'
 import {
   studentActiveCourses,
   studentCoursesPage as copy,
@@ -211,16 +213,20 @@ export function StudentCoursesPage() {
                   </div>
                   <div className="mt-1 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
-                      <h3 className="text-lg font-bold text-navy">{course.title}</h3>
+                      <h3 className="text-lg font-bold text-navy">
+                        <Link to={studentCoursePath(course.id)} className="hover:text-brand">
+                          {course.title}
+                        </Link>
+                      </h3>
                       <p className="mt-1 text-sm text-slate-500">{course.description}</p>
                     </div>
-                    <button
-                      type="button"
+                    <Link
+                      to={studentCoursePath(course.id)}
                       className="inline-flex shrink-0 items-center justify-center gap-1 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white"
                     >
                       {course.cta === 'assessment' ? copy.continueAssessment : copy.resume}
                       <ChevronRightIcon className="h-4 w-4" />
-                    </button>
+                    </Link>
                   </div>
                   <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <p className="inline-flex min-w-0 items-center gap-2 text-sm text-slate-600">
@@ -233,13 +239,13 @@ export function StudentCoursesPage() {
                       <span className="truncate">{course.next}</span>
                       <span className="hidden text-slate-400 sm:inline">{course.remaining}</span>
                     </p>
-                    <button
-                      type="button"
+                    <Link
+                      to={studentCoursePath(course.id)}
                       className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600"
                     >
                       <FileIcon className="h-4 w-4" />
                       {copy.syllabus}
-                    </button>
+                    </Link>
                   </div>
                   <div className="mt-3 flex items-center gap-3">
                     <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-100">
@@ -279,7 +285,11 @@ export function StudentCoursesPage() {
                   {course.expired}
                 </span>
               </div>
-              <h3 className="mt-3 text-lg font-bold text-navy">{course.title}</h3>
+              <h3 className="mt-3 text-lg font-bold text-navy">
+                <Link to={studentCoursePath(course.id)} className="hover:text-brand">
+                  {course.title}
+                </Link>
+              </h3>
               <p className="mt-1 text-sm leading-6 text-slate-500">{course.description}</p>
               <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
                 <span>{course.progressLabel}</span>
@@ -311,15 +321,15 @@ export function StudentCoursesPage() {
                 <span>{course.seat}</span>
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
-                <button
-                  type="button"
+                <Link
+                  to={studentCoursePath(course.id)}
                   className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600"
                 >
                   {course.primary.startsWith('Download') ? (
                     <DownloadIcon className="h-3.5 w-3.5" />
                   ) : null}
                   {course.primary}
-                </button>
+                </Link>
                 <button
                   type="button"
                   className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/5 px-3 py-2 text-sm font-semibold text-brand"

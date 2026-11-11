@@ -1,95 +1,97 @@
-import { useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { ContentNotice, ContentSelect } from '@/components/common'
+import { ContentNotice, ContentSelect, ContentTextInput } from '@/components/common'
 import {
-  findSalesOrder,
   formatSalesDate,
   formatSalesKwd,
-  salesLineTotal,
-  salesOrderTotal,
-  superAdminSalesOrders,
-  type SuperAdminSalesOrder,
+  getSuperAdminOrderDetail,
+  superAdminRefundReasons,
+  type SuperAdminOrderDetail,
+  type SuperAdminOrderLine,
 } from '@/constants'
 import { paths } from '@/routes/paths'
 import { StatusBadge } from './catalogShared'
 import { btnOutline, btnPrimary, cardClass } from './catalogUtils'
-import { SalesKpiGrid, SalesPageHeader, SalesSideCard, linkAction, theadRowClass, thClass, trClass } from './salesShared'
+import { MoneyCell, SalesPageHeader, theadRowClass, thClass, trClass } from './salesShared'
 
-const round3 = (value: number) => Math.round(value * 1000) / 1000
+const lineTotal = (line: SuperAdminOrderLine) => line.qty * line.unit * (1 - line.discountPct / 100)
 
-function DetailRow({ label, children }: { label: string; children: ReactNode }) {
+function InfoItem({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-4 py-2.5 text-sm">
-      <dt className="text-slate-500">{label}</dt>
-      <dd className="text-right font-semibold text-navy">{children}</dd>
+    <div>
+      <dt className="text-xs font-semibold tracking-wide text-slate-400 uppercase">{label}</dt>
+      <dd className="mt-1 text-sm font-semibold text-navy">{children}</dd>
     </div>
   )
 }
 
-export function AdminOrderDetailPage() {
-  const [params, setParams] = useSearchParams()
-  const base = findSalesOrder(params.get('order'))
-  const [overrides, setOverrides] = useState<Record<string, SuperAdminSalesOrder>>({})
+function TotalRow({ label, value, strong, negative }: { label: string; value: number; strong?: boolean; negative?: boolean }) {
+  return (
+    <div className={`flex items-center justify-between gap-3 text-sm ${strong ? 'border-t border-slate-100 pt-3' : ''}`}>
+      <span className={strong ? 'font-bold text-navy' : 'text-slate-500'}>{label}</span>
+      <span className={`tabular-nums ${strong ? 'text-base font-bold text-navy' : negative ? 'font-semibold text-rose-600' : 'font-semibold text-navy'}`}>
+        {negative && value > 0 ? '−' : ''}
+        {formatSalesKwd(value)}
+      </span>
+    </div>
+  )
+}
+
+function OrderDetailView({ initial }: { initial: SuperAdminOrderDetail }) {
+  const [refunded, setRefunded] = useState(initial.refunded)
+  const [baseStatus, setBaseStatus] = useState(initial.status)
+  const [lines, setLines] = useState(initial.lines)
+  const [amount, setAmount] = useState('100.000')
+  const [reason, setReason] = useState<string>(superAdminRefundReasons[4])
+  const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
 
-  const order = overrides[base?.id ?? ''] ?? base
-  if (!order) return null
+  const totals = useMemo(() => {
+    const subtotal = lines.reduce((sum, line) => sum + line.qty * line.unit, 0)
+    const discount = lines.reduce((sum, line) => sum + line.qty * line.unit * (line.discountPct / 100), 0)
+    const tax = (subtotal - discount) * (initial.taxRate / 100)
+    const total = subtotal - discount + tax
+    return { subtotal, discount, tax, total }
+  }, [initial.taxRate, lines])
 
-  const total = salesOrderTotal(order)
-  const refundable = round3(total - order.refunded)
-  const pendingLines = order.lines.filter((line) => line.fulfilment === 'Pending').length
-  const partial = order.refunded > 0 && refundable > 0
-  const subtotal = round3(order.lines.reduce((sum, line) => sum + line.unit * line.qty, 0))
-  const discountTotal = round3(subtotal - total)
+  const refundable = baseStatus === 'Paid' || baseStatus === 'Partially refunded'
+  const remaining = Math.max(0, totals.total - refunded)
+  const status =
+    baseStatus === 'Paid' || baseStatus === 'Partially refunded'
+      ? refunded >= totals.total
+        ? 'Refunded'
+        : refunded > 0
+          ? 'Partially refunded'
+          : 'Paid'
+      : baseStatus
 
-  const save = (next: SuperAdminSalesOrder, message: string) => {
-    setOverrides((current) => ({ ...current, [next.id]: next }))
-    setNotice(message)
+  const issueRefund = () => {
+    const value = Number(amount)
+    if (!Number.isFinite(value) || value <= 0) return setError('Enter a refund amount greater than zero.')
+    if (value > remaining + 0.0005) return setError(`Refund can’t exceed the remaining ${formatSalesKwd(remaining)}.`)
+    const next = Math.min(totals.total, refunded + value)
+    setError(null)
+    setRefunded(next)
+    if (next >= totals.total) {
+      setBaseStatus('Refunded')
+      setLines((current) => current.map((line) => ({ ...line, fulfilment: 'Refunded' })))
+    }
+    setNotice(`Partial refund of ${formatSalesKwd(value)} issued for ${initial.id} — ${reason} (sample).`)
+    setAmount(Math.min(100, Math.max(0, totals.total - next)).toFixed(3))
   }
-
-  const refund = (amount: number) => {
-    const refunded = round3(order.refunded + amount)
-    const full = refunded >= total
-    save(
-      { ...order, refunded, status: full ? 'Refunded' : order.status },
-      `${formatSalesKwd(amount, 3)} refunded on ${order.id} to ${order.customer} (sample).`,
-    )
-  }
-
-  const markDelivered = (index?: number) => {
-    const lines = order.lines.map((line, i) =>
-      line.fulfilment === 'Pending' && (index === undefined || index === i) ? { ...line, fulfilment: 'Delivered' as const } : line,
-    )
-    save({ ...order, lines }, index === undefined ? `All pending lines on ${order.id} marked delivered (sample).` : `Line marked delivered on ${order.id} (sample).`)
-  }
-
-  const statusLabel = partial ? 'Paid · partially refunded' : order.status
 
   return (
     <div className="space-y-5">
       <SalesPageHeader
         page="Order Detail"
-        subtitle="Line items, discounts and fulfilment for each order."
+        subtitle={`Order ${initial.id} · line items, totals and refunds for a single order.`}
         actions={
           <>
             <Link to={paths.admin.orders} className={btnOutline}>
-              Back to orders
+              ← Back to Orders
             </Link>
-            <button
-              type="button"
-              disabled={pendingLines === 0 || order.status !== 'Paid'}
-              onClick={() => markDelivered()}
-              className={btnOutline}
-            >
-              Mark delivered
-            </button>
-            <button
-              type="button"
-              disabled={refundable <= 0 || order.status !== 'Paid'}
-              onClick={() => refund(refundable)}
-              className={btnPrimary}
-            >
-              Refund order
+            <button type="button" onClick={() => setNotice(`Receipt for ${initial.id} sent to ${initial.email} (sample).`)} className={btnOutline}>
+              Send receipt
             </button>
           </>
         }
@@ -97,146 +99,121 @@ export function AdminOrderDetailPage() {
 
       {notice ? <ContentNotice onDismiss={() => setNotice(null)}>{notice}</ContentNotice> : null}
 
-      <section className={`${cardClass} flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between`}>
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <h2 className="text-xl font-bold text-navy">{order.id}</h2>
-            <StatusBadge value={order.status} />
-            {partial ? <StatusBadge value="Partially refunded" /> : null}
-          </div>
-          <p className="mt-1.5 text-sm text-slate-500">
-            {order.customer} · {order.type === 'B2B' ? 'Organization' : 'Individual'} · {order.email}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-sm text-slate-500">
-            Order
-            <ContentSelect
-              aria-label="Switch order"
-              value={order.id}
-              onChange={(event) => setParams({ order: event.target.value })}
-              className="!h-10 min-w-[10rem]"
-            >
-              {superAdminSalesOrders.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.id} · {item.customer}
-                </option>
-              ))}
-            </ContentSelect>
-          </label>
-        </div>
-      </section>
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="min-w-0 space-y-4">
+          <section className={`${cardClass} p-5`}>
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="text-xl font-bold text-navy">{initial.id}</h2>
+              <StatusBadge value={status} />
+            </div>
+            <dl className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <InfoItem label="Customer">{initial.customer}</InfoItem>
+              <InfoItem label="Email">{initial.email}</InfoItem>
+              <InfoItem label="Type">{initial.type}</InfoItem>
+              <InfoItem label="Date">{formatSalesDate(initial.date)}</InfoItem>
+              <InfoItem label="Payment method">{initial.method}</InfoItem>
+              <InfoItem label="Billing region">{initial.region}</InfoItem>
+            </dl>
+          </section>
 
-      <SalesKpiGrid
-        kpis={[
-          { id: 'total', label: 'Order total', value: formatSalesKwd(total, 3), detail: `${order.lines.length} line item${order.lines.length === 1 ? '' : 's'}` },
-          { id: 'discount', label: 'Discounts', value: formatSalesKwd(discountTotal, 3), detail: `On ${formatSalesKwd(subtotal, 3)} list price` },
-          {
-            id: 'refunded',
-            label: 'Refunded',
-            value: order.refunded > 0 ? formatSalesKwd(order.refunded, 3) : '—',
-            detail: order.refunded > 0 ? `${formatSalesKwd(refundable, 3)} remaining` : 'No refunds on this order',
-            tone: order.refunded > 0 ? 'down' : undefined,
-          },
-          { id: 'status', label: 'Status', value: statusLabel, detail: `Placed ${formatSalesDate(order.date)}` },
-        ]}
-        className="sm:grid-cols-2 xl:grid-cols-4"
-      />
-
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <section className={`${cardClass} overflow-hidden`}>
-          <div className="border-b border-slate-100 px-5 py-4">
-            <h2 className="text-base font-bold text-navy">Line items</h2>
-            <p className="mt-0.5 text-sm text-slate-500">Prices in KWD</p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-[760px] w-full border-collapse text-left">
-              <thead>
-                <tr className={theadRowClass}>
-                  <th className="px-4 py-2.5 font-semibold">Item</th>
-                  <th className={`${thClass} text-right`}>Qty</th>
-                  <th className={`${thClass} text-right`}>Unit</th>
-                  <th className={`${thClass} text-right`}>Discount</th>
-                  <th className={`${thClass} text-right`}>Line total</th>
-                  <th className={thClass}>Fulfilment</th>
-                  <th className={`${thClass} text-right`}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {order.lines.map((line, index) => (
-                  <tr key={`${line.item}-${index}`} className={trClass}>
-                    <td className="px-4 py-3.5 text-sm font-semibold text-navy">{line.item}</td>
-                    <td className="px-3 py-3.5 text-right text-sm tabular-nums text-slate-600">{line.qty}</td>
-                    <td className="px-3 py-3.5 text-right text-sm tabular-nums text-slate-600">{formatSalesKwd(line.unit, 3)}</td>
-                    <td className="px-3 py-3.5 text-right text-sm tabular-nums text-slate-600">
-                      {line.discount > 0 ? `${line.discount}%` : '—'}
-                    </td>
-                    <td className="px-3 py-3.5 text-right text-sm font-semibold tabular-nums text-navy">
-                      {formatSalesKwd(salesLineTotal(line), 3)}
-                    </td>
-                    <td className="px-3 py-3.5">
-                      <StatusBadge value={line.fulfilment} />
-                    </td>
-                    <td className="px-3 py-3.5 text-right">
-                      {line.fulfilment === 'Pending' && order.status === 'Paid' ? (
-                        <button type="button" onClick={() => markDelivered(index)} className={linkAction}>
-                          Mark delivered
-                        </button>
-                      ) : (
-                        <span className="text-sm text-slate-300">—</span>
-                      )}
-                    </td>
+          <section className={`${cardClass} overflow-hidden`}>
+            <div className="border-b border-slate-100 px-5 py-4">
+              <h2 className="text-base font-bold text-navy">Line items</h2>
+              <p className="mt-0.5 text-sm text-slate-500">{lines.length} items on this order</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[760px] border-collapse text-left">
+                <thead>
+                  <tr className={theadRowClass}>
+                    <th className="px-4 py-2.5 font-semibold">Course</th>
+                    <th className={`${thClass} text-right`}>Qty</th>
+                    <th className={`${thClass} text-right`}>Unit price</th>
+                    <th className={`${thClass} text-right`}>Discount</th>
+                    <th className={`${thClass} text-right`}>Line total</th>
+                    <th className={thClass}>Fulfilment</th>
                   </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="border-t border-slate-200 bg-slate-50/80 text-sm font-bold text-navy">
-                  <td className="px-4 py-3" colSpan={4}>
-                    Order total
-                  </td>
-                  <td className="px-3 py-3 text-right tabular-nums">{formatSalesKwd(total, 3)}</td>
-                  <td className="px-3 py-3" colSpan={2} />
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </section>
+                </thead>
+                <tbody>
+                  {lines.map((line) => (
+                    <tr key={line.id} className={trClass}>
+                      <td className="px-4 py-3.5 text-sm font-semibold text-navy">{line.course}</td>
+                      <td className="px-3 py-3.5 text-right text-sm tabular-nums text-slate-600">{line.qty}</td>
+                      <td className="px-3 py-3.5 text-right">
+                        <MoneyCell value={line.unit} bold={false} />
+                      </td>
+                      <td className="px-3 py-3.5 text-right text-sm tabular-nums text-slate-600">{line.discountPct}%</td>
+                      <td className="px-3 py-3.5 text-right">
+                        <MoneyCell value={lineTotal(line)} />
+                      </td>
+                      <td className="px-3 py-3.5">
+                        <StatusBadge value={line.fulfilment} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
 
         <div className="space-y-4">
-          <SalesSideCard icon={null} title="Payment">
-            <dl className="-my-2 divide-y divide-slate-100">
-              <DetailRow label="Method">{order.method}</DetailRow>
-              <DetailRow label="Reference">{order.reference}</DetailRow>
-              <DetailRow label="Placed">{formatSalesDate(order.date)}</DetailRow>
-              <DetailRow label="Paid on">{order.paidOn ? formatSalesDate(order.paidOn) : '—'}</DetailRow>
-              <DetailRow label="Billing country">{order.country}</DetailRow>
-            </dl>
-          </SalesSideCard>
+          <section className={`${cardClass} p-5`}>
+            <h2 className="text-base font-bold text-navy">Totals</h2>
+            <div className="mt-4 space-y-3">
+              <TotalRow label="Subtotal" value={totals.subtotal} />
+              <TotalRow label="Discount" value={totals.discount} negative />
+              <TotalRow label={`Tax (${initial.taxRate}% · ${initial.region})`} value={totals.tax} />
+              <TotalRow label="Order total" value={totals.total} />
+              <TotalRow label="Partial refund" value={refunded} negative />
+              <TotalRow label="Amount paid (net)" value={totals.total - refunded} strong />
+            </div>
+          </section>
 
-          <SalesSideCard icon={null} title="Refund summary">
-            <dl className="-my-2 divide-y divide-slate-100">
-              <DetailRow label="Order total">{formatSalesKwd(total, 3)}</DetailRow>
-              <DetailRow label="Refunded">{order.refunded > 0 ? `−${formatSalesKwd(order.refunded, 3)}` : '—'}</DetailRow>
-              <DetailRow label="Net received">
-                {order.status === 'Paid' || order.status === 'Refunded' ? formatSalesKwd(round3(total - order.refunded), 3) : '—'}
-              </DetailRow>
-            </dl>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                type="button"
-                disabled={refundable <= 0 || order.status !== 'Paid'}
-                onClick={() => refund(round3(refundable / 2))}
-                className={btnOutline}
-              >
-                Partial refund (50%)
+          <section className={`${cardClass} p-5`}>
+            <h2 className="text-base font-bold text-navy">Issue partial refund</h2>
+            <p className="mt-0.5 text-sm text-slate-500">
+              {refundable ? `${formatSalesKwd(remaining)} still refundable.` : `Refunds aren’t available while the order is ${status}.`}
+            </p>
+            <div className="mt-4 space-y-3">
+              <label className="block text-sm font-semibold text-navy">
+                Amount (KWD)
+                <ContentTextInput
+                  inputMode="decimal"
+                  value={amount}
+                  disabled={!refundable || remaining <= 0}
+                  invalid={!!error}
+                  onChange={(event) => setAmount(event.target.value)}
+                  className="mt-1.5"
+                />
+              </label>
+              <label className="block text-sm font-semibold text-navy">
+                Reason
+                <ContentSelect
+                  value={reason}
+                  disabled={!refundable || remaining <= 0}
+                  onChange={(event) => setReason(event.target.value)}
+                  className="mt-1.5"
+                >
+                  {superAdminRefundReasons.map((item) => (
+                    <option key={item}>{item}</option>
+                  ))}
+                </ContentSelect>
+              </label>
+              {error ? <p className="text-sm font-medium text-rose-600">{error}</p> : null}
+              <button type="button" onClick={issueRefund} disabled={!refundable || remaining <= 0} className={`${btnPrimary} w-full`}>
+                Issue partial refund
               </button>
             </div>
-            {order.status !== 'Paid' && order.status !== 'Refunded' ? (
-              <p className="mt-3 text-xs text-slate-400">Refunds are available once the order is paid.</p>
-            ) : null}
-          </SalesSideCard>
+          </section>
         </div>
       </div>
     </div>
   )
+}
+
+export function AdminOrderDetailPage() {
+  const [params] = useSearchParams()
+  const orderId = params.get('order')
+  const detail = useMemo(() => getSuperAdminOrderDetail(orderId), [orderId])
+  return <OrderDetailView key={detail.id} initial={detail} />
 }

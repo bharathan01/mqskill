@@ -1,17 +1,13 @@
 import { Link, Navigate, useLocation, useParams } from 'react-router'
 import {
   buildQuizResultFromAnswers,
-  employeeAssessmentCourseLink,
-  employeeAssessmentQuizPath,
   employeeAssessmentResultPage,
-  employeeAssessmentSubmitPath,
   getAssignmentResult,
   getEmployeeAssessment,
   getQuizResult,
   type AssignmentResultDetail,
   type QuizResultDetail,
 } from '@/constants'
-import { paths } from '@/routes/paths'
 import {
   BookIcon,
   CheckCircleIcon,
@@ -22,6 +18,7 @@ import {
   LockIcon,
   RefreshIcon,
 } from '@/components/ui'
+import { useLearnerAssessmentLinks } from './learnerLinks'
 
 const copy = employeeAssessmentResultPage
 
@@ -89,10 +86,11 @@ function QuizResultView({
   courseId: string
   result: QuizResultDetail
 }) {
+  const links = useLearnerAssessmentLinks()
   return (
     <div className="space-y-5">
       <Link
-        to={paths.employee.assessments}
+        to={links.list}
         className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:text-blue-700"
       >
         <ChevronLeftIcon className="h-4 w-4" />
@@ -183,14 +181,14 @@ function QuizResultView({
           </div>
           <div className="flex flex-wrap gap-2">
             <Link
-              to={employeeAssessmentCourseLink(courseId)}
+              to={links.course(courseId)}
               className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
               <BookIcon className="h-4 w-4" />
               {copy.reviewLessons}
             </Link>
             <Link
-              to={employeeAssessmentQuizPath(assessmentId)}
+              to={links.quiz(assessmentId)}
               className="inline-flex h-10 items-center gap-2 rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-blue-700"
             >
               <RefreshIcon className="h-4 w-4" />
@@ -229,7 +227,7 @@ function QuizResultView({
                         {copy.ofCorrect(topic.correct, topic.total)}
                       </span>
                       <Link
-                        to={employeeAssessmentCourseLink(topic.courseId)}
+                        to={links.course(topic.courseId)}
                         className="text-xs font-semibold text-brand hover:text-blue-700"
                       >
                         {copy.reviewLesson}
@@ -308,12 +306,13 @@ function AssignmentResultView({
   courseId: string
   result: AssignmentResultDetail
 }) {
+  const links = useLearnerAssessmentLinks()
   const graded = result.grade != null
 
   return (
     <div className="space-y-5">
       <Link
-        to={paths.employee.assessments}
+        to={links.list}
         className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:text-blue-700"
       >
         <ChevronLeftIcon className="h-4 w-4" />
@@ -372,7 +371,7 @@ function AssignmentResultView({
             {result.feedback || 'Awaiting reviewer feedback.'}
           </p>
           <Link
-            to={employeeAssessmentCourseLink(courseId)}
+            to={links.course(courseId)}
             className="mt-4 inline-flex text-sm font-semibold text-brand hover:text-blue-700"
           >
             {copy.openCourse} →
@@ -398,7 +397,7 @@ function AssignmentResultView({
           )}
           {!result.fileName ? (
             <Link
-              to={employeeAssessmentSubmitPath(assessmentId)}
+              to={links.submit(assessmentId)}
               className="mt-4 inline-flex h-10 items-center rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-blue-700"
             >
               Submit assignment
@@ -411,13 +410,14 @@ function AssignmentResultView({
 }
 
 export function EmployeeAssessmentResultPage() {
+  const links = useLearnerAssessmentLinks()
   const { assessmentId = '' } = useParams()
   const location = useLocation()
   const state = (location.state as LocationState | null) ?? null
   const assessment = getEmployeeAssessment(assessmentId)
 
   if (!assessment) {
-    return <Navigate to={paths.employee.assessments} replace />
+    return <Navigate to={links.list} replace />
   }
 
   if (assessment.kind === 'quiz') {
@@ -428,7 +428,7 @@ export function EmployeeAssessmentResultPage() {
         : stored
 
     if (!result) {
-      return <Navigate to={employeeAssessmentQuizPath(assessmentId)} replace />
+      return <Navigate to={links.quiz(assessmentId)} replace />
     }
 
     return (

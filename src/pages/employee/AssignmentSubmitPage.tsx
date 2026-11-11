@@ -1,14 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router'
 import {
-  employeeAssessmentCourseLink,
-  employeeAssessmentResultPath,
   employeeAssignmentSubmitPage,
   employeeAssessmentsPage,
   getEmployeeAssessment,
 } from '@/constants'
-import { paths } from '@/routes/paths'
 import { ChevronLeftIcon, FileIcon } from '@/components/ui'
+import { useLearnerAssessmentLinks } from './learnerLinks'
 
 const copy = employeeAssignmentSubmitPage
 const fieldClass =
@@ -17,6 +15,7 @@ const fieldClass =
 export function EmployeeAssignmentSubmitPage() {
   const { assessmentId = '' } = useParams()
   const navigate = useNavigate()
+  const links = useLearnerAssessmentLinks()
   const assessment = getEmployeeAssessment(assessmentId)
 
   const [fileName, setFileName] = useState('')
@@ -24,7 +23,7 @@ export function EmployeeAssignmentSubmitPage() {
   const [error, setError] = useState('')
 
   if (!assessment || assessment.kind !== 'assignment') {
-    return <Navigate to={paths.employee.assessments} replace />
+    return <Navigate to={links.list} replace />
   }
 
   function handleSubmit(event: FormEvent) {
@@ -33,7 +32,7 @@ export function EmployeeAssignmentSubmitPage() {
       setError(copy.required)
       return
     }
-    navigate(employeeAssessmentResultPath(assessmentId), {
+    navigate(links.result(assessmentId), {
       state: { fileName, note },
     })
   }
@@ -41,7 +40,7 @@ export function EmployeeAssignmentSubmitPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <Link
-        to={paths.employee.assessments}
+        to={links.list}
         className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:text-blue-700"
       >
         <ChevronLeftIcon className="h-4 w-4" />
@@ -109,7 +108,7 @@ export function EmployeeAssignmentSubmitPage() {
           </p>
           <p className="mt-1 text-sm font-bold text-navy">{assessment.courseTitle}</p>
           <Link
-            to={employeeAssessmentCourseLink(assessment.courseId)}
+            to={links.course(assessment.courseId)}
             className="mt-2 inline-flex text-sm font-semibold text-brand hover:text-blue-700"
           >
             Open course →
@@ -118,7 +117,7 @@ export function EmployeeAssignmentSubmitPage() {
 
         <div className="flex items-center gap-2">
           <Link
-            to={paths.employee.assessments}
+            to={links.list}
             className="inline-flex h-10 flex-1 items-center justify-center rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
             {copy.cancel}

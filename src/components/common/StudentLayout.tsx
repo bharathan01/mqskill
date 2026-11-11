@@ -12,6 +12,7 @@ import {
   AwardIcon,
   BellIcon,
   ChevronDownIcon,
+  ClipboardIcon,
   CreditCardIcon,
   LayersIcon,
   GearIcon,
@@ -26,6 +27,7 @@ import {
 const navIcons = {
   dashboard: GridIcon,
   courses: LayersIcon,
+  assessments: ClipboardIcon,
   certificates: AwardIcon,
   payments: CreditCardIcon,
   profile: UserIcon,

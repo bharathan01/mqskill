@@ -19,6 +19,11 @@ export const paths = {
     root: '/student',
     dashboard: '/student',
     courses: '/student/courses',
+    courseDetail: '/student/courses/:courseId',
+    assessments: '/student/assessments',
+    assessmentQuiz: '/student/assessments/:assessmentId/quiz',
+    assessmentSubmit: '/student/assessments/:assessmentId/submit',
+    assessmentResult: '/student/assessments/:assessmentId/result',
     certificates: '/student/certificates',
     payments: '/student/payments',
     profile: '/student/profile',
@@ -270,6 +275,10 @@ export function organizationHelpTicketPath(ticketId: string) {
 
 export function employeeCoursePath(courseId: string) {
   return `/employee/courses/${courseId}`
+}
+
+export function studentCoursePath(courseId: string) {
+  return `/student/courses/${courseId}`
 }
 
 export function employeeHelpTicketPath(ticketId: string) {
